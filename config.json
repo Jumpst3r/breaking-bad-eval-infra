@@ -1,0 +1,28 @@
+{
+    "version":1.0,
+    "toolchains": [
+        {
+            "x86-64-core-i7--glibc--stable-2018.11-1": {
+                "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64-core-i7/tarballs/x86-64-core-i7--glibc--stable-2018.11-1.tar.bz2",
+                "rootfs": "x86_64-buildroot-linux-gnu/sysroot",
+                "libdir": "lib64/",
+                "prefix": "bin/x86_64-linux-",
+                "compileOptions": [
+                    {
+                        "name": "openssl",
+                        "buildcmd": "./Configure linux-x86_64 --cross-compile-prefix=$(pwd)/../toolchain/bin/x86_64-linux-"
+                    }
+                ]
+            }
+        }
+    ],
+    "frameworks": [
+        {
+            "name": "openssl",
+            "git": "https://github.com/openssl/openssl",
+            "libname": "libcrypto.so",
+            "includeDirs": ["include"],
+            "compiler": "gcc"
+        }
+    ]
+}

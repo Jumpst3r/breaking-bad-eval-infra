@@ -1,0 +1,128 @@
+import multiprocessing
+import os
+import sys
+import json
+import subprocess
+
+
+def checkretcode(result):
+    err = result.stderr
+    if result.returncode != 0:
+        print(f"failed: {err}")
+        exit(1)
+
+def main():
+
+    cwd = os.getcwd()
+    toolchain_id = sys.argv[1]
+    framework_id = sys.argv[2]
+    framework_commit = sys.argv[3]
+
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+
+    framework_valid = False
+    for framework in config['frameworks']:
+        if framework_id in framework['name']:
+            framework_valid = True 
+            framework_url = framework['git']
+            libname = framework['libname']
+            includes = framework['includeDirs']
+            compiler = framework['compiler']
+    
+    if not framework_valid:
+        print("Invalid framework name")
+        exit(1)
+
+    toolchain_valid = False
+    # validate if toolchain is valid:
+    framework_config_cmd = None
+    for tc in config['toolchains']:
+        if toolchain_id in tc.keys():
+            toolchain_valid = True
+            toolchain_url = tc[toolchain_id]['url']
+            libdir = tc[toolchain_id]['libdir']
+            prefix = tc[toolchain_id]['prefix']
+
+            rootfs =  tc[toolchain_id]['rootfs']
+            for options in tc[toolchain_id]['compileOptions']:
+                if options['name'] == framework_id:
+                    framework_config_cmd = options['buildcmd']
+
+    
+    if not toolchain_valid or not framework_config_cmd:
+        print("Invalid toolchain name")
+        exit(1)
+
+
+    
+    # Download toolchain:
+    print("- Downloading toolchain")
+    
+    result = subprocess.run(['wget', '-O', 'toolchain.tar.bz2', toolchain_url], stderr=subprocess.PIPE)
+    checkretcode(result)
+
+    print('- Extracting')
+    
+    result = subprocess.run(['mkdir', '-p', 'toolchain'], stderr=subprocess.PIPE)
+    checkretcode(result)
+    
+    result = subprocess.run(['tar', '-xf', 'toolchain.tar.bz2', '-C', 'toolchain', '--strip-components', '1'], stderr=subprocess.PIPE)
+    checkretcode(result)
+    
+    os.environ["TOOLCHAIN_ROOT"] = os.getcwd() + '/toolchain'
+    print(f'- Set TOOLCHAIN_ROOT to {os.environ.get("TOOLCHAIN_ROOT")}')
+
+    os.environ["ROOTFS"] = os.getcwd() + '/toolchain/' + rootfs
+    print(f'- Set ROOTFS to {os.environ.get("ROOTFS")}')
+
+    print(f'- Cloning {framework_id}')
+    result = subprocess.run(['git', 'clone', framework_url], stderr=subprocess.PIPE)
+    checkretcode(result)
+
+    os.environ["FRAMEWORK"] = os.getcwd() + '/' +framework_id
+    print(f'- Set FRAMEWORK to {os.environ.get("FRAMEWORK")}')
+
+    os.chdir(os.environ.get("FRAMEWORK"))
+
+    print(f'- Checking out {framework_commit}')
+    result = subprocess.run(['git', 'checkout', framework_commit], stderr=subprocess.PIPE)
+    checkretcode(result)
+
+    print(f'- Configuring {framework_id} with {framework_config_cmd.split()}')
+    result = subprocess.run(framework_config_cmd, stderr=subprocess.PIPE, shell=True)
+    checkretcode(result)
+
+    nbcores = multiprocessing.cpu_count()
+
+    print(f'- Compiling')
+    result = subprocess.run(['make', f'-j{nbcores}'], stderr=subprocess.PIPE)
+    checkretcode(result)
+
+    print(f'- Copying files to {rootfs}/{libdir}')
+    result = subprocess.run(f'cp {libname}* {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+    checkretcode(result)
+
+    os.chdir(cwd)
+
+    print(f'- Copying driver to {rootfs}')
+    result = subprocess.run(f'cp {framework_id}-builder/driver.c {os.getcwd()}/toolchain/{rootfs}/driver.c', stderr=subprocess.PIPE, shell=True)
+    checkretcode(result)
+
+    os.chdir(cwd + '/toolchain')
+
+    print(f'- Compiling driver')
+    print(f'- Updating LD_LIBRARY_PATH to {os.getcwd() + "/" + "lib"}')
+    os.environ["LD_LIBRARY_PATH"] = os.getcwd() + '/' + 'lib'
+    includestr = ' '.join([f"-I{os.getcwd()}/../{framework_id}/{d}" for d in includes])
+    canonicalLibName = libname[3:].split('.')[0]
+    result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+    print(f'CWD={os.getcwd()}')
+    print(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c -o {os.getcwd()}/{rootfs}/driver.bin')
+    checkretcode(result)
+
+
+
+
+if __name__ == "__main__":
+    main()
