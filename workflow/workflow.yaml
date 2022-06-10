@@ -1,0 +1,109 @@
+kind: Workflow
+metadata:
+  generateName: builder-
+spec:
+  entrypoint: schedule-framework-builds
+  arguments:
+    parameters:
+    - name: buildmap
+      value: |
+        [
+        {
+            "toolchain": "x86-64-core-i7--glibc--stable-2018.11-1",
+            "framework": "openssl",
+            "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
+            "optlvl": "-O3"
+        }
+        ]
+    - name: algomap
+      value: |
+        [
+        {
+            "algo": "aes-cbc",
+            "keylen": "128"
+        },
+        {
+            "algo": "aria-cbc",
+            "keylen": "128"
+        }
+        ]
+  templates:
+  - name: schedule-framework-builds
+    inputs:
+      parameters:
+      - name: buildmap
+      - name: algomap
+    steps:
+    - - name: Schedule-Build
+        template: build
+        arguments:
+          parameters:
+          - name: toolchain
+            value: "{{item.toolchain}}"
+          - name: framework
+            value: "{{item.framework}}"
+          - name: commit
+            value: "{{item.commit}}"
+          - name: optlvl
+            value: "{{item.optlvl}}"
+        withParam: "{{inputs.parameters.buildmap}}"
+    - - name : Schedule-Analysis
+        template: analyze
+        arguments:
+          parameters:
+          - name: algorithm
+            value: "{{item.algo}}"
+          - name: keylen
+            value: "{{item.keylen}}"
+        withParam: "{{inputs.parameters.algomap}}"
+
+  - name: build
+    inputs:
+      parameters:
+      - name: toolchain
+      - name: framework
+      - name: commit
+      - name: optlvl
+    container:
+      image: builder
+      imagePullPolicy: "Never"
+      command:
+          - bash
+          - '-c'
+      args:
+          - >-
+            python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}}
+    outputs:
+      artifacts:
+      - name: toolchain
+        path: /build/toolchain.zip
+
+  - name: analyze
+    inputs:
+      parameters:
+      - name: algorithm
+      - name: keylen
+    steps:
+    - - name: config
+        template: jail-to-rootfs
+        arguments:
+          artifacts:
+          - name: toolchainzip
+            from : "{{build.outputs.artifacts.toolchain}}"
+
+  - name: jail-to-rootfs
+    inputs:
+      artifacts:
+      - name: toolchainzip
+        path: /build/toolchain.zip
+    container:
+      image: alpine
+      command:
+          - bash
+          - '-c'
+      args:
+          - >-
+            file /build/toolchain.zip
+
+    
+      

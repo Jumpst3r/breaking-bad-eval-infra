@@ -75,7 +75,6 @@ int main (int argc, char **argv)
 
     if (!strcmp(mode, "aes-cbc")) alg = EVP_aes_128_cbc();
     else if (!strcmp(mode, "camellia-cbc")) alg = EVP_camellia_128_cbc();
-    else if (!strcmp(mode, "camellia-cbc")) alg = EVP_camellia_128_cbc();
     else if (!strcmp(mode, "aria-cbc")) alg = EVP_aria_192_cbc();
 
 

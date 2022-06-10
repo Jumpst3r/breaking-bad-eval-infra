@@ -17,6 +17,7 @@ def main():
     toolchain_id = sys.argv[1]
     framework_id = sys.argv[2]
     framework_commit = sys.argv[3]
+    optflag = sys.argv[4]
 
     with open('config.json', 'r') as f:
         config = json.load(f)
@@ -48,6 +49,7 @@ def main():
             for options in tc[toolchain_id]['compileOptions']:
                 if options['name'] == framework_id:
                     framework_config_cmd = options['buildcmd']
+                    cflags = options['cflags'] + f" {optflag}"
 
     
     if not toolchain_valid or not framework_config_cmd:
@@ -89,6 +91,7 @@ def main():
     result = subprocess.run(['git', 'checkout', framework_commit], stderr=subprocess.PIPE)
     checkretcode(result)
 
+    os.environ["CFLAGS"] = cflags
     print(f'- Configuring {framework_id} with {framework_config_cmd.split()}')
     result = subprocess.run(framework_config_cmd, stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
@@ -118,11 +121,16 @@ def main():
     canonicalLibName = libname[3:].split('.')[0]
     result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
     print(f'CWD={os.getcwd()}')
-    print(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c -o {os.getcwd()}/{rootfs}/driver.bin')
+    print(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
     checkretcode(result)
 
-
-
+    os.chdir(cwd)
+    print(f'- Exporting toolchain')
+    result = subprocess.run(f'zip -r toolchain.zip toolchain', stderr=subprocess.PIPE, shell=True)
+    checkretcode(result)
+    print(f'- Cleaning up')
+    result = subprocess.run(f'rm -rf toolchain toolchain.tar.bz2 {framework_id}', stderr=subprocess.PIPE, shell=True)
+    checkretcode(result)
 
 if __name__ == "__main__":
     main()

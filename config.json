@@ -10,7 +10,34 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux-x86_64 --cross-compile-prefix=$(pwd)/../toolchain/bin/x86_64-linux-"
+                        "buildcmd": "./Configure linux-x86_64 --cross-compile-prefix=$(pwd)/../toolchain/bin/x86_64-linux- $CFLAGS",
+                        "cflags": ""
+                    }
+                ]
+            },
+            "aarch64--glibc--stable-2018.11-1": {
+                "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--glibc--stable-2018.11-1.tar.bz2",
+                "rootfs": "aarch64-buildroot-linux-gnu/sysroot/",
+                "libdir": "lib64/",
+                "prefix": "bin/aarch64-linux-",
+                "compileOptions": [
+                    {
+                        "name": "openssl",
+                        "buildcmd": "./Configure linux-aarch64 --cross-compile-prefix=$(pwd)/../toolchain/bin/aarch64-linux- $CFLAGS",
+                        "cflags": "-march=armv8-a"
+                    }
+                ]
+            },
+            "armv5-eabi--glibc--stable-2020.02-2": {
+                "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv5-eabi/tarballs/armv5-eabi--glibc--stable-2020.02-2.tar.bz2",
+                "rootfs": "arm-buildroot-linux-gnueabi/sysroot/",
+                "libdir": "lib/",
+                "prefix": "bin/arm-buildroot-linux-gnueabi-",
+                "compileOptions": [
+                    {
+                        "name": "openssl",
+                        "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi- $CFLAGS",
+                        "cflags": "-march=armv4"
                     }
                 ]
             }
