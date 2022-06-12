@@ -19,11 +19,11 @@ spec:
       value: |
         [
         {
-            "algo": "aes-cbc",
+            "algo": "aria-cbc",
             "keylen": "128"
         },
         {
-            "algo": "aria-cbc",
+            "algo": "aes-cbc",
             "keylen": "128"
         }
         ]
@@ -35,7 +35,7 @@ spec:
       - name: algomap
     steps:
     - - name: Schedule-Build
-        template: build
+        template: schedule-build
         arguments:
           parameters:
           - name: toolchain
@@ -46,16 +46,43 @@ spec:
             value: "{{item.commit}}"
           - name: optlvl
             value: "{{item.optlvl}}"
+          - name: algomap
+            value: "{{inputs.parameters.algomap}}"
         withParam: "{{inputs.parameters.buildmap}}"
-    - - name : Schedule-Analysis
-        template: analyze
+
+  - name: schedule-build
+    inputs:
+      parameters:
+      - name: toolchain
+      - name: framework
+      - name: commit
+      - name: optlvl
+      - name: algomap
+    steps:
+    - - name: schedule
+        template: build
         arguments:
           parameters:
+          - name: toolchain
+            value: "{{inputs.parameters.toolchain}}"
+          - name: framework
+            value: "{{inputs.parameters.framework}}"
+          - name: commit
+            value: "{{inputs.parameters.commit}}"
+          - name: optlvl
+            value: "{{inputs.parameters.optlvl}}"
           - name: algorithm
             value: "{{item.algo}}"
           - name: keylen
             value: "{{item.keylen}}"
         withParam: "{{inputs.parameters.algomap}}"
+    - - name: reduce
+        template: reduce
+        arguments:
+          parameters:
+          - name: leaks
+            value: "{{steps.schedule.outputs.parameters.leaks}}"
+
 
   - name: build
     inputs:
@@ -64,6 +91,8 @@ spec:
       - name: framework
       - name: commit
       - name: optlvl
+      - name: algorithm
+      - name: keylen
     container:
       image: builder
       imagePullPolicy: "Never"
@@ -72,30 +101,20 @@ spec:
           - '-c'
       args:
           - >-
-            python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}}
+            python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.algorithm}} {{inputs.parameters.keylen}}
     outputs:
       artifacts:
       - name: toolchain
-        path: /build/toolchain.zip
+        path: /build/results.zip
+      parameters:
+      - name: leaks
+        valueFrom:
+          path: /tmp/summary.json
 
-  - name: analyze
+  - name: reduce
     inputs:
       parameters:
-      - name: algorithm
-      - name: keylen
-    steps:
-    - - name: config
-        template: jail-to-rootfs
-        arguments:
-          artifacts:
-          - name: toolchainzip
-            from : "{{build.outputs.artifacts.toolchain}}"
-
-  - name: jail-to-rootfs
-    inputs:
-      artifacts:
-      - name: toolchainzip
-        path: /build/toolchain.zip
+      - name: leaks
     container:
       image: alpine
       command:
@@ -103,7 +122,6 @@ spec:
           - '-c'
       args:
           - >-
-            file /build/toolchain.zip
+            cat {{inputs.parameters.leaks}}
 
-    
       

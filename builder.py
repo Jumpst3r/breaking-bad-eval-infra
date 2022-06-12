@@ -1,8 +1,22 @@
+"""
+file @builder.py
+
+@author nicolas
+
+builder.py <toolchain> <framework> <commit> <optlvl> <alg> <keylen>
+
+"""
+
+
 import multiprocessing
 import os
 import sys
 import json
 import subprocess
+from microsurf.microsurf import SCDetector
+from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
+from microsurf.pipeline.Stages import BinaryLoader
+from microsurf.utils.generators import hex_key_generator
 
 
 def checkretcode(result):
@@ -11,8 +25,29 @@ def checkretcode(result):
         print(f"failed: {err}")
         exit(1)
 
-def main():
+def analyze(lib):
+    rootfs = os.getcwd()
+    algname = sys.argv[5]
+    keylen = int(sys.argv[6])
+    binpath = rootfs + '/driver.bin'
+    args = f'@ {algname}'.split()
+    sharedObjects = [lib]
+    binLoader = BinaryLoader(
+        path=binpath,
+        args=args,
+        rootfs=rootfs,
+        rndGen=hex_key_generator(keylen),
+        sharedObjects=sharedObjects,
+    )
+    scd = SCDetector(modules=[
+        # Secret dependent memory read detection
+        DataLeakDetector(binaryLoader=binLoader),
+        # Secret dependent control flow detection
+        CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)
+    ])
+    scd.exec()
 
+def build():
     cwd = os.getcwd()
     toolchain_id = sys.argv[1]
     framework_id = sys.argv[2]
@@ -123,13 +158,17 @@ def main():
     print(f'CWD={os.getcwd()}')
     print(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
     checkretcode(result)
+    os.chdir(cwd + f'/toolchain/{rootfs}')
+    analyze(libname.split('.')[0])
 
-    os.chdir(cwd)
-    print(f'- Exporting toolchain')
-    result = subprocess.run(f'zip -r toolchain.zip toolchain', stderr=subprocess.PIPE, shell=True)
+    
+
+def main():
+    build()
+    print("- Zipping results " + os.getcwd())
+    result = subprocess.run(f'zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
-    print(f'- Cleaning up')
-    result = subprocess.run(f'rm -rf toolchain toolchain.tar.bz2 {framework_id}', stderr=subprocess.PIPE, shell=True)
+    result = subprocess.run(f'mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
 
 if __name__ == "__main__":

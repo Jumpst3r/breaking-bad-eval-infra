@@ -104,8 +104,8 @@ int main (int argc, char **argv)
                               ciphertext, alg);
 
     /* Do something useful with the ciphertext here */
-    printf("Ciphertext is:\n");
-    BIO_dump_fp (stdout, (const char *)ciphertext, ciphertext_len);
+    //printf("Ciphertext is:\n");
+    //BIO_dump_fp (stdout, (const char *)ciphertext, ciphertext_len);
 
 
     return 0;
