@@ -21,10 +21,6 @@ spec:
         {
             "algo": "aria-cbc",
             "keylen": "128"
-        },
-        {
-            "algo": "aes-cbc",
-            "keylen": "128"
         }
         ]
   templates:
@@ -34,7 +30,7 @@ spec:
       - name: buildmap
       - name: algomap
     steps:
-    - - name: Schedule-Build
+    - - name: schedule-build
         template: schedule-build
         arguments:
           parameters:
@@ -49,6 +45,12 @@ spec:
           - name: algomap
             value: "{{inputs.parameters.algomap}}"
         withParam: "{{inputs.parameters.buildmap}}"
+    - - name: reduce-global
+        template: reduce-global
+        arguments:
+          parameters:
+            - name: jsonlist
+              value: "{{steps.schedule-build.outputs.parameters.json}}"
 
   - name: schedule-build
     inputs:
@@ -76,12 +78,27 @@ spec:
           - name: keylen
             value: "{{item.keylen}}"
         withParam: "{{inputs.parameters.algomap}}"
-    - - name: reduce
-        template: reduce
+    - - name: reduce-framework
+        template: reduce-framework
         arguments:
           parameters:
           - name: leaks
             value: "{{steps.schedule.outputs.parameters.leaks}}"
+          - name: toolchain
+            value: "{{inputs.parameters.toolchain}}"
+          - name: framework
+            value: "{{inputs.parameters.framework}}"
+          - name: commit
+            value: "{{inputs.parameters.commit}}"
+          - name: optlvl
+            value: "{{inputs.parameters.optlvl}}"
+          - name: algomap
+            value: "{{inputs.parameters.algomap}}" 
+    outputs:
+      parameters:
+      - name: json
+        valueFrom: 
+          parameter: "{{steps.reduce-framework.outputs.parameters.json}}"
 
 
   - name: build
@@ -104,24 +121,90 @@ spec:
             python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.algorithm}} {{inputs.parameters.keylen}}
     outputs:
       artifacts:
-      - name: toolchain
+      - name: results
         path: /build/results.zip
       parameters:
       - name: leaks
         valueFrom:
           path: /tmp/summary.json
 
-  - name: reduce
+  - name: reduce-framework
     inputs:
       parameters:
       - name: leaks
-    container:
-      image: alpine
-      command:
-          - bash
-          - '-c'
-      args:
-          - >-
-            cat {{inputs.parameters.leaks}}
+      - name: toolchain
+      - name: framework
+      - name: commit
+      - name: optlvl
+      - name: algomap
+    script:
+      image: python:alpine3.6
+      command: [python]
+      source: |
+        import json
+        import re
+        print(type({{inputs.parameters.leaks}}))
+        rawleaks = r'{{inputs.parameters.leaks}}'
+        rawleaks = rawleaks.replace('\\"', '|')
+        rawleaks = rawleaks.replace('"', '')
+        rawleaks = rawleaks.replace('|', '"')
+        print(rawleaks)
+
+        leaks = json.loads(rawleaks)
+        algs = json.loads(str({{inputs.parameters.algomap}}).replace("'", '"'))
+        toolchain = "{{inputs.parameters.toolchain}}".strip()
+        framework = "{{inputs.parameters.framework}}".strip()
+        commit = "{{inputs.parameters.commit}}".strip()
+        optlvl = "{{inputs.parameters.optlvl}}".strip()
+
+        larray = []
+        for idx,l in enumerate(leaks):
+            robj = {}
+            robj['algorithm'] = algs[idx]['algo']
+            robj['keylen'] = algs[idx]['keylen']
+            robj['leaks'] = l
+            larray.append(robj)
+
+
+        result = {}
+        result['toolchain'] = toolchain
+        result['framework'] = framework
+        result['commit'] = commit
+        result['optlvl'] = optlvl
+        result['results'] = larray
+
+
+        with open('/tmp/result.json', 'w') as f: 
+            json.dump(result,f)
+    outputs:
+      parameters:
+      - name: json
+        valueFrom:
+          path: /tmp/result.json
+
+  - name: reduce-global
+    inputs:
+      parameters:
+      - name: jsonlist
+    script:
+      image: python:alpine3.6
+      command: [python]
+      source: |
+        import json
+        rawleaks = r'{{inputs.parameters.jsonlist}}'
+        rawleaks = rawleaks.replace('\\"', '|')
+        rawleaks = rawleaks.replace('"', '')
+        rawleaks = rawleaks.replace('|', '"')
+        li = json.loads(rawleaks)
+        with open('/tmp/result.json', 'w') as f: 
+            json.dump(li,f)
+    outputs:
+      artifacts:
+      - name: results
+        path: /tmp/result.json
+      parameters:
+      - name: results
+        valueFrom:
+          path: /tmp/result.json
 
       
