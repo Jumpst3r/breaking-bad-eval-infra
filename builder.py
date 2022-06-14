@@ -91,8 +91,6 @@ def build():
         print("Invalid toolchain name")
         exit(1)
 
-
-    
     # Download toolchain:
     print("- Downloading toolchain")
     

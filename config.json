@@ -12,6 +12,11 @@
                         "name": "openssl",
                         "buildcmd": "./Configure linux-x86_64 --cross-compile-prefix=$(pwd)/../toolchain/bin/x86_64-linux- $CFLAGS",
                         "cflags": ""
+                    },
+                    {
+                        "name": "botan",
+                        "buildcmd": "./configure.py --cc-bin=$(pwd)/../toolchain/bin/x86_64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags": ""
                     }
                 ]
             },
@@ -24,6 +29,11 @@
                     {
                         "name": "openssl",
                         "buildcmd": "./Configure linux-aarch64 --cross-compile-prefix=$(pwd)/../toolchain/bin/aarch64-linux- $CFLAGS",
+                        "cflags": "-march=armv8-a"
+                    },
+                    {
+                        "name": "botan",
+                        "buildcmd": "./configure.py --cpu=armv8 --cc-bin=$(pwd)/../toolchain/bin/aarch64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
                         "cflags": "-march=armv8-a"
                     }
                 ]
@@ -38,6 +48,65 @@
                         "name": "openssl",
                         "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi- $CFLAGS",
                         "cflags": "-march=armv4"
+                    },
+                    {
+                        "name": "botan",
+                        "buildcmd": "./configure.py --cpu=arm --cc-bin=$(pwd)/../toolchain/bin/aarch64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags": "-march=armv4"
+                    }
+                ]
+            },
+            "armv7-eabihf--glibc--stable-2018.11-1": {
+                "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--glibc--stable-2018.11-1.tar.bz2",
+                "rootfs": "arm-buildroot-linux-gnueabihf/sysroot/",
+                "libdir": "lib/",
+                "prefix": "bin/arm-linux-",
+                "compileOptions": [
+                    {
+                        "name": "openssl",
+                        "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/arm-linux- $CFLAGS",
+                        "cflags": "-mthumb -march=armv7"
+                    },
+                    {
+                        "name": "botan",
+                        "buildcmd": "./configure.py --cpu=arm --cc-bin=$(pwd)/../toolchain/bin/arm-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags": "-mthumb -march=armv7"
+                    }
+                ]
+            },
+            "riscv64-lp64d--glibc--stable-2021.11-1": {
+                "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--glibc--stable-2021.11-1.tar.bz2",
+                "rootfs": "riscv64-buildroot-linux-gnu/sysroot/",
+                "libdir": "lib64/",
+                "prefix": "bin/riscv64-linux-",
+                "compileOptions": [
+                    {
+                        "name": "openssl",
+                        "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/riscv64-linux- $CFLAGS",
+                        "cflags": ""
+                    },
+                    {
+                        "name": "botan",
+                        "buildcmd": "./configure.py --cpu=riscv64 --cc-bin=$(pwd)/../toolchain/bin/riscv64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags": ""
+                    }
+                ]
+            },
+            "mips32el--glibc--stable-2018.11-1": {
+                "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/mips32el/tarballs/mips32el--glibc--stable-2018.11-1.tar.bz2",
+                "rootfs": "mipsel-buildroot-linux-gnu/sysroot/",
+                "libdir": "lib/",
+                "prefix": "bin/mipsel-linux-",
+                "compileOptions": [
+                    {
+                        "name": "openssl",
+                        "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/mipsel-linux- $CFLAGS",
+                        "cflags": ""
+                    },
+                    {
+                        "name": "botan",
+                        "buildcmd": "./configure.py --cpu=riscv64 --cc-bin=$(pwd)/../toolchain/bin/mipsel-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags": ""
                     }
                 ]
             }
@@ -46,10 +115,19 @@
     "frameworks": [
         {
             "name": "openssl",
-            "git": "https://github.com/openssl/openssl",
+            "git": "https://github.com/openssl/openssl.git",
             "libname": "libcrypto.so",
             "includeDirs": ["include"],
-            "compiler": "gcc"
+            "compiler": "gcc",
+            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-ecb", "sm4-cbc"]
+        },
+        {
+            "name": "botan",
+            "git": "https://github.com/randombit/botan.git",
+            "libname": "libbotan-3.so",
+            "includeDirs": ["build/include"],
+            "compiler": "g++",
+            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-ecb", "sm4-cbc"]
         }
     ]
 }
