@@ -27,7 +27,7 @@
             },
             "aarch64--glibc--stable-2018.11-1": {
                 "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--glibc--stable-2018.11-1.tar.bz2",
-                "rootfs": "aarch64-buildroot-linux-gnu/sysroot/",
+                "rootfs": "aarch64-buildroot-linux-gnu/sysroot",
                 "libdir": "lib64/",
                 "prefix": "bin/aarch64-linux-",
                 "compileOptions": [
@@ -43,14 +43,14 @@
                     },
                     {
                         "name": "wolfssl",
-                        "buildcmd": "./autogen.sh && ./configure  --enable-armasm --enable-opensslall --enable-all-crypto",
-                        "cflags": ""
+                        "buildcmd": "./autogen.sh && ./configure --host=aarch64 -enable-shared=yes --enable-armasm --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot/",
+                        "cflags": "-fpic"
                     }
                 ]
             },
             "armv5-eabi--glibc--stable-2020.02-2": {
                 "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv5-eabi/tarballs/armv5-eabi--glibc--stable-2020.02-2.tar.bz2",
-                "rootfs": "arm-buildroot-linux-gnueabi/sysroot/",
+                "rootfs": "arm-buildroot-linux-gnueabi/sysroot",
                 "libdir": "lib/",
                 "prefix": "bin/arm-buildroot-linux-gnueabi-",
                 "compileOptions": [
@@ -68,7 +68,7 @@
             },
             "armv7-eabihf--glibc--stable-2018.11-1": {
                 "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--glibc--stable-2018.11-1.tar.bz2",
-                "rootfs": "arm-buildroot-linux-gnueabihf/sysroot/",
+                "rootfs": "arm-buildroot-linux-gnueabihf/sysroot",
                 "libdir": "lib/",
                 "prefix": "bin/arm-linux-",
                 "compileOptions": [
@@ -86,7 +86,7 @@
             },
             "riscv64-lp64d--glibc--stable-2021.11-1": {
                 "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--glibc--stable-2021.11-1.tar.bz2",
-                "rootfs": "riscv64-buildroot-linux-gnu/sysroot/",
+                "rootfs": "riscv64-buildroot-linux-gnu/sysroot",
                 "libdir": "lib64/",
                 "prefix": "bin/riscv64-linux-",
                 "compileOptions": [
@@ -104,7 +104,7 @@
             },
             "mips32el--glibc--stable-2018.11-1": {
                 "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/mips32el/tarballs/mips32el--glibc--stable-2018.11-1.tar.bz2",
-                "rootfs": "mipsel-buildroot-linux-gnu/sysroot/",
+                "rootfs": "mipsel-buildroot-linux-gnu/sysroot",
                 "libdir": "lib/",
                 "prefix": "bin/mipsel-linux-",
                 "compileOptions": [
@@ -142,7 +142,7 @@
         {
             "name": "wolfssl",
             "git": "https://github.com/wolfSSL/wolfssl.git",
-            "libname": "libwolfssl.so",
+            "libname": "libwolfssl",
             "includeDirs": ["", "wolfssl", "wolfssl/openssl", "wolfssl/wolfcrypt"],
             "compiler": "gcc",
             "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-ecb", "sm4-cbc"]

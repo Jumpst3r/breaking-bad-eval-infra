@@ -136,7 +136,7 @@ def build():
     checkretcode(result)
 
     print(f'- Copying files to {rootfs}/{libdir}')
-    result = subprocess.run(f'cp $(find ./ -name "{libname}*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+    result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
 
     os.chdir(cwd)
@@ -152,9 +152,21 @@ def build():
     os.environ["LD_LIBRARY_PATH"] = os.getcwd() + '/' + 'lib'
     includestr = ' '.join([f"-I{os.getcwd()}/../{framework_id}/{d}" for d in includes])
     canonicalLibName = libname[3:].split('.')[0]
-    result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+    # check if we got a static .a object, for wolfssl shared object don't seem to get created on non x86 so we need to create them. Ugly hack
+    import glob
+    flist = glob.glob(f'{os.getcwd()}/{rootfs}/{libdir}/{libname.split(".")[0]}.a')
+    if flist:
+        static = True
+    flist = " ".join(flist)
+    if framework_id == 'wolfssl' and static:
+        print(f"- Detected static lib, converting to shared object (wolfssl): {os.getcwd()}/{prefix}{compiler} -shared -o {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so  {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.a -lwolfssl -Wl,--no-whole-archive && mv {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.so")
+        result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} -shared -o {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so  {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.a -lwolfssl -Wl,--no-whole-archive && mv {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.so', stderr=subprocess.PIPE, shell=True)
+        checkretcode(result)
     print(f'CWD={os.getcwd()}')
-    print(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
+    result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+    print(f'CWD={os.getcwd()}')
+    
+    print(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
     checkretcode(result)
     os.chdir(cwd + f'/toolchain/{rootfs}')
     analyze(libname.split('.')[0])
