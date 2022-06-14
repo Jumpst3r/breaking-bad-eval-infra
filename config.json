@@ -17,6 +17,11 @@
                         "name": "botan",
                         "buildcmd": "./configure.py --cc-bin=$(pwd)/../toolchain/bin/x86_64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
                         "cflags": ""
+                    },
+                    {
+                        "name": "wolfssl",
+                        "buildcmd": "./autogen.sh && ./configure  --enable-aesni --enable-intelasm --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot/",
+                        "cflags": ""
                     }
                 ]
             },
@@ -35,6 +40,11 @@
                         "name": "botan",
                         "buildcmd": "./configure.py --cpu=armv8 --cc-bin=$(pwd)/../toolchain/bin/aarch64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
                         "cflags": "-march=armv8-a"
+                    },
+                    {
+                        "name": "wolfssl",
+                        "buildcmd": "./autogen.sh && ./configure  --enable-armasm --enable-opensslall --enable-all-crypto",
+                        "cflags": ""
                     }
                 ]
             },
@@ -127,6 +137,14 @@
             "libname": "libbotan-3.so",
             "includeDirs": ["build/include"],
             "compiler": "g++",
+            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-ecb", "sm4-cbc"]
+        },
+        {
+            "name": "wolfssl",
+            "git": "https://github.com/wolfSSL/wolfssl.git",
+            "libname": "libwolfssl.so",
+            "includeDirs": ["", "wolfssl", "wolfssl/openssl", "wolfssl/wolfcrypt"],
+            "compiler": "gcc",
             "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-ecb", "sm4-cbc"]
         }
     ]

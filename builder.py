@@ -136,7 +136,7 @@ def build():
     checkretcode(result)
 
     print(f'- Copying files to {rootfs}/{libdir}')
-    result = subprocess.run(f'cp {libname}* {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+    result = subprocess.run(f'cp $(find ./ -name "{libname}*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
 
     os.chdir(cwd)
