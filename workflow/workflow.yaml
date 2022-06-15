@@ -73,6 +73,8 @@ spec:
     steps:
     - - name: schedule
         template: build
+        continueOn:
+          failed: true
         arguments:
           parameters:
           - name: toolchain

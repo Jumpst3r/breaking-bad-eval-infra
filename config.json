@@ -22,6 +22,11 @@
                         "name": "wolfssl",
                         "buildcmd": "./autogen.sh && ./configure  --enable-aesni --enable-intelasm --enable-opensslextra --enable-all-crypto CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot/",
                         "cflags": ""
+                    },
+                    {
+                        "name": "mbedtls",
+                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "cflags": ""
                     }
                 ]
             },
@@ -45,6 +50,11 @@
                         "name": "wolfssl",
                         "buildcmd": "./autogen.sh && ./configure --host=aarch64 -enable-shared=yes --enable-armasm --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot/",
                         "cflags": "-fpic"
+                    },
+                    {
+                        "name": "mbedtls",
+                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
+                        "cflags": "-march=armv8-a"
                     }
                 ]
             },
@@ -68,6 +78,11 @@
                         "name": "wolfssl",
                         "buildcmd": "./autogen.sh && ./configure --host=armv4 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/arm-buildroot-linux-gnueabi/sysroot",
                         "cflags": "-fpic -march=armv4 "
+                    },
+                    {
+                        "name": "mbedtls",
+                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "cflags": "-march=armv4"
                     }
                 ]
             },
@@ -91,6 +106,11 @@
                         "name": "wolfssl",
                         "buildcmd": "./autogen.sh && ./configure --host=armv7 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/arm-buildroot-linux-gnueabihf/sysroot",
                         "cflags": "-fpic -march=armv7 -mthumb "
+                    },
+                    {
+                        "name": "mbedtls",
+                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/arm-linux-gcc AR=$(pwd)/../toolchain/bin/arm-linux-ar LD=$(pwd)/../toolchain/bin/arm-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
+                        "cflags": "-march=armv7 -mthumb"
                     }
                 ]
             },
@@ -114,6 +134,11 @@
                         "name": "wolfssl",
                         "buildcmd": "./autogen.sh && ./configure --host=riscv64 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot",
                         "cflags": "-fpic"
+                    },
+                    {
+                        "name": "mbedtls",
+                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "cflags": ""
                     }
                 ]
             },
@@ -137,6 +162,11 @@
                         "name": "wolfssl",
                         "buildcmd": "./autogen.sh && ./configure --host=mips32 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot",
                         "cflags": "-fpic"
+                    },
+                    {
+                        "name": "mbedtls",
+                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
+                        "cflags": ""
                     }
                 ]
             }
@@ -164,6 +194,14 @@
             "git": "https://github.com/wolfSSL/wolfssl.git",
             "libname": "libwolfssl",
             "includeDirs": ["", "wolfssl", "wolfssl/openssl", "wolfssl/wolfcrypt"],
+            "compiler": "gcc",
+            "available-ciphers": ["aes-cbc", "camellia-cbc", "des-ecb"]
+        },
+        {
+            "name": "mbedtls",
+            "git": "https://github.com/Mbed-TLS/mbedtls.git",
+            "libname": "libmbedcrypto",
+            "includeDirs": ["include", "include/mbedtls", "include/psa"],
             "compiler": "gcc",
             "available-ciphers": ["aes-cbc", "camellia-cbc", "des-ecb"]
         }

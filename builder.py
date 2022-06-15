@@ -16,7 +16,7 @@ import subprocess
 from microsurf.microsurf import SCDetector
 from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
-from microsurf.utils.generators import hex_key_generator
+from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator
 
 
 def checkretcode(result):
@@ -26,11 +26,23 @@ def checkretcode(result):
         exit(1)
 
 def analyze(lib):
-    rootfs = os.getcwd()
     algname = sys.argv[5]
     keylen = int(sys.argv[6])
-    binpath = rootfs + '/driver.bin'
+    fct = hex_key_generator(keylen)
     args = f'@ {algname}'.split()
+    # for mbedtls the driver is more complex so go custom:
+    if 'mbed' in lib:
+        print(f'- Creating tmp files')
+        result = subprocess.run('echo "AAAAAAAAAAAAAAA" > input', stderr=subprocess.PIPE, shell=True)
+        checkretcode(result)
+        fct = mbedTLS_hex_key_generator(keylen)
+        result = subprocess.run('touch output', stderr=subprocess.PIPE, shell=True)
+        checkretcode(result)
+        args = f"0 input output {algname} SHA1 @".split()
+    
+    rootfs = os.getcwd()
+    
+    binpath = rootfs + '/driver.bin'
     # can't get wolfssl to create shared objects on some archs, so hard code a fix here
     if 'wolfssl' in lib:
         sharedObjects = ['driver.bin']
@@ -40,7 +52,7 @@ def analyze(lib):
         path=binpath,
         args=args,
         rootfs=rootfs,
-        rndGen=hex_key_generator(keylen),
+        rndGen=fct,
         sharedObjects=sharedObjects,
     )
     scd = SCDetector(modules=[
@@ -134,6 +146,7 @@ def build():
     checkretcode(result)
 
     os.environ["CFLAGS"] = cflags
+    os.environ["SHARED"] = '1'
     print(f'- Configuring {framework_id} with {framework_config_cmd.split()}')
     result = subprocess.run(framework_config_cmd, stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
@@ -141,16 +154,22 @@ def build():
     nbcores = multiprocessing.cpu_count()
 
     print(f'- Compiling')
-    result = subprocess.run(['make', f'-j{nbcores}'], stderr=subprocess.PIPE)
-    checkretcode(result)
+    # For mbedtls, the config step actually builds the lib
+    if 'mbed' not in libname:
+        result = subprocess.run(['make', f'-j{nbcores}'], stderr=subprocess.PIPE)
+        checkretcode(result)
 
     result = subprocess.run(f'find ./ -name "{libname}*"', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
 
 
     print(f'- Copying files to {rootfs}/{libdir}')
-    result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
-    checkretcode(result)
+    if 'wolf' in libname:
+        result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+        checkretcode(result)
+    else:
+        result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*.so*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+        checkretcode(result)
     
     os.chdir(cwd)
 
@@ -166,8 +185,10 @@ def build():
     includestr = ' '.join([f"-I{os.getcwd()}/../{framework_id}/{d}" for d in includes])
     canonicalLibName = libname[3:].split('.')[0]
     # check if we got a static .a object, for wolfssl shared object don't seem to get created on non x86 so we need to create them. Ugly hack
-    import glob
-    flist = glob.glob(f'{os.getcwd()}/{rootfs}/{libdir}/{libname.split(".")[0]}.a')
+    flist = ""
+    if 'wolf' in libname:
+        import glob
+        flist = glob.glob(f'{os.getcwd()}/{rootfs}/{libdir}/{libname.split(".")[0]}.a')
     if flist:
         static = True
     else:
