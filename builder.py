@@ -31,7 +31,11 @@ def analyze(lib):
     keylen = int(sys.argv[6])
     binpath = rootfs + '/driver.bin'
     args = f'@ {algname}'.split()
-    sharedObjects = [lib]
+    # can't get wolfssl to create shared objects on some archs, so hard code a fix here
+    if 'wolfssl' in lib:
+        sharedObjects = ['driver.bin']
+    else:
+        sharedObjects = [lib]
     binLoader = BinaryLoader(
         path=binpath,
         args=args,
@@ -46,6 +50,11 @@ def analyze(lib):
         CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)
     ])
     scd.exec()
+    # remove driver induced leaks
+    if 'wolfssl' in lib:
+        scd.DF = scd.DF[scd.DF['Symbol Name'] != 'hextobin']
+        # recreate reports:
+        scd._generateReport()
 
 def build():
     cwd = os.getcwd()
@@ -135,10 +144,14 @@ def build():
     result = subprocess.run(['make', f'-j{nbcores}'], stderr=subprocess.PIPE)
     checkretcode(result)
 
+    result = subprocess.run(f'find ./ -name "{libname}*"', stderr=subprocess.PIPE, shell=True)
+    checkretcode(result)
+
+
     print(f'- Copying files to {rootfs}/{libdir}')
     result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
-
+    
     os.chdir(cwd)
 
     print(f'- Copying driver to {rootfs}')
@@ -157,11 +170,13 @@ def build():
     flist = glob.glob(f'{os.getcwd()}/{rootfs}/{libdir}/{libname.split(".")[0]}.a')
     if flist:
         static = True
+    else:
+        static = False
     flist = " ".join(flist)
     if framework_id == 'wolfssl' and static:
         print(f"- Detected static lib, converting to shared object (wolfssl): {os.getcwd()}/{prefix}{compiler} -shared -o {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so  {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.a -lwolfssl -Wl,--no-whole-archive && mv {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.so")
-        result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} -shared -o {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so  {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.a -lwolfssl -Wl,--no-whole-archive && mv {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.so', stderr=subprocess.PIPE, shell=True)
-        checkretcode(result)
+        result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler}  -Wl,--whole-archive  -lwolfssl -shared -o {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.a -Wl,--no-whole-archive && mv {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfss.so', stderr=subprocess.PIPE, shell=True)
+
     print(f'CWD={os.getcwd()}')
     result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
     print(f'CWD={os.getcwd()}')
