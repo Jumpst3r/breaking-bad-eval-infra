@@ -3,6 +3,8 @@ metadata:
   generateName: builder-
 spec:
   entrypoint: schedule-framework-builds
+  imagePullSecrets:
+  - name: regcred2
   arguments:
     parameters:
     - name: buildmap
@@ -119,8 +121,7 @@ spec:
       - name: algorithm
       - name: keylen
     container:
-      image: builder
-      imagePullPolicy: "Never"
+      image: jumpst3r/builder
       command:
           - bash
           - '-c'
