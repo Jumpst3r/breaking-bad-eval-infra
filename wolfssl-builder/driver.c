@@ -58,7 +58,6 @@ int encrypt_aes(Aes *ctx, const byte *key,int keysize, int dir){
     byte in[32] = { 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
     byte out[32];
     int ret;
-    printf("keysize: %d\n", keysize);
     ret = wc_AesSetKey(ctx,key, keysize, iv, dir);
     if (ret != 0){
         printf("Failed to set key: ERRNO %d\n", ret);
@@ -77,7 +76,6 @@ int encrypt_camellia(Camellia *ctx, const byte *key,int keysize){
     byte in[32] = { 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
     byte out[32];
     int ret;
-    printf("keysize: %d\n", keysize);
     ret = wc_CamelliaSetKey(ctx,key, keysize, iv);
     if (ret != 0){
         printf("Failed to set key: ERRNO %d\n", ret);
@@ -97,7 +95,6 @@ int encrypt_des3(Des3 *ctx, const byte *key,int keysize){
     byte in[] = { 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
     byte out[100];
     int ret;
-    printf("keysize: %d\n", keysize);
     ret = wc_Des3_SetKey(ctx, key, iv, DES_ENCRYPTION);
     if (ret != 0){
         printf("Failed to set key: ERRNO %d\n", ret);

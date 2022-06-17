@@ -72,7 +72,7 @@
                     {
                         "name": "botan",
                         "buildcmd": "./configure.py --cpu=arm --cc-bin=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
-                        "cflags": "-march=armv4"
+                        "cflags": "-march=armv4 -mfloat-abi=softfp"
                     },
                     {
                         "name": "wolfssl",
@@ -122,7 +122,7 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/riscv64-linux- $CFLAGS",
+                        "buildcmd": "./Configure linux64-riscv64 --cross-compile-prefix=$(pwd)/../toolchain/bin/riscv64-linux- $CFLAGS",
                         "cflags": ""
                     },
                     {
@@ -150,12 +150,12 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/mipsel-linux- $CFLAGS",
+                        "buildcmd": "./Configure linux-mips32 --cross-compile-prefix=$(pwd)/../toolchain/bin/mipsel-linux- $CFLAGS",
                         "cflags": ""
                     },
                     {
                         "name": "botan",
-                        "buildcmd": "./configure.py --cpu=riscv64 --cc-bin=$(pwd)/../toolchain/bin/mipsel-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "buildcmd": "./configure.py --cpu=mips --cc-bin=$(pwd)/../toolchain/bin/mipsel-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
                         "cflags": ""
                     },
                     {
@@ -176,18 +176,18 @@
         {
             "name": "openssl",
             "git": "https://github.com/openssl/openssl.git",
-            "libname": "libcrypto.so",
+            "libname": "libcrypto",
             "includeDirs": ["include"],
             "compiler": "gcc",
-            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-ecb", "sm4-cbc"]
+            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-cbc", "sm4-cbc"]
         },
         {
             "name": "botan",
             "git": "https://github.com/randombit/botan.git",
-            "libname": "libbotan-3.so",
+            "libname": "libbotan-3",
             "includeDirs": ["build/include"],
             "compiler": "g++",
-            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-ecb", "sm4-cbc"]
+            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-cbc", "sm4-cbc"]
         },
         {
             "name": "wolfssl",
@@ -195,7 +195,7 @@
             "libname": "libwolfssl",
             "includeDirs": ["", "wolfssl", "wolfssl/openssl", "wolfssl/wolfcrypt"],
             "compiler": "gcc",
-            "available-ciphers": ["aes-cbc", "camellia-cbc", "des-ecb"]
+            "available-ciphers": ["aes-cbc", "camellia-cbc", "des-cbc"]
         },
         {
             "name": "mbedtls",
@@ -203,7 +203,7 @@
             "libname": "libmbedcrypto",
             "includeDirs": ["include", "include/mbedtls", "include/psa"],
             "compiler": "gcc",
-            "available-ciphers": ["aes-cbc", "camellia-cbc", "des-ecb"]
+            "available-ciphers": ["aes-cbc", "camellia-cbc", "des-cbc", "aria-cbc"]
         }
     ]
 }

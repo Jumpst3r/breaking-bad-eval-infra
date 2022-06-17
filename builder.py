@@ -26,6 +26,14 @@ def checkretcode(result):
         exit(1)
 
 def analyze(lib):
+    # create a dummy file if it fails:
+    st = ['{"CF Leak Count":-1,"Memory Leak Count":-1}']
+    with open('/tmp/summary.json', 'w') as f:
+        f.writelines(st)
+    os.mkdir('results')
+    result = subprocess.run('zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
+    subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
+
     algname = sys.argv[5]
     keylen = int(sys.argv[6])
     fct = hex_key_generator(keylen)
@@ -48,6 +56,7 @@ def analyze(lib):
         sharedObjects = ['driver.bin']
     else:
         sharedObjects = [lib]
+    print("Creating BinaryLoader")
     binLoader = BinaryLoader(
         path=binpath,
         args=args,
@@ -55,6 +64,12 @@ def analyze(lib):
         rndGen=fct,
         sharedObjects=sharedObjects,
     )
+    print("Configuring BinaryLoader")
+
+    errno = binLoader.configure()
+    if errno:
+        print("failed to configure BinaryLoader")
+        return 0
     scd = SCDetector(modules=[
         # Secret dependent memory read detection
         DataLeakDetector(binaryLoader=binLoader),
@@ -159,16 +174,20 @@ def build():
         result = subprocess.run(['make', f'-j{nbcores}'], stderr=subprocess.PIPE)
         checkretcode(result)
 
-    result = subprocess.run(f'find ./ -name "{libname}*"', stderr=subprocess.PIPE, shell=True)
+    result = subprocess.run(f'find ./ -name "{libname}*.so"', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
 
+    result = subprocess.run(f'find ./ -name "{libname}*.so.*"', stderr=subprocess.PIPE, shell=True)
+    checkretcode(result)
 
     print(f'- Copying files to {rootfs}/{libdir}')
     if 'wolf' in libname:
         result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
     else:
-        result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*.so*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+        result = subprocess.run(f'cp $(find ./ -name "{libname}*.so") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+        checkretcode(result)
+        result = subprocess.run(f'cp $(find ./ -name "{libname}*.so.*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
     
     os.chdir(cwd)

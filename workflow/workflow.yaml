@@ -9,25 +9,15 @@ spec:
       value: |
         [
         {
-            "toolchain": "x86-64-core-i7--glibc--stable-2018.11-1",
-            "framework": "openssl",
-            "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
-            "optlvl": "-O3"
-        },
-        {
-            "toolchain": "aarch64--glibc--stable-2018.11-1",
-            "framework": "openssl",
-            "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
-            "optlvl": "-O3"
+            "toolchain": "armv5-eabi--glibc--stable-2020.02-2",
+            "framework": "wolfssl",
+            "commit": "f401a3b53ddd531b848caf635feeb87103625b3d",
+            "optlvl": "-O0"
         }
         ]
     - name: algomap
       value: |
         [
-        {
-            "algo": "aria-cbc",
-            "keylen": "128"
-        },
         {
             "algo": "aes-cbc",
             "keylen": "128"
@@ -35,6 +25,7 @@ spec:
         ]
   templates:
   - name: schedule-framework-builds
+    parallelism: 2
     inputs:
       parameters:
       - name: buildmap
@@ -42,6 +33,8 @@ spec:
     steps:
     - - name: schedule-build
         template: schedule-build
+        continueOn:
+          failed: true
         arguments:
           parameters:
           - name: toolchain
@@ -63,6 +56,7 @@ spec:
               value: "{{steps.schedule-build.outputs.parameters.json}}"
 
   - name: schedule-build
+    parallelism: 2
     inputs:
       parameters:
       - name: toolchain
@@ -92,6 +86,8 @@ spec:
         withParam: "{{inputs.parameters.algomap}}"
     - - name: reduce-framework
         template: reduce-framework
+        continueOn:
+          failed: true
         arguments:
           parameters:
           - name: leaks
