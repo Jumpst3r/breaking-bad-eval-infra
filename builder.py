@@ -30,7 +30,10 @@ def analyze(lib):
     st = ['{"CF Leak Count":-1,"Memory Leak Count":-1}']
     with open('/tmp/summary.json', 'w') as f:
         f.writelines(st)
-    os.mkdir('results')
+    try:
+        os.mkdir('results', )
+    except Exception as e:
+        pass
     result = subprocess.run('zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
     subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
 

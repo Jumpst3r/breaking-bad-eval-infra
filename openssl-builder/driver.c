@@ -10,8 +10,9 @@ Adapted from https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Dec
 void handleErrors(void)
 {
     ERR_print_errors_fp(stderr);
-    abort();
+    exit(EXIT_FAILURE);
 }
+
 
 int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
             unsigned char *iv, unsigned char *ciphertext, const EVP_CIPHER *algo)
@@ -81,7 +82,6 @@ int main (int argc, char **argv)
     // the following only work with legacy 1.1.x OpensSSL versions
     else if (!strcmp(mode, "bf-cbc")) alg = EVP_bf_cbc();
     else if (!strcmp(mode, "cast-cbc")) alg = EVP_cast5_cbc();
-
 
     /* A 128 bit IV */
     unsigned char *iv = (unsigned char *) "0123456789012345";
