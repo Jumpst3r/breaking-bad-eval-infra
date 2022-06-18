@@ -131,6 +131,9 @@ int main (int argc, char **argv)
         Des3 enc;
         encrypt_des3(&enc, KEY, keysize);
     }
+    else{
+        return 1;
+    }
 
     return 0;
 }
