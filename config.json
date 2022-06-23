@@ -10,23 +10,25 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux-x86_64 --cross-compile-prefix=$(pwd)/../toolchain/bin/x86_64-linux- $CFLAGS",
-                        "cflags": ""
+                        "buildcmd-gcc": "./Configure linux-x86_64 --cross-compile-prefix=$(pwd)/../toolchain/bin/x86_64-linux- $cflags-gcc",
+                        "cflags-gcc": ""
                     },
                     {
                         "name": "botan",
-                        "buildcmd": "./configure.py --cc-bin=$(pwd)/../toolchain/bin/x86_64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
-                        "cflags": ""
+                        "buildcmd-gcc": "./configure.py --cc-bin=$(pwd)/../toolchain/bin/x86_64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags-gcc": ""
                     },
                     {
                         "name": "wolfssl",
-                        "buildcmd": "./autogen.sh && ./configure  --enable-aesni --enable-intelasm --enable-opensslextra --enable-all-crypto CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot/",
-                        "cflags": ""
+                        "buildcmd-gcc": "./autogen.sh && ./configure  --enable-aesni --enable-intelasm - --enable-all-crypto CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot/",
+                        "buildcmd-clang": "./autogen.sh && ./configure  --enable-intelasm --enable-aesni -enable-shared=no --enable-all-crypto CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc --prefix=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot/ CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile",
+                        "cflags-clang": "-fpic --target=x86_64-elf-linux --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -Wno-error",
+                        "cflags-gcc": ""
                     },
                     {
                         "name": "mbedtls",
-                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" make lib",
-                        "cflags": ""
+                        "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-gcc": ""
                     }
                 ]
             },
@@ -38,23 +40,25 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux-aarch64 --cross-compile-prefix=$(pwd)/../toolchain/bin/aarch64-linux- $CFLAGS",
-                        "cflags": "-march=armv8-a"
+                        "buildcmd-gcc": "./Configure linux-aarch64 --cross-compile-prefix=$(pwd)/../toolchain/bin/aarch64-linux- $cflags-gcc",
+                        "cflags-gcc": "-march=armv8-a"
                     },
                     {
                         "name": "botan",
-                        "buildcmd": "./configure.py --cpu=armv8 --cc-bin=$(pwd)/../toolchain/bin/aarch64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
-                        "cflags": "-march=armv8-a"
+                        "buildcmd-gcc": "./configure.py --cpu=armv8 --cc-bin=$(pwd)/../toolchain/bin/aarch64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags-gcc": "-march=armv8-a"
                     },
                     {
                         "name": "wolfssl",
-                        "buildcmd": "./autogen.sh && ./configure --host=aarch64 -enable-shared=yes --enable-armasm --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot/",
-                        "cflags": "-fpic"
+                        "buildcmd-gcc": "./autogen.sh && ./configure --host=aarch64 -enable-shared=yes --enable-armasm --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot/",
+                        "buildcmd-clang": "./autogen.sh && ./configure --host=aarch64 -enable-shared=yes --enable-armasm --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc --prefix=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot/ CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile",
+                        "cflags-clang": "-fpic --target=aarch64-elf-linux --sysroot=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -Wno-error",
+                        "cflags-gcc": "-fpic"
                     },
                     {
                         "name": "mbedtls",
-                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
-                        "cflags": "-march=armv8-a"
+                        "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
+                        "cflags-gcc": "-march=armv8-a"
                     }
                 ]
             },
@@ -66,23 +70,25 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi- $CFLAGS",
-                        "cflags": "-march=armv4"
+                        "buildcmd-gcc": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi- $cflags-gcc",
+                        "cflags-gcc": "-march=armv4"
                     },
                     {
                         "name": "botan",
-                        "buildcmd": "./configure.py --cpu=arm --cc-bin=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
-                        "cflags": "-march=armv4 -mfloat-abi=softfp"
+                        "buildcmd-gcc": "./configure.py --cpu=arm --cc-bin=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags-gcc": "-march=armv4 -mfloat-abi=softfp"
                     },
                     {
                         "name": "wolfssl",
-                        "buildcmd": "./autogen.sh && ./configure --host=armv4 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/arm-buildroot-linux-gnueabi/sysroot",
-                        "cflags": "-fpic -march=armv4 "
+                        "buildcmd-gcc": "./autogen.sh && ./configure --host=armv4 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/arm-buildroot-linux-gnueabi/sysroot",
+                        "buildcmd-clang": "./autogen.sh && ./configure --host=armv4 -enable-shared=no --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-gcc CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile",
+                        "cflags-clang": "-fpic --target=arm-elf-linux -march=armv4 --sysroot=$(pwd)/../toolchain/arm-buildroot-linux-gnueabi/sysroot -L$(pwd)/../toolchain/lib/gcc/arm-buildroot-linux-gnueabi/8.4.0/ -B $(pwd)/../toolchain/lib/gcc/arm-buildroot-linux-gnueabi/8.4.0/ -Wno-error",
+                        "cflags-gcc": "-fpic -march=armv4 "
                     },
                     {
                         "name": "mbedtls",
-                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ld CFLAGS=\"$CFLAGS\" make lib",
-                        "cflags": "-march=armv4"
+                        "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-gcc": "-march=armv4"
                     }
                 ]
             },
@@ -94,23 +100,23 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/arm-linux- $CFLAGS",
-                        "cflags": "-mthumb -march=armv7"
+                        "buildcmd-gcc": "./Configure linux-armv4 --cross-compile-prefix=$(pwd)/../toolchain/bin/arm-linux- $cflags-gcc",
+                        "cflags-gcc": "-mthumb -march=armv7"
                     },
                     {
                         "name": "botan",
-                        "buildcmd": "./configure.py --cpu=arm --cc-bin=$(pwd)/../toolchain/bin/arm-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
-                        "cflags": "-mthumb -march=armv7"
+                        "buildcmd-gcc": "./configure.py --cpu=arm --cc-bin=$(pwd)/../toolchain/bin/arm-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags-gcc": "-mthumb -march=armv7"
                     },
                     {
                         "name": "wolfssl",
-                        "buildcmd": "./autogen.sh && ./configure --host=armv7 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/arm-buildroot-linux-gnueabihf/sysroot",
-                        "cflags": "-fpic -march=armv7 -mthumb "
+                        "buildcmd-gcc": "./autogen.sh && ./configure --host=armv7 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/arm-buildroot-linux-gnueabihf/sysroot",
+                        "cflags-gcc": "-fpic -march=armv7 -mthumb "
                     },
                     {
                         "name": "mbedtls",
-                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/arm-linux-gcc AR=$(pwd)/../toolchain/bin/arm-linux-ar LD=$(pwd)/../toolchain/bin/arm-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
-                        "cflags": "-march=armv7 -mthumb"
+                        "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/arm-linux-gcc AR=$(pwd)/../toolchain/bin/arm-linux-ar LD=$(pwd)/../toolchain/bin/arm-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
+                        "cflags-gcc": "-march=armv7 -mthumb"
                     }
                 ]
             },
@@ -122,23 +128,23 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux64-riscv64 --cross-compile-prefix=$(pwd)/../toolchain/bin/riscv64-linux- $CFLAGS",
-                        "cflags": ""
+                        "buildcmd-gcc": "./Configure linux64-riscv64 --cross-compile-prefix=$(pwd)/../toolchain/bin/riscv64-linux- $cflags-gcc",
+                        "cflags-gcc": ""
                     },
                     {
                         "name": "botan",
-                        "buildcmd": "./configure.py --cpu=riscv64 --cc-bin=$(pwd)/../toolchain/bin/riscv64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
-                        "cflags": ""
+                        "buildcmd-gcc": "./configure.py --cpu=riscv64 --cc-bin=$(pwd)/../toolchain/bin/riscv64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags-gcc": ""
                     },
                     {
                         "name": "wolfssl",
-                        "buildcmd": "./autogen.sh && ./configure --host=riscv64 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot",
-                        "cflags": "-fpic"
+                        "buildcmd-gcc": "./autogen.sh && ./configure --host=riscv64 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot",
+                        "cflags-gcc": "-fpic"
                     },
                     {
                         "name": "mbedtls",
-                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" make lib",
-                        "cflags": ""
+                        "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-gcc": ""
                     }
                 ]
             },
@@ -150,23 +156,23 @@
                 "compileOptions": [
                     {
                         "name": "openssl",
-                        "buildcmd": "./Configure linux-mips32 --cross-compile-prefix=$(pwd)/../toolchain/bin/mipsel-linux- $CFLAGS",
-                        "cflags": ""
+                        "buildcmd-gcc": "./Configure linux-mips32 --cross-compile-prefix=$(pwd)/../toolchain/bin/mipsel-linux- $cflags-gcc",
+                        "cflags-gcc": ""
                     },
                     {
                         "name": "botan",
-                        "buildcmd": "./configure.py --cpu=mips --cc-bin=$(pwd)/../toolchain/bin/mipsel-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
-                        "cflags": ""
+                        "buildcmd-gcc": "./configure.py --cpu=mips --cc-bin=$(pwd)/../toolchain/bin/mipsel-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile",
+                        "cflags-gcc": ""
                     },
                     {
                         "name": "wolfssl",
-                        "buildcmd": "./autogen.sh && ./configure --host=mips32 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot",
-                        "cflags": "-fpic"
+                        "buildcmd-gcc": "./autogen.sh && ./configure --host=mips32 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot",
+                        "cflags-gcc": "-fpic"
                     },
                     {
                         "name": "mbedtls",
-                        "buildcmd": "SHARED=1 CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
-                        "cflags": ""
+                        "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
+                        "cflags-gcc": ""
                     }
                 ]
             }

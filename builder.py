@@ -3,8 +3,7 @@ file @builder.py
 
 @author nicolas
 
-builder.py <toolchain> <framework> <commit> <optlvl> <alg> <keylen>
-
+builder.py <toolchain> <framework> <commit> <optlvl> <compiler> <alg> <keylen>
 """
 
 
@@ -37,8 +36,8 @@ def analyze(lib):
     result = subprocess.run('zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
     subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
 
-    algname = sys.argv[5]
-    keylen = int(sys.argv[6])
+    algname = sys.argv[6]
+    keylen = int(sys.argv[7])
     fct = hex_key_generator(keylen)
     args = f'@ {algname}'.split()
     # for mbedtls the driver is more complex so go custom:
@@ -82,7 +81,9 @@ def analyze(lib):
     scd.exec()
     # remove driver induced leaks
     if 'wolfssl' in lib:
-        scd.DF = scd.DF[scd.DF['Symbol Name'] != 'hextobin']
+        # all wolfssl crypto routines start with wc_
+        mask = scd.DF['Symbol Name'].str.contains('wc')
+        scd.DF = scd.DF[mask]
         # recreate reports:
         scd._generateReport()
 
@@ -92,6 +93,11 @@ def build():
     framework_id = sys.argv[2]
     framework_commit = sys.argv[3]
     optflag = sys.argv[4]
+    u_compiler = sys.argv[5]
+
+    if u_compiler not in ['gcc', 'clang']:
+        print("Invalid compiler.")
+        exit(1)
 
     with open('config.json', 'r') as f:
         config = json.load(f)
@@ -103,7 +109,7 @@ def build():
             framework_url = framework['git']
             libname = framework['libname']
             includes = framework['includeDirs']
-            compiler = framework['compiler']
+            compiler = u_compiler
     
     if not framework_valid:
         print("Invalid framework name")
@@ -122,8 +128,12 @@ def build():
             rootfs =  tc[toolchain_id]['rootfs']
             for options in tc[toolchain_id]['compileOptions']:
                 if options['name'] == framework_id:
-                    framework_config_cmd = options['buildcmd']
-                    cflags = options['cflags'] + f" {optflag}"
+                    if u_compiler == 'gcc':
+                        framework_config_cmd = options['buildcmd-gcc']
+                        cflags = options['cflags-gcc'] + f" {optflag}"
+                    elif u_compiler == 'clang':
+                        framework_config_cmd = options['buildcmd-clang']
+                        cflags = options['cflags-clang'] + f" {optflag}"
 
     
     if not toolchain_valid or not framework_config_cmd:
@@ -162,7 +172,8 @@ def build():
     print(f'- Checking out {framework_commit}')
     result = subprocess.run(['git', 'checkout', framework_commit], stderr=subprocess.PIPE)
     checkretcode(result)
-
+    cflags = cflags.replace('$(pwd)', os.getcwd())
+    print(f"SSSS_ {cflags}")
     os.environ["CFLAGS"] = cflags
     os.environ["SHARED"] = '1'
     print(f'- Configuring {framework_id} with {framework_config_cmd.split()}')
@@ -185,7 +196,7 @@ def build():
 
     print(f'- Copying files to {rootfs}/{libdir}')
     if 'wolf' in libname:
-        result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+        result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*.a") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
     else:
         result = subprocess.run(f'cp $(find ./ -name "{libname}*.so") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
@@ -213,23 +224,23 @@ def build():
         flist = glob.glob(f'{os.getcwd()}/{rootfs}/{libdir}/{libname.split(".")[0]}.a')
     if flist:
         static = True
+        statObj = flist[0]
     else:
         static = False
+        statObj = ""
     flist = " ".join(flist)
-    if framework_id == 'wolfssl' and static:
-        print(f"- Detected static lib, converting to shared object (wolfssl): {os.getcwd()}/{prefix}{compiler} -shared -o {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so  {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.a -lwolfssl -Wl,--no-whole-archive && mv {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.so")
-        result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler}  -Wl,--whole-archive  -lwolfssl -shared -o {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfssl.a -Wl,--no-whole-archive && mv {os.getcwd()}/{rootfs}/{libdir}/wolfssl.so {os.getcwd()}/{rootfs}/{libdir}/libwolfss.so', stderr=subprocess.PIPE, shell=True)
+    print(f'CWD={os.getcwd()}')
+
+    if compiler == 'gcc':
+        result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+    elif compiler == 'clang':
+        result = subprocess.run(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin -fuse-ld=lld', stderr=subprocess.PIPE, shell=True)
 
     print(f'CWD={os.getcwd()}')
-    result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
-    print(f'CWD={os.getcwd()}')
-    
-    print(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
+    print(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
     checkretcode(result)
     os.chdir(cwd + f'/toolchain/{rootfs}')
     analyze(libname.split('.')[0])
-
-    
 
 def main():
     build()

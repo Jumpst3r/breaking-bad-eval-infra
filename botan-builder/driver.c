@@ -35,6 +35,10 @@ int main(int argc, char **argv)
     {
         botan_cipher_id = "SM4";
     }
+    else if (!strcmp(umode, "chacha_poly1305"))
+    {
+        botan_cipher_id = "ChaCha20Poly1305-256";
+    }
 
     Botan::AutoSeeded_RNG rng;
 

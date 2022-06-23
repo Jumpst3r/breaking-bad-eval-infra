@@ -14,7 +14,7 @@ spec:
               "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
               "framework": "wolfssl",
               "commit": "f401a3b53ddd531b848caf635feeb87103625b3d",
-              "optlvl": "-O0"
+              "optlvl": "-Os"
           },
           {
               "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",

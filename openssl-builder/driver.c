@@ -79,9 +79,11 @@ int main (int argc, char **argv)
     else if (!strcmp(mode, "aria-cbc")) alg = EVP_aria_192_cbc();
     else if (!strcmp(mode, "des-cbc")) alg = EVP_des_ede_cbc();
     else if (!strcmp(mode, "sm4-cbc")) alg = EVP_sm4_cbc();
+    else if (!strcmp(mode, "chacha_poly1305")) alg = EVP_chacha20_poly1305();
     // the following only work with legacy 1.1.x OpensSSL versions
     else if (!strcmp(mode, "bf-cbc")) alg = EVP_bf_cbc();
     else if (!strcmp(mode, "cast-cbc")) alg = EVP_cast5_cbc();
+
 
     /* A 128 bit IV */
     unsigned char *iv = (unsigned char *) "0123456789012345";
