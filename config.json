@@ -111,6 +111,8 @@
                     {
                         "name": "wolfssl",
                         "buildcmd-gcc": "./autogen.sh && ./configure --host=armv7 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabihf-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/arm-buildroot-linux-gnueabihf/sysroot",
+                        "buildcmd-clang": "./autogen.sh && ./configure --host=armv7 -enable-shared=no --enable-all-crypto CC=$(pwd)/../toolchain/bin/arm-linux-gcc CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile",
+                        "cflags-clang": "-fpic --target=arm-elf-linux -mthumb -mfloat-abi=hard -march=armv7 --sysroot=$(pwd)/../toolchain/arm-buildroot-linux-gnueabihf/sysroot -L$(pwd)/../toolchain/lib/gcc/arm-buildroot-linux-gnueabihf/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/arm-buildroot-linux-gnueabihf/7.3.0/ -Wno-error",
                         "cflags-gcc": "-fpic -march=armv7 -mthumb "
                     },
                     {
@@ -139,6 +141,8 @@
                     {
                         "name": "wolfssl",
                         "buildcmd-gcc": "./autogen.sh && ./configure --host=riscv64 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot",
+                        "buildcmd-clang": "./autogen.sh && ./configure --host=riscv64 -enable-shared=no --enable-all-crypto CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile",
+                        "cflags-clang": "-fpic --target=riscv64-elf-linux --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -Wno-error",
                         "cflags-gcc": "-fpic"
                     },
                     {
@@ -167,6 +171,8 @@
                     {
                         "name": "wolfssl",
                         "buildcmd-gcc": "./autogen.sh && ./configure --host=mips32 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot",
+                        "buildcmd-clang": "./autogen.sh && ./configure --host=mips32 -enable-shared=no --enable-all-crypto CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile",
+                        "cflags-clang": "-Wl,-z,notext --target=mipsel-elf-linux --sysroot=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -Wno-error",
                         "cflags-gcc": "-fpic"
                     },
                     {
