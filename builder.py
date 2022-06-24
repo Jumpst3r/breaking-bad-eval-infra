@@ -175,6 +175,8 @@ def build():
     cflags = cflags.replace('$(pwd)', os.getcwd())
     print(f"SSSS_ {cflags}")
     os.environ["CFLAGS"] = cflags
+    if framework == 'mbedtls' and compiler == 'clang':
+        os.environ["LDFLAGS"] = cflags
     os.environ["SHARED"] = '1'
     print(f'- Configuring {framework_id} with {framework_config_cmd.split()}')
     result = subprocess.run(framework_config_cmd, stderr=subprocess.PIPE, shell=True)

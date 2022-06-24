@@ -28,6 +28,8 @@
                     {
                         "name": "mbedtls",
                         "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "buildcmd-clang": "SHARED=1 CC=clang CFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-clang": "--target=x86_64-elf-linux --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": ""
                     }
                 ]
@@ -58,7 +60,9 @@
                     {
                         "name": "mbedtls",
                         "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
-                        "cflags-gcc": "-march=armv8-a"
+                        "cflags-gcc": "-march=armv8-a",
+                        "buildcmd-clang": "SHARED=1 CC=clang LD=clang AR=llvm-ar CFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-clang": "--target=aarch64-elf-linux --sysroot=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld"
                     }
                 ]
             },
@@ -88,6 +92,8 @@
                     {
                         "name": "mbedtls",
                         "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-gcc AR=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ar LD=$(pwd)/../toolchain/bin/arm-buildroot-linux-gnueabi-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "buildcmd-clang": "SHARED=1 CC=clang AR=llvm-ar LD=clang CFLAGS=\"$CFLAGS\" LDFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-clang": "--target=arm-elf-linux -march=armv4 --sysroot=$(pwd)/../toolchain/arm-buildroot-linux-gnueabi/sysroot -L$(pwd)/../toolchain/lib/gcc/arm-buildroot-linux-gnueabi/8.4.0/ -B $(pwd)/../toolchain/lib/gcc/arm-buildroot-linux-gnueabi/8.4.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": "-march=armv4"
                     }
                 ]
@@ -118,6 +124,8 @@
                     {
                         "name": "mbedtls",
                         "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/arm-linux-gcc AR=$(pwd)/../toolchain/bin/arm-linux-ar LD=$(pwd)/../toolchain/bin/arm-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
+                        "buildcmd-clang": "SHARED=1 CC=clang AR=llvm-ar LD=clang CFLAGS=\"$CFLAGS\" LDFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-clang": "--target=arm-elf-linux -mfloat-abi=hard -march=armv7 --sysroot=$(pwd)/../toolchain/arm-buildroot-linux-gnueabihf/sysroot -L$(pwd)/../toolchain/lib/gcc/arm-buildroot-linux-gnueabihf/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/arm-buildroot-linux-gnueabihf/7.3.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": "-march=armv7 -mthumb"
                     }
                 ]
@@ -148,6 +156,8 @@
                     {
                         "name": "mbedtls",
                         "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" make lib",
+                        "buildcmd-clang": "SHARED=1 CC=clang AR=llvm-ar LD=clang CFLAGS=\"$CFLAGS\" LDFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-clang": "--target=riscv64-elf-linux --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": ""
                     }
                 ]
@@ -178,6 +188,8 @@
                     {
                         "name": "mbedtls",
                         "buildcmd-gcc": "SHARED=1 CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\"  make lib",
+                        "buildcmd-clang": "SHARED=1 CC=clang AR=llvm-ar LD=clang CFLAGS=\"$CFLAGS\" LDFLAGS=\"$CFLAGS\" make lib",
+                        "cflags-clang": "-Wl,-z,notext --target=mipsel-elf-linux --sysroot=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": ""
                     }
                 ]
