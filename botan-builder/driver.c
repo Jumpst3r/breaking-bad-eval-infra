@@ -58,6 +58,5 @@ int main(int argc, char **argv)
     enc->start(iv);
     enc->finish(pt);
 
-    std::cout << enc->name() << " with iv " << Botan::hex_encode(iv) << " " << Botan::hex_encode(pt) << "\n";
     return 0;
 }

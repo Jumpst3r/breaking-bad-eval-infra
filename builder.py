@@ -175,8 +175,6 @@ def build():
     cflags = cflags.replace('$(pwd)', os.getcwd())
     print(f"SSSS_ {cflags}")
     os.environ["CFLAGS"] = cflags
-    if framework == 'mbedtls' and compiler == 'clang':
-        os.environ["LDFLAGS"] = cflags
     os.environ["SHARED"] = '1'
     print(f'- Configuring {framework_id} with {framework_config_cmd.split()}')
     result = subprocess.run(framework_config_cmd, stderr=subprocess.PIPE, shell=True)
@@ -186,7 +184,7 @@ def build():
 
     print(f'- Compiling')
     # For mbedtls, the config step actually builds the lib
-    if 'mbed' not in libname:
+    if 'mbed' not in libname and 'botan' not in libname:
         result = subprocess.run(['make', f'-j{nbcores}'], stderr=subprocess.PIPE)
         checkretcode(result)
 
@@ -234,8 +232,13 @@ def build():
     print(f'CWD={os.getcwd()}')
 
     if compiler == 'gcc':
-        result = subprocess.run(f'{os.getcwd()}/{prefix}{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+        if framework_id == 'botan':
+            result = subprocess.run(f'{os.getcwd()}/{prefix}g++ {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+        else:
+            result = subprocess.run(f'{os.getcwd()}/{prefix}gcc {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
     elif compiler == 'clang':
+        if framework_id == 'botan':
+            compiler = 'clang++'
         result = subprocess.run(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin -fuse-ld=lld', stderr=subprocess.PIPE, shell=True)
 
     print(f'CWD={os.getcwd()}')
