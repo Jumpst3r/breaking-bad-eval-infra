@@ -14,13 +14,15 @@ spec:
               "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
               "framework": "wolfssl",
               "commit": "f401a3b53ddd531b848caf635feeb87103625b3d",
-              "optlvl": "-Os"
+              "optlvl": "-Os",
+              "compiler": "clang"
           },
           {
               "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
               "framework": "wolfssl",
               "commit": "f401a3b53ddd531b848caf635feeb87103625b3d",
-              "optlvl": "-O3"
+              "optlvl": "-O3",
+              "compiler": "gcc"
           }
         ]
     - name: algomap
@@ -53,6 +55,8 @@ spec:
             value: "{{item.commit}}"
           - name: optlvl
             value: "{{item.optlvl}}"
+          - name: compiler
+            value: "{{item.compiler}}"
           - name: algomap
             value: "{{inputs.parameters.algomap}}"
         withParam: "{{inputs.parameters.buildmap}}"
@@ -71,6 +75,7 @@ spec:
       - name: framework
       - name: commit
       - name: optlvl
+      - name: compiler
       - name: algomap
     steps:
     - - name: schedule
@@ -87,6 +92,8 @@ spec:
             value: "{{inputs.parameters.commit}}"
           - name: optlvl
             value: "{{inputs.parameters.optlvl}}"
+          - name: compiler
+            value: "{{inputs.parameters.compiler}}"
           - name: algorithm
             value: "{{item.algo}}"
           - name: keylen
@@ -108,6 +115,8 @@ spec:
             value: "{{inputs.parameters.commit}}"
           - name: optlvl
             value: "{{inputs.parameters.optlvl}}"
+          - name: compiler
+            value: "{{inputs.parameters.compiler}}"
           - name: algomap
             value: "{{inputs.parameters.algomap}}" 
     outputs:
@@ -124,6 +133,7 @@ spec:
       - name: framework
       - name: commit
       - name: optlvl
+      - name: compiler
       - name: algorithm
       - name: keylen
     container:
@@ -133,7 +143,7 @@ spec:
           - '-c'
       args:
           - >-
-            python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.algorithm}} {{inputs.parameters.keylen}}
+            python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.compiler}} {{inputs.parameters.algorithm}} {{inputs.parameters.keylen}}
     outputs:
       artifacts:
       - name: results
@@ -151,6 +161,7 @@ spec:
       - name: framework
       - name: commit
       - name: optlvl
+      - name: compiler
       - name: algomap
     script:
       image: python:alpine3.6
@@ -171,6 +182,7 @@ spec:
         framework = "{{inputs.parameters.framework}}".strip()
         commit = "{{inputs.parameters.commit}}".strip()
         optlvl = "{{inputs.parameters.optlvl}}".strip()
+        compiler = "{{inputs.parameters.compiler}}".strip()
 
         larray = []
         for idx,l in enumerate(leaks):
@@ -186,6 +198,7 @@ spec:
         result['framework'] = framework
         result['commit'] = commit
         result['optlvl'] = optlvl
+        result['compiler'] = compiler
         result['results'] = larray
 
 

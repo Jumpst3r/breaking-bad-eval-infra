@@ -95,7 +95,7 @@ def build():
     optflag = sys.argv[4]
     u_compiler = sys.argv[5]
 
-    if u_compiler not in ['gcc', 'clang']:
+    if u_compiler not in ['gcc', 'clang', 'icx']:
         print("Invalid compiler.")
         exit(1)
 
@@ -134,8 +134,12 @@ def build():
                     elif u_compiler == 'clang':
                         framework_config_cmd = options['buildcmd-clang']
                         cflags = options['cflags-clang'] + f" {optflag}"
+                    elif u_compiler == 'icx':
+                        framework_config_cmd = options['buildcmd-icx']
+                        cflags = options['cflags-clang'] + f" {optflag}"
 
-    
+    ICX_LIB_DIR = '/opt/intel/oneapi/compiler/2022.1.0/linux/compiler/lib/intel64_lin/'
+
     if not toolchain_valid or not framework_config_cmd:
         print("Invalid toolchain name")
         exit(1)
@@ -176,17 +180,12 @@ def build():
     print(f"SSSS_ {cflags}")
     os.environ["CFLAGS"] = cflags
     os.environ["SHARED"] = '1'
-    print(f'- Configuring {framework_id} with {framework_config_cmd.split()}')
-    result = subprocess.run(framework_config_cmd, stderr=subprocess.PIPE, shell=True)
-    checkretcode(result)
+    for cmd in framework_config_cmd:
+        print(f'- Configuring/Compiling {framework_id} with {cmd.split()}')
+        result = subprocess.run(cmd, stderr=subprocess.PIPE, shell=True)
+        checkretcode(result)
 
     nbcores = multiprocessing.cpu_count()
-
-    print(f'- Compiling')
-    # For mbedtls, the config step actually builds the lib
-    if 'mbed' not in libname and 'botan' not in libname:
-        result = subprocess.run(['make', f'-j{nbcores}'], stderr=subprocess.PIPE)
-        checkretcode(result)
 
     result = subprocess.run(f'find ./ -name "{libname}*.so"', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
@@ -195,6 +194,11 @@ def build():
     checkretcode(result)
 
     print(f'- Copying files to {rootfs}/{libdir}')
+
+    if compiler == 'icx':
+        result = subprocess.run(f'cp {ICX_LIB_DIR}* {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
+
+
     if 'wolf' in libname:
         result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*.a") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
@@ -240,6 +244,8 @@ def build():
         if framework_id == 'botan':
             compiler = 'clang++'
         result = subprocess.run(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin -fuse-ld=lld', stderr=subprocess.PIPE, shell=True)
+    elif compiler == 'icx':
+        result = subprocess.run(f'. /opt/intel/oneapi/setvars.sh intel64 && {compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin -fuse-ld=lld', stderr=subprocess.PIPE, shell=True)
 
     print(f'CWD={os.getcwd()}')
     print(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
