@@ -194,7 +194,7 @@
                         "name": "openssl",
                         "buildcmd-gcc": ["./Configure linux-mips32 --cross-compile-prefix=$(pwd)/../toolchain/bin/mipsel-linux- $CLFAGS", "make -j4"],
                         "buildcmd-clang": ["./Configure linux-mips32", "sed -i \"/^CC=/c\\CC=clang\" Makefile && sed -i \"/^AR=/c\\AR=llvm-ar\" Makefile && sed -i \"/^CXX=/c\\CXX=clang++\" Makefile", "make -j4"],
-                        "cflags-clang": "--target=mipsel-elf-linux --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/include/c++/7.3.0/ -I$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/include/c++/7.3.0/mipsel-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -fuse-ld=lld -Wno-error -Wl,-z,notext",
+                        "cflags-clang": "-Wl,-z,notext --target=mipsel-elf-linux --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/include/c++/7.3.0/ -I$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/include/c++/7.3.0/mipsel-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -fuse-ld=lld -Wno-error",
                         "cflags-gcc": ""
                     },
                     {
