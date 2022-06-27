@@ -35,7 +35,7 @@ spec:
         ]
   templates:
   - name: schedule-framework-builds
-    parallelism: 2
+    parallelism: 4
     inputs:
       parameters:
       - name: buildmap
@@ -68,7 +68,7 @@ spec:
               value: "{{steps.schedule-build.outputs.parameters.json}}"
 
   - name: schedule-build
-    parallelism: 2
+    parallelism: 4
     inputs:
       parameters:
       - name: toolchain

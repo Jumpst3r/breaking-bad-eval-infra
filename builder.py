@@ -88,6 +88,16 @@ def analyze(lib):
         scd._generateReport()
 
 def build():
+    st = ['{"CF Leak Count":-2,"Memory Leak Count":-2}']
+    with open('/tmp/summary.json', 'w') as f:
+        f.writelines(st)
+    try:
+        os.mkdir('results', )
+    except Exception as e:
+        pass
+    result = subprocess.run('zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
+    subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
+    
     cwd = os.getcwd()
     toolchain_id = sys.argv[1]
     framework_id = sys.argv[2]
