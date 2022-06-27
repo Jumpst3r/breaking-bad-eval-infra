@@ -22,7 +22,7 @@ def checkretcode(result):
     err = result.stderr
     if result.returncode != 0:
         print(f"failed: {err}")
-        exit(1)
+        exit(0)
 
 def analyze(lib):
     # create a dummy file if it fails:
@@ -97,7 +97,7 @@ def build():
         pass
     result = subprocess.run('zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
     subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
-    
+
     cwd = os.getcwd()
     toolchain_id = sys.argv[1]
     framework_id = sys.argv[2]
@@ -107,7 +107,7 @@ def build():
 
     if u_compiler not in ['gcc', 'clang', 'icx']:
         print("Invalid compiler.")
-        exit(1)
+        exit(0)
 
     with open('config.json', 'r') as f:
         config = json.load(f)
@@ -123,7 +123,7 @@ def build():
     
     if not framework_valid:
         print("Invalid framework name")
-        exit(1)
+        exit(0)
 
     toolchain_valid = False
     # validate if toolchain is valid:
@@ -152,7 +152,7 @@ def build():
 
     if not toolchain_valid or not framework_config_cmd:
         print("Invalid toolchain name")
-        exit(1)
+        exit(0)
 
     # Download toolchain:
     print("- Downloading toolchain")
