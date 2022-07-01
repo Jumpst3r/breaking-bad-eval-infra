@@ -146,9 +146,6 @@ spec:
           - >-
             python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.compiler}} {{inputs.parameters.algorithm}} {{inputs.parameters.keylen}}
     outputs:
-      artifacts:
-      - name: results
-        path: /build/results.zip
       parameters:
       - name: leaks
         valueFrom:

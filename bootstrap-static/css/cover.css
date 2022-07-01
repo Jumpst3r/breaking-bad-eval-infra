@@ -11,6 +11,8 @@
   background: #888; 
 }
 
+td:last-child {     display:none; }
+
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: #555; 
