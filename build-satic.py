@@ -41,6 +41,85 @@ if __name__ == "__main__":
     txt = txt[2:] # remove table def
     txt = txt[:-2] # footer
     
+    result = client['microsurf']['evaluation'].aggregate([
+        {
+            '$unwind': {
+                'path': '$results'
+            }
+        }, {
+            '$addFields': {
+                'algorithm': '$results.algorithm'
+            }
+        }, {
+            '$addFields': {
+                'compiler': 'gcc'
+            }
+        }, {
+            '$match': {
+                '$or': [
+                    {
+                        'results.leaks.Memory Leak Count': {
+                            '$gt': 0
+                        }
+                    }, {
+                        'results.leaks.CF Leak Count': {
+                            '$gt': 0
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$addFields': {
+                'result': '<span class=\"badge badge-danger text-uppercase\">Not Constant time</span>'
+            }
+        }
+        ])
+    df = pd.DataFrame(result)[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result']]
+    txt2 = df.to_html(escape=False, header=False, index_names=False, index=False).split('\n')
+    txt2 = txt2[2:] # remove table def
+    txt2 = txt2[:-2] # footer
+
+    result = client['microsurf']['evaluation'].aggregate([
+        {
+            '$unwind': {
+                'path': '$results'
+            }
+        }, {
+            '$addFields': {
+                'algorithm': '$results.algorithm'
+            }
+        }, {
+            '$addFields': {
+                'compiler': 'gcc'
+            }
+        }, {
+            '$match': {
+                '$or': [
+                    {
+                        'results.leaks.Memory Leak Count': {
+                            '$eq': -1
+                        }
+                    }, {
+                        'results.leaks.CF Leak Count': {
+                            '$eq': -1
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$addFields': {
+                'result': '<span class=\"badge badge-warning text-uppercase\">Algorithm not supported</span>'
+            }
+        }
+        ])
+        
+    df = pd.DataFrame(result)[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result']]
+    txt3 = df.to_html(escape=False, header=False, index_names=False, index=False).split('\n')
+    txt3 = txt3[2:] # remove table def
+    txt3 = txt3[:-2] # footer
+
+    txt = txt + txt2 + txt3
+
     # load table
     with open('bootstrap-static/index.html', 'r') as f:
         html = f.readlines()

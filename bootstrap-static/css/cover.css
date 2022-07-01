@@ -164,7 +164,8 @@ background-color: #d9f4fb !important
 .bg-info-lt:focus,
 .bg-info-lt:hover {
 color: #fff !important;
-background-color: #14bae4 !important
+background-color: #14bae4 !important;
+cursor: pointer;
 }
 
 .bg-success-lt {
@@ -188,24 +189,30 @@ background-color: #fdf6d9 !important
 .bg-warning-lt:focus,
 .bg-warning-lt:hover {
 color: #fff !important;
-background-color: #f4c414 !important
+background-color: #f4c414 !important;
 }
 
 .bg-warning--lt {
 color: #5e676f !important;
-background-color: #fdf6d9 !important
+background-color: #fdf6d9 !important;
+}
+
+
+table tr:hover td {
+  background: #efefef;
 }
 
 .bg-danger-lt {
 color: #f21378 !important;
-background-color: #fde1ee !important
+background-color: #fde1ee !important;
 }
 
 .bg-danger-lt.active,
 .bg-danger-lt:focus,
 .bg-danger-lt:hover {
 color: #fff !important;
-background-color: #f54394 !important
+background-color: #f54394 !important;
+cursor: pointer;
 }
 
 .bg-secondary-lt {
@@ -230,6 +237,10 @@ background-color: #dadbdf !important
 .bg-dark-lt:hover {
 color: #fff !important;
 background-color: #192039 !important
+}
+
+.badge:hover{
+  cursor: pointer;
 }
 
 @media (min-width: 992px) {
