@@ -16,7 +16,7 @@ from microsurf.microsurf import SCDetector
 from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
 from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator
-
+import base64
 
 def checkretcode(result):
     err = result.stderr
@@ -86,6 +86,18 @@ def analyze(lib):
         scd.DF = scd.DF[mask]
         # recreate reports:
         scd._generateReport()
+    result = subprocess.run('zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
+    subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
+    with open("/build/results.zip", "rb") as f:
+        b64 = base64.b64encode(f.read())
+
+    with open('/tmp/result.json', 'r') as f:
+        d = json.load(f)
+    d['result'] = b64
+
+    jsonstr = json.dumps(d)
+    with open('/tmp/result.json', 'w') as f:
+        f.write(jsonstr)
 
 def build():
     st = ['{"CF Leak Count":-2,"Memory Leak Count":-2}']

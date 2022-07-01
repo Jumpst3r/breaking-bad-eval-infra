@@ -138,6 +138,7 @@ spec:
       - name: keylen
     container:
       image: jumpst3r/builder:eval
+      imagePullPolicy: Always
       command:
           - bash
           - '-c'
