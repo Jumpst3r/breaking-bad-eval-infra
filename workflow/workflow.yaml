@@ -94,36 +94,14 @@ spec:
             value: "{{inputs.parameters.optlvl}}"
           - name: compiler
             value: "{{inputs.parameters.compiler}}"
-          - name: algorithm
-            value: "{{item.algo}}"
-          - name: keylen
-            value: "{{item.keylen}}"
-        withParam: "{{inputs.parameters.algomap}}"
-    - - name: reduce-framework
-        template: reduce-framework
-        continueOn:
-          failed: true
-        arguments:
-          parameters:
-          - name: leaks
-            value: "{{steps.schedule.outputs.parameters.leaks}}"
-          - name: toolchain
-            value: "{{inputs.parameters.toolchain}}"
-          - name: framework
-            value: "{{inputs.parameters.framework}}"
-          - name: commit
-            value: "{{inputs.parameters.commit}}"
-          - name: optlvl
-            value: "{{inputs.parameters.optlvl}}"
-          - name: compiler
-            value: "{{inputs.parameters.compiler}}"
+          artifacts:
           - name: algomap
-            value: "{{inputs.parameters.algomap}}" 
+            path: /build/algomap.json
     outputs:
       parameters:
       - name: json
         valueFrom: 
-          parameter: "{{steps.reduce-framework.outputs.parameters.json}}"
+          parameter: "{{steps.schedule.outputs.parameters.json}}"
 
 
   - name: build
@@ -136,6 +114,9 @@ spec:
       - name: compiler
       - name: algorithm
       - name: keylen
+      artifacts:
+        - name: algomap
+          path: /build/algomap.json
     container:
       image: jumpst3r/builder:eval
       imagePullPolicy: Always
@@ -144,7 +125,7 @@ spec:
           - '-c'
       args:
           - >-
-            python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.compiler}} {{inputs.parameters.algorithm}} {{inputs.parameters.keylen}}
+            python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.compiler}}
     outputs:
       parameters:
       - name: leaks

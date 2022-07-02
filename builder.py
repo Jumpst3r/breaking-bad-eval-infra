@@ -24,20 +24,28 @@ def checkretcode(result):
         print(f"failed: {err}")
         exit(0)
 
-def analyze(lib):
-    # create a dummy file if it fails:
-    st = ['{"CF Leak Count":-1,"Memory Leak Count":-1}']
-    with open('/tmp/summary.json', 'w') as f:
-        f.writelines(st)
+
+resultjson = []
+initPath = ""
+
+'''
+called for every element in algomap.json
+'''
+def analyze(lib, algname, keylen):
+    global resultjson
+    global initPath
+    # clear previous results
+    result = subprocess.run('rm -rf results', stderr=subprocess.PIPE, shell=True)
+    checkretcode(result)
+    result = subprocess.run('rm results.zip', stderr=subprocess.PIPE, shell=True)
+    # checkretcode(result)
     try:
         os.mkdir('results', )
     except Exception as e:
         pass
     result = subprocess.run('zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
-    subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
+    subprocess.run(f'mv results.zip {initPath}/results.zip', stderr=subprocess.PIPE, shell=True)
 
-    algname = sys.argv[6]
-    keylen = int(sys.argv[7])
     fct = hex_key_generator(keylen)
     args = f'@ {algname}'.split()
     # for mbedtls the driver is more complex so go custom:
@@ -53,7 +61,7 @@ def analyze(lib):
     rootfs = os.getcwd()
     
     binpath = rootfs + '/driver.bin'
-    # can't get wolfssl to create shared objects on some archs, so hard code a fix here
+    # can't get wolfssl to create shared objects on some archs, so hard code a fix here (track static object)
     if 'wolfssl' in lib:
         sharedObjects = ['driver.bin']
     else:
@@ -71,6 +79,7 @@ def analyze(lib):
     errno = binLoader.configure()
     if errno:
         print("failed to configure BinaryLoader")
+        resultjson.append({"CF Leak Count":-1,"Memory Leak Count":-1})
         return 0
     scd = SCDetector(modules=[
         # Secret dependent memory read detection
@@ -90,20 +99,21 @@ def analyze(lib):
     result = subprocess.run('find ./results/ -name "*.json" -type f -delete', stderr=subprocess.PIPE, shell=True)
     result = subprocess.run('find ./results/ -name "*.png" -type f -delete', stderr=subprocess.PIPE, shell=True)
     result = subprocess.run('zip -9 -r results.zip results', stderr=subprocess.PIPE, shell=True)
-    subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
-    with open("/build/results.zip", "rb") as f:
+    subprocess.run(f'cp results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
+    with open("results.zip", "rb") as f:
         b64 = base64.b64encode(f.read())
 
     with open('/tmp/summary.json', 'r') as f:
         d = json.load(f)
     d['result'] = str(b64, encoding='utf8')
 
-    jsonstr = json.dumps(d)
-    with open('/tmp/summary.json', 'w') as f:
-        f.write(jsonstr)
+    resultjson.append(d)
 
 def build():
+    # leak count of -2 indicates compiler failure
     st = ['{"CF Leak Count":-2,"Memory Leak Count":-2}']
+
+    # write to output file
     with open('/tmp/summary.json', 'w') as f:
         f.writelines(st)
     try:
@@ -210,8 +220,6 @@ def build():
         result = subprocess.run(cmd, stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
 
-    nbcores = multiprocessing.cpu_count()
-
     result = subprocess.run(f'find ./ -name "{libname}*.so"', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
 
@@ -275,15 +283,29 @@ def build():
     print(f'CWD={os.getcwd()}')
     print(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
     checkretcode(result)
+
+    # parse algomap file
+    with open('../algomap.json', 'r') as f:
+        algomap = json.load(f)
+
     os.chdir(cwd + f'/toolchain/{rootfs}')
-    analyze(libname.split('.')[0])
+
+    for el in algomap:
+        analyze(libname.split('.')[0], el['algo'], int(el['keylen']))
+
+    global resultjson
+    print(resultjson)
+    with open('/tmp/summary.json', 'w') as f:
+        json.dump(resultjson, f)
 
 def main():
+    global initPath
+    initPath = os.getcwd()
     build()
     print("- Zipping results " + os.getcwd())
     result = subprocess.run(f'zip -r results.zip results', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
-    result = subprocess.run(f'mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
+    result = subprocess.run(f'mv results.zip {initPath}/results.zip', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
 
 if __name__ == "__main__":
