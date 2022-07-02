@@ -20,6 +20,13 @@ spec:
         "commit": "4ccd226cbf087ee78b443e452200dd0486527658",
         "optlvl": "-Os",
         "compiler": "clang"
+        },
+        {
+        "toolchain": "x86-64-core-i7--glibc--stable-2018.11-1",
+        "framework": "mbedtls",
+        "commit": "4ccd226cbf087ee78b443e452200dd0486527658",
+        "optlvl": "-Os",
+        "compiler": "gcc"
         }
         ]
     - name: algomap

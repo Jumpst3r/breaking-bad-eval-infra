@@ -79,7 +79,7 @@ def analyze(lib, algname, keylen):
     errno = binLoader.configure()
     if errno:
         print("failed to configure BinaryLoader")
-        resultjson.append({"CF Leak Count":-1,"Memory Leak Count":-1})
+        resultjson.append({"algorithm":algname,"CF Leak Count":-1,"Memory Leak Count":-1})
         return 0
     scd = SCDetector(modules=[
         # Secret dependent memory read detection
@@ -106,6 +106,7 @@ def analyze(lib, algname, keylen):
     with open('/tmp/summary.json', 'r') as f:
         d = json.load(f)
     d['result'] = str(b64, encoding='utf8')
+    d['algorithm'] = algname
 
     resultjson.append(d)
 
@@ -303,7 +304,7 @@ def build():
     finalres['toolchain'] = toolchain_id
     finalres['framework'] = framework_id
     finalres['commit'] = framework_commit
-    finalres['optlvl'] = cflags
+    finalres['optlvl'] = optflag
     finalres['compiler'] = compiler
     finalres['results'] = resultjson
 

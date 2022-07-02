@@ -11,6 +11,10 @@
   background: #888; 
 }
 
+[data-href] {
+  cursor: pointer;
+}
+
 td:last-child {     display:none; }
 
 /* Handle on hover */
