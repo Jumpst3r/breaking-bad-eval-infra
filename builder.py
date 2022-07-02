@@ -109,7 +109,10 @@ def analyze(lib, algname, keylen):
 
     resultjson.append(d)
 
+global ID
+
 def build():
+    global ID
     # leak count of -2 indicates compiler failure
     st = ['{"CF Leak Count":-2,"Memory Leak Count":-2}']
 
@@ -129,6 +132,8 @@ def build():
     framework_commit = sys.argv[3]
     optflag = sys.argv[4]
     u_compiler = sys.argv[5]
+
+    ID = f'{toolchain_id}*{framework_id}*{framework_commit}*{optflag}*{u_compiler}'
 
     if u_compiler not in ['gcc', 'clang', 'icx']:
         print("Invalid compiler.")
@@ -294,9 +299,22 @@ def build():
         analyze(libname.split('.')[0], el['algo'], int(el['keylen']))
 
     global resultjson
-    print(resultjson)
-    with open('/tmp/summary.json', 'w') as f:
-        json.dump(resultjson, f)
+    finalres = {}
+    finalres['toolchain'] = toolchain_id
+    finalres['framework'] = framework_id
+    finalres['commit'] = framework_commit
+    finalres['optlvl'] = cflags
+    finalres['compiler'] = compiler
+    finalres['results'] = resultjson
+
+    print(finalres)
+
+    # check if k8s shared volume is mounted
+    if os.path.isdir('/mnt/vol'):
+         with open(f'/mnt/vol/{ID}.json', 'w') as f:
+            json.dump(finalres, f)
+    else:
+        print("No mounted volume")
 
 def main():
     global initPath

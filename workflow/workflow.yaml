@@ -1,8 +1,12 @@
 kind: Workflow
 metadata:
-  generateName: builder-
+  generateName: builder
 spec:
   entrypoint: schedule-framework-builds
+  volumes:
+  - name: workdir
+    persistentVolumeClaim:
+      claimName: my-existing-volume
   imagePullSecrets:
   - name: regcred2
   arguments:
@@ -10,13 +14,6 @@ spec:
     - name: buildmap
       value: |
         [
-        {
-        "toolchain": "x86-64-core-i7--glibc--stable-2018.11-1",
-        "framework": "mbedtls",
-        "commit": "4ccd226cbf087ee78b443e452200dd0486527658",
-        "optlvl": "-O3",
-        "compiler": "clang"
-        },
         {
         "toolchain": "x86-64-core-i7--glibc--stable-2018.11-1",
         "framework": "mbedtls",
@@ -41,10 +38,16 @@ spec:
       - name: buildmap
       - name: algomap
     steps:
+    - - name: getmapartifact
+        template: getmapartifact
+        arguments:
+          parameters:
+            - name: algomap
+              value: "{{inputs.parameters.algomap}}"
     - - name: schedule-build
         template: schedule-build
         continueOn:
-          failed: true
+          failed: false
         arguments:
           parameters:
           - name: toolchain
@@ -57,16 +60,14 @@ spec:
             value: "{{item.optlvl}}"
           - name: compiler
             value: "{{item.compiler}}"
-          - name: algomap
-            value: "{{inputs.parameters.algomap}}"
+          artifacts:
+            - name: algomap
+              from: "{{steps.getmapartifact.outputs.artifacts.algomap}}"
         withParam: "{{inputs.parameters.buildmap}}"
     - - name: reduce-global
         template: reduce-global
-        arguments:
-          parameters:
-            - name: jsonlist
-              value: "{{steps.schedule-build.outputs.parameters.json}}"
-
+  
+  
   - name: schedule-build
     parallelism: 2
     inputs:
@@ -76,12 +77,13 @@ spec:
       - name: commit
       - name: optlvl
       - name: compiler
+      artifacts:
       - name: algomap
     steps:
     - - name: schedule
         template: build
         continueOn:
-          failed: true
+          failed: false
         arguments:
           parameters:
           - name: toolchain
@@ -96,13 +98,8 @@ spec:
             value: "{{inputs.parameters.compiler}}"
           artifacts:
           - name: algomap
+            from: "{{inputs.artifacts.algomap}}"
             path: /build/algomap.json
-    outputs:
-      parameters:
-      - name: json
-        valueFrom: 
-          parameter: "{{steps.schedule.outputs.parameters.json}}"
-
 
   - name: build
     inputs:
@@ -112,99 +109,54 @@ spec:
       - name: commit
       - name: optlvl
       - name: compiler
-      - name: algorithm
-      - name: keylen
       artifacts:
         - name: algomap
           path: /build/algomap.json
     container:
-      image: jumpst3r/builder:eval
-      imagePullPolicy: Always
+      #image: jumpst3r/builder:eval
+      image: docker.io/library/builder2
+      imagePullPolicy: Never
+      volumeMounts:
+      - name: workdir
+        mountPath: /mnt/vol
       command:
           - bash
           - '-c'
       args:
           - >-
             python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.compiler}}
-    outputs:
-      parameters:
-      - name: leaks
-        valueFrom:
-          path: /tmp/summary.json
-
-  - name: reduce-framework
-    inputs:
-      parameters:
-      - name: leaks
-      - name: toolchain
-      - name: framework
-      - name: commit
-      - name: optlvl
-      - name: compiler
-      - name: algomap
-    script:
-      image: python:alpine3.6
-      command: [python]
-      source: |
-        import json
-        import re
-        print(type({{inputs.parameters.leaks}}))
-        rawleaks = r'{{inputs.parameters.leaks}}'
-        rawleaks = rawleaks.replace('\\"', '|')
-        rawleaks = rawleaks.replace('"', '')
-        rawleaks = rawleaks.replace('|', '"')
-        print(rawleaks)
-
-        leaks = json.loads(rawleaks)
-        algs = json.loads(str({{inputs.parameters.algomap}}).replace("'", '"'))
-        toolchain = "{{inputs.parameters.toolchain}}".strip()
-        framework = "{{inputs.parameters.framework}}".strip()
-        commit = "{{inputs.parameters.commit}}".strip()
-        optlvl = "{{inputs.parameters.optlvl}}".strip()
-        compiler = "{{inputs.parameters.compiler}}".strip()
-
-        larray = []
-        for idx,l in enumerate(leaks):
-            robj = {}
-            robj['algorithm'] = algs[idx]['algo']
-            robj['keylen'] = algs[idx]['keylen']
-            robj['leaks'] = l
-            larray.append(robj)
-
-
-        result = {}
-        result['toolchain'] = toolchain
-        result['framework'] = framework
-        result['commit'] = commit
-        result['optlvl'] = optlvl
-        result['compiler'] = compiler
-        result['results'] = larray
-
-
-        with open('/tmp/result.json', 'w') as f: 
-            json.dump(result,f)
-    outputs:
-      parameters:
-      - name: json
-        valueFrom:
-          path: /tmp/result.json
 
   - name: reduce-global
-    inputs:
-      parameters:
-      - name: jsonlist
     script:
       image: python:alpine3.6
+      volumeMounts:
+      - name: workdir
+        mountPath: /mnt/vol
       command: [python]
       source: |
+        import glob
         import json
-        rawleaks = r'{{inputs.parameters.jsonlist}}'
-        rawleaks = rawleaks.replace('\\"', '|')
-        rawleaks = rawleaks.replace('"', '')
-        rawleaks = rawleaks.replace('|', '"')
-        li = json.loads(rawleaks)
+        jlist = glob.glob('/mnt/vol/*.json')
+        print("jsonlist:")
+        print(jlist)
+        final = []
+        for r in jlist:
+          if '*' not in r:
+            continue
+          with open(r, 'r') as f:
+            res = json.load(f)
+          canonicalName = r.split('/')[-1]
+          jsondict = {}
+          jsondict['toolchain'] = canonicalName.split('*')[0]
+          jsondict['framework'] = canonicalName.split('*')[1]
+          jsondict['commit'] = canonicalName.split('*')[2]
+          jsondict['optlvl'] = canonicalName.split('*')[3]
+          jsondict['compiler'] = canonicalName.split('*')[4]
+          jsondict['results'] = res
+          final.append(res)
         with open('/tmp/result.json', 'w') as f: 
-            json.dump(li,f)
+          json.dump(final, f)
+
     outputs:
       artifacts:
       - name: results
@@ -213,5 +165,28 @@ spec:
       - name: results
         valueFrom:
           path: /tmp/result.json
+  
+
+
+  - name: getmapartifact
+    inputs:
+      parameters:
+      - name: algomap
+    script:
+      image: python:alpine3.6
+      command: [python]
+      source: |
+        import json
+        algomap = r'''{{inputs.parameters.algomap}}'''
+        #algomap = algomap.replace('\\"', '|')
+        #algomap = algomap.replace('"', '')
+        #algomap = algomap.replace('|', '"')
+        print(algomap)
+        with open('/tmp/res.json', 'w') as f:
+          f.write(algomap)
+    outputs:
+      artifacts:
+      - name: algomap
+        path: /tmp/res.json
 
       
