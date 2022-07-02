@@ -15,7 +15,7 @@
   cursor: pointer;
 }
 
-td:last-child {     display:none; }
+#evaltable td:last-child {     display:none; }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {

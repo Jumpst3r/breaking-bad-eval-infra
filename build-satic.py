@@ -102,7 +102,9 @@ if __name__ == "__main__":
             outer_div=soup.find('div',attrs={"class":"results-body"})
             outer_div.clear()
             outer_div.append(BeautifulSoup(''.join(html_report),'html.parser'))
-
+            tables = soup.findAll('table')
+            for t in tables:
+                t['class'] = 'table table-theme table-row v-middle'
             lines = soup.prettify()
             lines = lines.split('\n')
             # write back
