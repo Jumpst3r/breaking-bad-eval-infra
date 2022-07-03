@@ -10,7 +10,7 @@ if __name__ == "__main__":
     client = MongoClient('mongodb://docker:mongopw@localhost:55000/')
 
     # First, all constant time ones
-    result = client['microsurf']['evaluation2'].aggregate([
+    result = client['microsurf']['evaluation3'].aggregate([
     {
             '$unwind': {
                 'path': '$results'

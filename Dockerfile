@@ -1,4 +1,4 @@
-FROM jumpst3r/microsurf:eval
+FROM jumpst3r/microsurf:latest
 #FROM docker.io/library/microsurf2
 RUN apt update && apt install --no-install-recommends -y build-essential libtool git wget python3 python-is-python3 zip
 RUN wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz && tar -xf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz && cd clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04 && cp -R * /usr/local/

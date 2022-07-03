@@ -6,7 +6,7 @@ spec:
   volumes:
   - name: workdir
     persistentVolumeClaim:
-      claimName: my-existing-volume
+      claimName: myclaim2
   imagePullSecrets:
   - name: regcred2
   arguments:
@@ -54,7 +54,7 @@ spec:
     - - name: schedule-build
         template: schedule-build
         continueOn:
-          failed: false
+          failed: true
         arguments:
           parameters:
           - name: toolchain
@@ -90,7 +90,7 @@ spec:
     - - name: schedule
         template: build
         continueOn:
-          failed: false
+          failed: true
         arguments:
           parameters:
           - name: toolchain
@@ -120,9 +120,8 @@ spec:
         - name: algomap
           path: /build/algomap.json
     container:
-      #image: jumpst3r/builder:eval
-      image: docker.io/library/builder2
-      imagePullPolicy: Never
+      image: jumpst3r/builder:eval
+      # image: docker.io/library/builder2
       volumeMounts:
       - name: workdir
         mountPath: /mnt/vol
