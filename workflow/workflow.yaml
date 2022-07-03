@@ -120,7 +120,7 @@ spec:
         - name: algomap
           path: /build/algomap.json
     container:
-      image: jumpst3r/builder:eval
+      image: jumpst3r/builder:latest
       # image: docker.io/library/builder2
       volumeMounts:
       - name: workdir
@@ -180,9 +180,18 @@ spec:
       - name: algomap
     script:
       image: python:alpine3.6
+      volumeMounts:
+      - name: workdir
+        mountPath: /mnt/vol
       command: [python]
       source: |
         import json
+        import os
+        import glob
+        # remove files from previous runs
+        files = glob.glob('/mnt/vol/*')
+        for f in files:
+            os.remove(f)
         algomap = r'''{{inputs.parameters.algomap}}'''
         #algomap = algomap.replace('\\"', '|')
         #algomap = algomap.replace('"', '')

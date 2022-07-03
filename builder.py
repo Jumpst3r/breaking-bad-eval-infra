@@ -114,6 +114,13 @@ global ID
 
 def build():
     global ID
+    toolchain_id = sys.argv[1]
+    framework_id = sys.argv[2]
+    framework_commit = sys.argv[3]
+    optflag = sys.argv[4]
+    u_compiler = sys.argv[5]
+
+    ID = f'{toolchain_id}*{framework_id}*{framework_commit}*{optflag}*{u_compiler}'
     # leak count of -2 indicates compiler failure
     st = ['{"CF Leak Count":-2,"Memory Leak Count":-2}']
     # check if k8s shared volume is mounted
@@ -133,13 +140,6 @@ def build():
     subprocess.run('mv results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
 
     cwd = os.getcwd()
-    toolchain_id = sys.argv[1]
-    framework_id = sys.argv[2]
-    framework_commit = sys.argv[3]
-    optflag = sys.argv[4]
-    u_compiler = sys.argv[5]
-
-    ID = f'{toolchain_id}*{framework_id}*{framework_commit}*{optflag}*{u_compiler}'
 
     if u_compiler not in ['gcc', 'clang', 'icx']:
         print("Invalid compiler.")
