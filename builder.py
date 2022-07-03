@@ -135,7 +135,7 @@ def build():
         print("No mounted volume")
     # write to output file
     with open('/tmp/summary.json', 'w') as f:
-        f.writelines(st)
+        f.writelines(finalres)
     try:
         os.mkdir('results', )
     except Exception as e:
