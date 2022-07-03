@@ -116,7 +116,12 @@ def build():
     global ID
     # leak count of -2 indicates compiler failure
     st = ['{"CF Leak Count":-2,"Memory Leak Count":-2}']
-
+    # check if k8s shared volume is mounted
+    if os.path.isdir('/mnt/vol'):
+         with open(f'/mnt/vol/{ID}.json', 'w') as f:
+            f.writelines(st)
+    else:
+        print("No mounted volume")
     # write to output file
     with open('/tmp/summary.json', 'w') as f:
         f.writelines(st)
