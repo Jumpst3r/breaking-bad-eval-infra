@@ -191,7 +191,8 @@ if __name__ == "__main__":
         txt4 = df.to_html(escape=False, header=False, index_names=False, index=False).split('\n')
         txt4 = txt4[2:] # remove table def
         txt4 = txt4[:-2] # footer
-    except Exception:
+    except Exception as e:
+        print(e)
         pass
 
     txt = txt + txt2 + txt3 + txt4

@@ -114,19 +114,23 @@ global ID
 
 def build():
     global ID
+    finalres = {}
     toolchain_id = sys.argv[1]
     framework_id = sys.argv[2]
     framework_commit = sys.argv[3]
     optflag = sys.argv[4]
     u_compiler = sys.argv[5]
-
+    finalres['toolchain'] = toolchain_id
+    finalres['framework'] = framework_id
+    finalres['commit'] = framework_commit
+    finalres['optlvl'] = optflag
+    finalres['compiler'] = u_compiler
+    finalres['results'] = [{"CF Leak Count":-2, "Memory Leak Count":-2}]
     ID = f'{toolchain_id}*{framework_id}*{framework_commit}*{optflag}*{u_compiler}'
-    # leak count of -2 indicates compiler failure
-    st = ['{"CF Leak Count":-2,"Memory Leak Count":-2}']
     # check if k8s shared volume is mounted
     if os.path.isdir('/mnt/vol'):
          with open(f'/mnt/vol/{ID}.json', 'w') as f:
-            f.writelines(st)
+            json.dump(finalres, f)
     else:
         print("No mounted volume")
     # write to output file
