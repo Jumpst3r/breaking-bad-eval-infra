@@ -71,7 +71,7 @@
                         "name": "mbedtls",
                         "buildcmd-gcc": ["SHARED=1 CC=$(pwd)/../toolchain/bin/aarch64-linux-gcc AR=$(pwd)/../toolchain/bin/aarch64-linux-ar LD=$(pwd)/../toolchain/bin/aarch64-linux-ld CFLAGS=\"$CFLAGS\"  make lib -j4 "],
                         "cflags-gcc": "-march=armv8-a -gdwarf-4",
-                        "buildcmd-clang": ["SHARED=1 CC=clang LD=clang AR=llvm-ar CFLAGS=\"$CFLAGS\" make lib -j4 "],
+                        "buildcmd-clang": ["SHARED=1 CC=clang LD=clang AR=llvm-ar CFLAGS=\"$CFLAGS\" LDFLAGS=\"$CFLAGS\" make lib -j4 "],
                         "cflags-clang": "--target=aarch64-elf-linux -gdwarf-4 --sysroot=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld"
                     }
                 ]

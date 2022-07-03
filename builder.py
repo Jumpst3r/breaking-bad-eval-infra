@@ -129,8 +129,9 @@ def build():
     ID = f'{toolchain_id}*{framework_id}*{framework_commit}*{optflag}*{u_compiler}'
     # check if k8s shared volume is mounted
     if os.path.isdir('/mnt/vol'):
-         with open(f'/mnt/vol/{ID}.json', 'w') as f:
+        with open(f'/mnt/vol/{ID}.json', 'w') as f:
             json.dump(finalres, f)
+        print("saved data in case of failure")
     else:
         print("No mounted volume")
     # write to output file
@@ -321,8 +322,9 @@ def build():
 
     # check if k8s shared volume is mounted
     if os.path.isdir('/mnt/vol'):
-         with open(f'/mnt/vol/{ID}.json', 'w') as f:
+        with open(f'/mnt/vol/{ID}.json', 'w') as f:
             json.dump(finalres, f)
+        print("saved data")
     else:
         print("No mounted volume")
 

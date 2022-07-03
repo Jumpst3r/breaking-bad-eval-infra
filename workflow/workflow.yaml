@@ -18,21 +18,7 @@ spec:
             "toolchain": "aarch64--glibc--stable-2018.11-1",
             "framework": "mbedtls",
             "commit": "4ccd226cbf087ee78b443e452200dd0486527658",
-            "optlvl": "-O3",
-            "compiler": "clang"
-        },
-        {
-            "toolchain": "aarch64--glibc--stable-2018.11-1",
-            "framework": "mbedtls",
-            "commit": "4ccd226cbf087ee78b443e452200dd0486527658",
-            "optlvl": "-Os",
-            "compiler": "clang"
-        },
-        {
-            "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
-            "framework": "wolfssl",
-            "commit": "f401a3b53ddd531b848caf635feeb87103625b3d",
-            "optlvl": "-O3",
+            "optlvl": "-Owdksndksnd",
             "compiler": "clang"
         },
         {
@@ -140,7 +126,7 @@ spec:
         - name: algomap
           path: /build/algomap.json
     container:
-      image: jumpst3r/builder:eval
+      image: jumpst3r/builder:prod
       imagePullPolicy: Always
       # image: docker.io/library/builder2
       volumeMounts:
@@ -166,6 +152,9 @@ spec:
         jlist = glob.glob('/mnt/vol/*.json')
         print("jsonlist:")
         print(jlist)
+        all = glob.glob('/mnt/vol/*')
+        print("all files:")
+        print(all)
         final = []
         for r in jlist:
           if '*' not in r:
