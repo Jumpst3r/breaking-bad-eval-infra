@@ -52,8 +52,12 @@ hextobin(unsigned char *dst, const char *src)
 	return num;
 }
 
-
-int encrypt_aes(Aes *ctx, const byte *key,int keysize, int dir){
+/*
+mode 0: cbc
+mode 1: ctr
+mode 2: gcm
+*/
+int encrypt_aes(Aes *ctx, const byte *key,int keysize, int dir, int mode){
     const byte iv[] = { 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
     byte in[32] = { 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
     byte out[32];
@@ -63,7 +67,21 @@ int encrypt_aes(Aes *ctx, const byte *key,int keysize, int dir){
         printf("Failed to set key: ERRNO %d\n", ret);
         exit(1);
     }
-    ret = wc_AesCbcEncrypt(ctx, out, in, sizeof(in));
+    if (mode == 0){
+        ret = wc_AesCbcEncrypt(ctx, out, in, sizeof(in));
+    }
+    else if (mode == 1){
+        ret = wc_AesCtrEncrypt(ctx, out, in, sizeof(in));
+    }
+    else if (mode == 2){
+        ret = wc_AesGcmSetKey(ctx, key, sizeof(key));
+        if (ret != 0) return 1;
+        byte auth_tag[32]; 
+        byte auth_vec[32]; 
+        ret = wc_AesGcmEncrypt(ctx, out, in,  sizeof(in), iv, sizeof(iv), auth_tag, sizeof(auth_tag), auth_vec, sizeof(auth_vec));
+        if (ret != 0) return 1;
+    }
+   
     if (ret != 0){
         printf("Failed to set key: ERRNO %d\n", ret);
         exit(1);
@@ -121,7 +139,15 @@ int main (int argc, char **argv)
 
     if (!strcmp(mode, "aes-cbc")) {
         Aes enc;
-        encrypt_aes(&enc, KEY, keysize, AES_ENCRYPTION);
+        encrypt_aes(&enc, KEY, keysize, AES_ENCRYPTION, 0);
+    }
+    else if (!strcmp(mode, "aes-ctr")) {
+        Aes enc;
+        encrypt_aes(&enc, KEY, keysize, AES_ENCRYPTION, 1);
+    }
+    else if (!strcmp(mode, "aes-gcm")) {
+        Aes enc;
+        encrypt_aes(&enc, KEY, keysize, AES_ENCRYPTION, 2);
     }
     else if (!strcmp(mode, "camellia-cbc")) {
         Camellia enc;

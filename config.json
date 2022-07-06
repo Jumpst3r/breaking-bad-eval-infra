@@ -18,7 +18,7 @@
                     },
                     {
                         "name": "botan",
-                        "buildcmd-gcc": ["./configure.py --cc-bin=$(pwd)/../toolchain/bin/x86_64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile && make libs -j$(nproc) "],
+                        "buildcmd-gcc": ["./configure.py --cc-bin=$(pwd)/../toolchain/bin/x86_64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile && make libs -j4 "],
                         "buildcmd-clang": ["./configure.py --ldflags=\"$CFLAGS\" --cc-bin=clang++ --ar-command=llvm-ar --with-sysroot-dir=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot --extra-cxxflags=\"$CFLAGS\" && make libs -j4"],
                         "buildcmd-icx": ["./configure.py --ldflags=\"$CFLAGS\" --cc-bin=icpx --cc=icc --disable-cc-tests --ar-command=llvm-ar --extra-cxxflags=\"$CFLAGS\" && make libs -j4"],
                         "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/include/c++/7.3.0/ -I$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/include/c++/7.3.0/x86_64-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -fuse-ld=lld -Wno-error",
@@ -33,7 +33,7 @@
                     },
                     {
                         "name": "mbedtls",
-                        "buildcmd-gcc": ["SHARED=1 CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" make lib -j$(nproc) "],
+                        "buildcmd-gcc": ["SHARED=1 CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" make lib -j4 "],
                         "buildcmd-clang": ["SHARED=1 CC=clang CFLAGS=\"$CFLAGS\" make lib  -j2"],
                         "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": "-gdwarf-4"
@@ -55,7 +55,7 @@
                     },
                     {
                         "name": "botan",
-                        "buildcmd-gcc": ["./configure.py --cpu=armv8 --cc-bin=$(pwd)/../toolchain/bin/aarch64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile && make libs -j$(nproc) "],
+                        "buildcmd-gcc": ["./configure.py --cpu=armv8 --cc-bin=$(pwd)/../toolchain/bin/aarch64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile && make libs -j4 "],
                         "buildcmd-clang": ["./configure.py --disable-cc-tests --cpu=armv8 --ldflags=\"$CFLAGS\" --cc-bin=clang++ --ar-command=llvm-ar --with-sysroot-dir=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot --extra-cxxflags=\"$CFLAGS\" && make libs -j4"],
                         "cflags-clang": "--target=aarch64-elf-linux -gdwarf-4 -march=armv8-a --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/include/c++/7.3.0/ -I$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/include/c++/7.3.0/aarch64-buildroot-linux-gnu/ -I$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/include/ --sysroot=$(pwd)/../toolchain/aarch64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -fuse-ld=lld -Wno-error",
                         "cflags-gcc": "-march=armv8-a -gdwarf-4"
@@ -158,28 +158,28 @@
                         "name": "openssl",
                         "buildcmd-gcc": ["./Configure linux64-riscv64 --cross-compile-prefix=$(pwd)/../toolchain/bin/riscv64-linux- $CFLAGS", "make -j4"],
                         "buildcmd-clang": ["./Configure linux64-riscv64", "sed -i \"/^CC=/c\\CC=clang\" Makefile && sed -i \"/^AR=/c\\AR=llvm-ar\" Makefile && sed -i \"/^CXX=/c\\CXX=clang++\" Makefile", "make -j4"],
-                        "cflags-clang": "--target=arm-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/c++/10.3.0/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/c++/10.3.0/riscv64-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-clang": "--target==riscv64-elf-linux-gnu -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/c++/10.3.0/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/c++/10.3.0/riscv64-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -fuse-ld=lld -Wno-error",
                         "cflags-gcc": "-gdwarf-4"
                     },
                     {
                         "name": "botan",
                         "buildcmd-gcc": ["./configure.py --cpu=riscv64 --cc-bin=$(pwd)/../toolchain/bin/riscv64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile && make libs -j4"],
                         "buildcmd-clang": ["./configure.py --disable-cc-tests --cpu=riscv64 --ldflags=\"$CFLAGS\" --cc-bin=clang++ --ar-command=llvm-ar --with-sysroot-dir=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot --extra-cxxflags=\"$CFLAGS\" && make libs -j4"],
-                        "cflags-clang": "--target=arm-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/c++/10.3.0/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/c++/10.3.0/riscv64-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-clang": "--target==riscv64-elf-linux-gnu -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/c++/10.3.0/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/ -I$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/include/c++/10.3.0/riscv64-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -fuse-ld=lld -Wno-error",
                         "cflags-gcc": "-gdwarf-4"
                     },
                     {
                         "name": "wolfssl",
                         "buildcmd-gcc": ["./autogen.sh && ./configure --host=riscv64 -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot", "make -j4"],
                         "buildcmd-clang": ["./autogen.sh && ./configure --host=riscv64 -enable-shared=no --enable-all-crypto CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile", "make -j4"],
-                        "cflags-clang": "-fpic --target=riscv64-elf-linux -gdwarf-4 --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -Wno-error",
+                        "cflags-clang": "-fpic --target=riscv64-elf-linux-gnu -gdwarf-4 --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -Wno-error",
                         "cflags-gcc": "-fpic -gdwarf-4"
                     },
                     {
                         "name": "mbedtls",
                         "buildcmd-gcc": ["SHARED=1 CC=$(pwd)/../toolchain/bin/riscv64-linux-gcc AR=$(pwd)/../toolchain/bin/riscv64-linux-ar LD=$(pwd)/../toolchain/bin/riscv64-linux-ld CFLAGS=\"$CFLAGS\" make lib -j4 "],
                         "buildcmd-clang": ["SHARED=1 CC=clang AR=llvm-ar LD=clang CFLAGS=\"$CFLAGS\" LDFLAGS=\"$CFLAGS\" make lib -j4 "],
-                        "cflags-clang": "--target=riscv64-elf-linux -gdwarf-4 --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -Wno-error -fuse-ld=lld",
+                        "cflags-clang": "--target=riscv64-elf-linux-gnu -gdwarf-4 --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": "-gdwarf-4"
                     }
                 ]
@@ -216,6 +216,28 @@
                         "buildcmd-gcc": ["SHARED=1 CC=$(pwd)/../toolchain/bin/mipsel-linux-gcc AR=$(pwd)/../toolchain/bin/mipsel-linux-ar LD=$(pwd)/../toolchain/bin/mipsel-linux-ld CFLAGS=\"$CFLAGS\"  make lib -j4 "],
                         "buildcmd-clang": ["SHARED=1 CC=clang AR=llvm-ar LD=clang CFLAGS=\"$CFLAGS\" LDFLAGS=\"$CFLAGS\" make lib -j4 "],
                         "cflags-clang": "-Wl,-z,notext -gdwarf-4 --target=mipsel-elf-linux --sysroot=$(pwd)/../toolchain/mipsel-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld",
+                        "cflags-gcc": "-gdwarf-4"
+                    }
+                ]
+            },
+            "powerpc-440fp--glibc--stable-2020.08-1": {
+                "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/powerpc-440fp/tarballs/powerpc-440fp--glibc--stable-2020.08-1.tar.bz2",
+                "rootfs": "powerpc-buildroot-linux-gnu/sysroot",
+                "libdir": "lib/",
+                "prefix": "bin/powerpc-buildroot-linux-gnu-",
+                "compileOptions": [
+                    {
+                        "name": "wolfssl",
+                        "buildcmd-gcc": ["./autogen.sh && ./configure --host=powerpc -enable-shared=yes --with-pic=yes --enable-opensslall --enable-all-crypto CC=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-gnu-gcc AR=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-gnu-ar LD=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-gnu-ld CFLAGS=\"$CFLAGS\"", "make -j4"],
+                        "buildcmd-clang": ["./autogen.sh && ./configure --host=powerpc -enable-shared=no --enable-all-crypto CC=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-gnu-gcc CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile", "make -j4"],
+                        "cflags-clang": "-Wl,-z,notext -gdwarf-4 --target=powerpc-elf-linux --sysroot=$(pwd)/../toolchain/powerpc-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-gnu/9.3.0/ -B $(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-gnu/9.3.0/ -Wno-error",
+                        "cflags-gcc": "-fpic -gdwarf-4"
+                    },
+                    {
+                        "name": "mbedtls",
+                        "buildcmd-gcc": ["SHARED=1 CC=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-gnu-gcc AR=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-gnu-ar LD=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-gnu-ld CFLAGS=\"$CFLAGS\"  make lib -j11 "],
+                        "buildcmd-clang": ["SHARED=1 CC=clang AR=llvm-ar LD=clang CFLAGS=\"$CFLAGS\" LDFLAGS=\"$CFLAGS\" make lib -j11 "],
+                        "cflags-clang": "-Wl,-z,notext -gdwarf-4 --target=powerpc-elf-linux --sysroot=$(pwd)/../toolchain/powerpc-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-gnu/9.3.0/ -B $(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-gnu/9.3.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": "-gdwarf-4"
                     }
                 ]

@@ -15,7 +15,7 @@ import subprocess
 from microsurf.microsurf import SCDetector
 from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
-from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator
+from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator, ecdsa_privkey_generator, RSAPrivKeyGenerator
 import base64
 
 def checkretcode(result):
@@ -58,6 +58,9 @@ def analyze(lib, algname, keylen):
         checkretcode(result)
         args = f"0 input output {algname} SHA1 @".split()
     
+    if algname == 'ecdsa':
+        fct = ecdsa_privkey_generator(keylen)
+
     rootfs = os.getcwd()
     
     binpath = rootfs + '/driver.bin'
@@ -83,18 +86,21 @@ def analyze(lib, algname, keylen):
         return 0
     scd = SCDetector(modules=[
         # Secret dependent memory read detection
-        DataLeakDetector(binaryLoader=binLoader),
+        DataLeakDetector(binaryLoader=binLoader, granularity=4),
         # Secret dependent control flow detection
-        CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)
-    ])
+        #CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=False)
+    ], getAssembly=True)
     scd.exec()
     # remove driver induced leaks
-    if 'wolfssl' in lib:
-        # all wolfssl crypto routines start with wc_
-        mask = scd.DF['Symbol Name'].str.contains('wc')
-        scd.DF = scd.DF[mask]
-        # recreate reports:
-        scd._generateReport()
+    try:
+        if 'wolfssl' in lib:
+            # all wolfssl crypto routines start with wc_
+            mask = scd.DF['Symbol Name'].str.contains('wc')
+            scd.DF = scd.DF[mask]
+            # recreate reports:
+            scd._generateReport()
+    except Exception as e:
+        print("no leaks")
     result = subprocess.run('find ./results/ -name "*.md" -type f -delete', stderr=subprocess.PIPE, shell=True)
     result = subprocess.run('find ./results/ -name "*.json" -type f -delete', stderr=subprocess.PIPE, shell=True)
     result = subprocess.run('find ./results/ -name "*.png" -type f -delete', stderr=subprocess.PIPE, shell=True)
@@ -114,6 +120,7 @@ global ID
 
 def build():
     global ID
+    DOWNLOAD = False 
     finalres = {}
     toolchain_id = sys.argv[1]
     framework_id = sys.argv[2]
@@ -197,17 +204,16 @@ def build():
 
     # Download toolchain:
     print("- Downloading toolchain")
-    
-    result = subprocess.run(['wget', '-O', 'toolchain.tar.bz2', toolchain_url], stderr=subprocess.PIPE)
-    checkretcode(result)
+    if DOWNLOAD:
+        result = subprocess.run(['wget', '-O', 'toolchain.tar.bz2', toolchain_url], stderr=subprocess.PIPE)
+        checkretcode(result)
 
-    print('- Extracting')
-    
-    result = subprocess.run(['mkdir', '-p', 'toolchain'], stderr=subprocess.PIPE)
-    checkretcode(result)
-    
-    result = subprocess.run(['tar', '-xf', 'toolchain.tar.bz2', '-C', 'toolchain', '--strip-components', '1'], stderr=subprocess.PIPE)
-    checkretcode(result)
+        print('- Extracting')
+        result = subprocess.run(['mkdir', '-p', 'toolchain'], stderr=subprocess.PIPE)
+        checkretcode(result)
+        
+        result = subprocess.run(['tar', '-xf', 'toolchain.tar.bz2', '-C', 'toolchain', '--strip-components', '1'], stderr=subprocess.PIPE)
+        checkretcode(result)
     
     os.environ["TOOLCHAIN_ROOT"] = os.getcwd() + '/toolchain'
     print(f'- Set TOOLCHAIN_ROOT to {os.environ.get("TOOLCHAIN_ROOT")}')
@@ -215,9 +221,10 @@ def build():
     os.environ["ROOTFS"] = os.getcwd() + '/toolchain/' + rootfs
     print(f'- Set ROOTFS to {os.environ.get("ROOTFS")}')
 
-    print(f'- Cloning {framework_id}')
-    result = subprocess.run(['git', 'clone', framework_url], stderr=subprocess.PIPE)
-    checkretcode(result)
+    if DOWNLOAD:
+        print(f'- Cloning {framework_id}')
+        result = subprocess.run(['git', 'clone', framework_url], stderr=subprocess.PIPE)
+        checkretcode(result)
 
     os.environ["FRAMEWORK"] = os.getcwd() + '/' +framework_id
     print(f'- Set FRAMEWORK to {os.environ.get("FRAMEWORK")}')
@@ -225,16 +232,21 @@ def build():
     os.chdir(os.environ.get("FRAMEWORK"))
 
     print(f'- Checking out {framework_commit}')
-    result = subprocess.run(['git', 'checkout', framework_commit], stderr=subprocess.PIPE)
-    checkretcode(result)
+    if DOWNLOAD:
+        result = subprocess.run(['git', 'checkout', framework_commit], stderr=subprocess.PIPE)
+        checkretcode(result)
     cflags = cflags.replace('$(pwd)', os.getcwd())
     print(f"SSSS_ {cflags}")
     os.environ["CFLAGS"] = cflags
     os.environ["SHARED"] = '1'
-    for cmd in framework_config_cmd:
-        print(f'- Configuring/Compiling {framework_id} with {cmd.split()}')
-        result = subprocess.run(cmd, stderr=subprocess.PIPE, shell=True)
-        checkretcode(result)
+    if DOWNLOAD:
+        if 'powerpc' in toolchain_id:
+            print(f"- Updating LD_LIBRARY_PATH to {os.getcwd() + '/../toolchain/' + 'lib/'}")
+            os.environ["LD_LIBRARY_PATH"] = os.getcwd() + '/../toolchain/' + 'lib/'
+        for cmd in framework_config_cmd:
+            print(f'- Configuring/Compiling {framework_id} with {cmd.split()}')
+            result = subprocess.run(cmd, stderr=subprocess.PIPE, shell=True)
+            checkretcode(result)
 
     result = subprocess.run(f'find ./ -name "{libname}*.so"', stderr=subprocess.PIPE, shell=True)
     checkretcode(result)
@@ -257,6 +269,11 @@ def build():
         result = subprocess.run(f'cp $(find ./ -name "{libname}*.so.*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
     
+    # emulation for ppc requires libs in a different dir
+    if 'powerpc' in toolchain_id:
+        result = subprocess.run(f'mkdir -p {os.getcwd()}/../toolchain/{rootfs}/{libdir}/tls/i686', stderr=subprocess.PIPE, shell=True)
+        result = subprocess.run(f'cp {os.getcwd()}/../toolchain/{rootfs}/{libdir}/* {os.getcwd()}/../toolchain/{rootfs}/{libdir}/tls/i686/', stderr=subprocess.PIPE, shell=True)
+
     os.chdir(cwd)
 
     print(f'- Copying driver to {rootfs}')

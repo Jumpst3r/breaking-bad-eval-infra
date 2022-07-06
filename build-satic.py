@@ -8,9 +8,9 @@ import glob
 if __name__ == "__main__":    
     
     client = MongoClient('mongodb://docker:mongopw@localhost:55000/')
-
+    collection = 'eval-demo'
     # First, all constant time ones
-    result = client['microsurf']['evaluation3'].aggregate([
+    result = client['microsurf'][collection].aggregate([
     {
             '$unwind': {
                 'path': '$results'
@@ -36,14 +36,14 @@ if __name__ == "__main__":
     ])
     txt = []
     try:
-        df = pd.DataFrame(result)[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result']]
+        df = pd.DataFrame(result)[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result', '_id']]
         txt = df.to_html(escape=False, header=False, index_names=False, index=False).split('\n')
         txt = txt[2:] # remove table def
         txt = txt[:-2] # footer
     except Exception:
         pass
     
-    result = client['microsurf']['evaluation'].aggregate([
+    result = client['microsurf'][collection].aggregate([
         {
             '$unwind': {
                 'path': '$results'
@@ -81,15 +81,16 @@ if __name__ == "__main__":
     txt2 = []
     try:
         df = pd.DataFrame(result)
+        df['code'] = list(range(len(df)))
         for i in range(len(df)):
             row = df[i:i+1]
             b64bytes = base64.b64decode(str(row['b64'].values[0]))
             import zipfile
-            with open(f'/tmp/{str(row["_id"].values[0])}.zip', 'wb') as f:
+            with open(f'/tmp/{str(i)}.zip', 'wb') as f:
                 f.write(b64bytes)
-            with zipfile.ZipFile(f"/tmp/{str(row['_id'].values[0])}.zip","r") as zip_ref:
-                    zip_ref.extractall(f"/tmp/res-{str(row['_id'].values[0])}")
-            htmlfile = glob.glob(f"/tmp/res-{str(row['_id'].values[0])}/**/*.html", recursive=True)[-1]
+            with zipfile.ZipFile(f"/tmp/{str(i)}.zip","r") as zip_ref:
+                    zip_ref.extractall(f"/tmp/res-{str(i)}")
+            htmlfile = glob.glob(f"/tmp/res-{str(i)}/**/*.html", recursive=True)[-1]
             
 
             with open('bootstrap-static/results/template.html', 'r') as f:
@@ -108,17 +109,17 @@ if __name__ == "__main__":
             lines = soup.prettify()
             lines = lines.split('\n')
             # write back
-            with open(f'bootstrap-static/results/{str(row["_id"].values[0])}.html', 'w') as f:
+            with open(f'bootstrap-static/results/{str(i)}.html', 'w') as f:
                 f.writelines(lines)
-
-        dftable = df[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result', '_id']]
+        print("done")
+        dftable = df[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result', 'code']]
         txt2 = dftable.to_html(escape=False, header=False, index_names=False, index=False).split('\n')
         txt2 = txt2[2:] # remove table def
         txt2 = txt2[:-2] # footer
     except Exception as e:
         print(str(e))
 
-    result = client['microsurf']['evaluation'].aggregate([
+    result = client['microsurf'][collection].aggregate([
         {
             '$unwind': {
                 'path': '$results'
@@ -149,14 +150,16 @@ if __name__ == "__main__":
         ])
     txt3 = []
     try:
-        df = pd.DataFrame(result)[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result']]
+        df = pd.DataFrame(result)
+        df = df[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result', '_id']]
         txt3 = df.to_html(escape=False, header=False, index_names=False, index=False).split('\n')
         txt3 = txt3[2:] # remove table def
         txt3 = txt3[:-2] # footer
-    except Exception:
+    except Exception as e:
+        print(f"unsup: {e}")
         pass
 
-    result = client['microsurf']['evaluation'].aggregate([
+    result = client['microsurf'][collection].aggregate([
         {
             '$unwind': {
                 'path': '$results'
@@ -187,7 +190,7 @@ if __name__ == "__main__":
         ])
     txt4 = []
     try:
-        df = pd.DataFrame(result)[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result']]
+        df = pd.DataFrame(result)[['framework', 'algorithm', 'toolchain', 'compiler', 'optlvl', 'commit', 'result', '_id']]
         txt4 = df.to_html(escape=False, header=False, index_names=False, index=False).split('\n')
         txt4 = txt4[2:] # remove table def
         txt4 = txt4[:-2] # footer

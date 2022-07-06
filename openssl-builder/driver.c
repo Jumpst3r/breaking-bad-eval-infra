@@ -75,6 +75,8 @@ int main (int argc, char **argv)
     const EVP_CIPHER *alg;
 
     if (!strcmp(mode, "aes-cbc")) alg = EVP_aes_128_cbc();
+    else if (!strcmp(mode, "aes-ctr")) alg = EVP_aes_128_ctr();
+    else if (!strcmp(mode, "aes-gcm")) alg = EVP_aes_128_ctr();
     else if (!strcmp(mode, "camellia-cbc")) alg = EVP_camellia_128_cbc();
     else if (!strcmp(mode, "aria-cbc")) alg = EVP_aria_192_cbc();
     else if (!strcmp(mode, "des-cbc")) alg = EVP_des_ede_cbc();
@@ -109,8 +111,8 @@ int main (int argc, char **argv)
                               ciphertext, alg);
 
     /* Do something useful with the ciphertext here */
-    //printf("Ciphertext is:\n");
-    //BIO_dump_fp (stdout, (const char *)ciphertext, ciphertext_len);
+    // printf("Ciphertext is:\n");
+    // BIO_dump_fp (stdout, (const char *)ciphertext, ciphertext_len);
 
 
     return 0;

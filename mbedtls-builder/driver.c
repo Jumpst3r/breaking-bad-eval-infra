@@ -150,6 +150,9 @@ int main( int argc, char *argv[] )
     char *mmode = argv[4];
     char *alg;
     if (!strcmp(mmode, "aes-cbc")) alg = "AES-128-CBC";
+    if (!strcmp(mmode, "aes-ctr")) alg = "AES-128-CTR";
+    if (!strcmp(mmode, "aes-gcm")) alg = "AES-128-GCM";
+
     else if (!strcmp(mmode, "camellia-cbc")) alg = "CAMELLIA-128-CBC";
     else if (!strcmp(mmode, "aria-cbc")) alg = "ARIA-128-CBC";
     else if (!strcmp(mmode, "des-cbc")) alg = "DES-EDE3-CBC";
