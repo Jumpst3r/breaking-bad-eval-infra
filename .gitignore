@@ -1,3 +1,4 @@
 *.bin
 .vscode/
 k8s-config/
+*.html

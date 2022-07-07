@@ -17,6 +17,7 @@ from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
 from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator, ecdsa_privkey_generator, RSAPrivKeyGenerator
 import base64
+import uuid
 
 def checkretcode(result):
     err = result.stderr
@@ -86,16 +87,16 @@ def analyze(lib, algname, keylen):
         return 0
     scd = SCDetector(modules=[
         # Secret dependent memory read detection
-        DataLeakDetector(binaryLoader=binLoader, granularity=4),
+        DataLeakDetector(binaryLoader=binLoader, granularity=1),
         # Secret dependent control flow detection
-        #CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=False)
+        CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=False)
     ], getAssembly=True)
     scd.exec()
     # remove driver induced leaks
     try:
         if 'wolfssl' in lib:
             # all wolfssl crypto routines start with wc_
-            mask = scd.DF['Symbol Name'].str.contains('wc')
+            mask = scd.DF['Symbol Name'].str.contains('hextobin')
             scd.DF = scd.DF[mask]
             # recreate reports:
             scd._generateReport()
@@ -133,7 +134,7 @@ def build():
     finalres['optlvl'] = optflag
     finalres['compiler'] = u_compiler
     finalres['results'] = [{"CF Leak Count":-2, "Memory Leak Count":-2}]
-    ID = f'{toolchain_id}*{framework_id}*{framework_commit}*{optflag}*{u_compiler}'
+    ID = f'{toolchain_id}*{framework_id}*{framework_commit}*{optflag}*{u_compiler}*{uuid.uuid4()}'
     # check if k8s shared volume is mounted
     if os.path.isdir('/mnt/vol'):
         with open(f'/mnt/vol/{ID}.json', 'w') as f:
