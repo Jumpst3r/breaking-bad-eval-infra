@@ -15,7 +15,7 @@ import subprocess
 from microsurf.microsurf import SCDetector
 from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
-from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator, ecdsa_privkey_generator, RSAPrivKeyGenerator
+from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator
 import base64
 import uuid
 
@@ -59,8 +59,8 @@ def analyze(lib, algname, keylen):
         checkretcode(result)
         args = f"0 input output {algname} SHA1 @".split()
     
-    if algname == 'ecdsa':
-        fct = ecdsa_privkey_generator(keylen)
+    #if algname == 'ecdsa':
+        #fct = ecdsa_privkey_generator(keylen)
 
     rootfs = os.getcwd()
     
