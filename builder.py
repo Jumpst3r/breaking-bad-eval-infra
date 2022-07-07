@@ -121,7 +121,7 @@ global ID
 
 def build():
     global ID
-    DOWNLOAD = False 
+    DOWNLOAD = True 
     finalres = {}
     toolchain_id = sys.argv[1]
     framework_id = sys.argv[2]
