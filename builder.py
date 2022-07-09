@@ -97,7 +97,7 @@ def analyze(lib, algname, keylen):
         if 'wolfssl' in lib:
             # all wolfssl crypto routines start with wc_
             mask = scd.DF['Symbol Name'].str.contains('hextobin')
-            scd.DF = scd.DF[mask]
+            scd.DF = scd.DF[~mask]
             # recreate reports:
             scd._generateReport()
     except Exception as e:

@@ -18,11 +18,14 @@
 #include <botan/x509_key.h>
 #include <botan/data_src.h>
 #include <botan/pubkey.h>
+#include <botan/mac.h>
+
 
 int main(int argc, char **argv)
 {
     std::string ukey = (const char *)argv[1];
     std::string mode;
+    std::string hmacmode = "HMAC";
 
     char *umode = argv[2];
     std::string botan_cipher_id;
@@ -92,6 +95,18 @@ int main(int argc, char **argv)
         mode.insert(0, botan_cipher_id);
         opmode = 1;
     }
+    else if (!strcmp(umode, "hmac-sha256"))
+    {
+        std::string id = "(SHA-256)";
+        hmacmode.insert(4, id);
+        opmode = 2;
+    }
+    else if (!strcmp(umode, "hmac-sha512"))
+    {
+        std::string id = "(SHA-512)";
+        hmacmode.insert(4, id);
+        opmode = 2;
+    }
     else if (!strcmp(umode, "ecdsa") or !strcmp(umode, "rsa"))
     {
         const std::string path = argv[1];
@@ -123,7 +138,18 @@ int main(int argc, char **argv)
 
         enc->start(iv);
         enc->finish(pt);
-
+    }
+    else if (opmode == 2){
+        //hmac
+        const std::vector<uint8_t> key = Botan::hex_decode(ukey);
+        const std::vector<uint8_t> data = Botan::hex_decode("6BC1BEE22E409F96E93D7E117393172A");
+        std::unique_ptr<Botan::MessageAuthenticationCode> mac(Botan::MessageAuthenticationCode::create(hmacmode));
+        if(!mac)
+            return 1;
+        mac->set_key(key);
+        mac->start();
+        mac->update(data);
+        Botan::secure_vector<uint8_t> tag = mac->final();
     }
     
 

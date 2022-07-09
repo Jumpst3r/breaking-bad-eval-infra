@@ -9,6 +9,10 @@ Adapted from https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Dec
 #include <wolfssl/wolfcrypt/camellia.h>
 #include <wolfssl/wolfcrypt/aes.h>
 #include <wolfssl/wolfcrypt/des3.h>
+#include <wolfssl/wolfcrypt/sha256.h>
+#include <wolfssl/wolfcrypt/sha512.h>
+#include <wolfssl/wolfcrypt/hmac.h>
+
 
 #include <string.h>
 
@@ -19,9 +23,9 @@ void handleErrors(void)
 
 
 
-// from BearSSL test_crypto.c - hextobin()
+// from BearSSL test_crypto.c - hextobin(). Force no-inline to properly remove key parsing secret dep leaks from report by matching the symbold name
 static size_t
-hextobin(unsigned char *dst, const char *src)
+ __attribute__ ((noinline)) hextobin(unsigned char *dst, const char *src)
 {
 	size_t num;
 	unsigned acc;
@@ -51,6 +55,41 @@ hextobin(unsigned char *dst, const char *src)
 	}
 	return num;
 }
+
+/*
+mode 0: SHA256
+mode 1: SHA512
+*/
+int hmac(const byte *key,int keysize, int mode){
+    int ret;
+    Hmac hmac;
+    const byte in[32] = { 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
+    const byte hash[256];
+    if (wc_HmacInit(&hmac, NULL, INVALID_DEVID) != 0) {
+        printf("Issue initializing hmac\n");
+        exit(1);
+    }
+
+    ret = wc_HmacSetKey(&hmac, (mode == 0) ? WC_SHA256 : WC_SHA512, key, keysize);
+    if (ret != 0){
+        printf("Issue with set key\n");
+                exit(1);
+}
+
+    ret = wc_HmacUpdate(&hmac, in, 32);
+    if (ret != 0){
+        printf("Issue with update\n");
+                exit(1);
+
+}
+    ret = wc_HmacFinal(&hmac, hash);
+    if (ret != 0){
+        printf("Issue with hmac final\n");
+        exit(1);
+    }
+    return ret;
+}
+
 
 /*
 mode 0: cbc
@@ -127,6 +166,7 @@ int encrypt_des3(Des3 *ctx, const byte *key,int keysize){
 }
 
 
+
 int main (int argc, char **argv)
 {
     const char *key = (const char*) argv[1];
@@ -136,7 +176,7 @@ int main (int argc, char **argv)
 
     /* The encryption primitive to use */
     char *mode =  argv[2];
-
+    
     if (!strcmp(mode, "aes-cbc")) {
         Aes enc;
         encrypt_aes(&enc, KEY, keysize, AES_ENCRYPTION, 0);
@@ -156,6 +196,12 @@ int main (int argc, char **argv)
     else if (!strcmp(mode, "des-cbc")) {
         Des3 enc;
         encrypt_des3(&enc, KEY, keysize);
+    }
+    else if (!strcmp(mode, "hmac-sha256")){
+        hmac(KEY, keysize, 0);
+    }
+    else if (!strcmp(mode, "hmac-sha512")){
+        hmac(KEY, keysize, 1);
     }
     else{
         return 1;

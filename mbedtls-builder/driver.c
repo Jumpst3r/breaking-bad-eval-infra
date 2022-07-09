@@ -130,6 +130,19 @@ int main( int argc, char *argv[] )
         goto exit;
     }
 
+    if( memcmp( argv[6], "hex:", 4 ) == 0 )
+    {
+        p = &argv[6][4];
+        keylen = 0;
+
+        while( sscanf( p, "%02X", (unsigned int*) &n ) > 0 &&
+                keylen < (int) sizeof( key ) )
+        {
+            key[keylen++] = (unsigned char) n;
+            p += 2;
+        }
+    }
+
     mode = MODE_ENCRYPT;
 
 
@@ -150,12 +163,45 @@ int main( int argc, char *argv[] )
     char *mmode = argv[4];
     char *alg;
     if (!strcmp(mmode, "aes-cbc")) alg = "AES-128-CBC";
-    if (!strcmp(mmode, "aes-ctr")) alg = "AES-128-CTR";
-    if (!strcmp(mmode, "aes-gcm")) alg = "AES-128-GCM";
-
+    else if (!strcmp(mmode, "aes-ctr")) alg = "AES-128-CTR";
+    else if (!strcmp(mmode, "aes-gcm")) alg = "AES-128-GCM";
     else if (!strcmp(mmode, "camellia-cbc")) alg = "CAMELLIA-128-CBC";
     else if (!strcmp(mmode, "aria-cbc")) alg = "ARIA-128-CBC";
     else if (!strcmp(mmode, "des-cbc")) alg = "DES-EDE3-CBC";
+    else if (!strcmp(mmode, "hmac-sha256") || !strcmp(mmode, "hmac-sha512")){
+        unsigned char hmacResult[32];
+        mbedtls_md_context_t ctx;
+        char *payload = "some text";
+        mbedtls_md_type_t md_type;
+        if (!strcmp(mmode, "hmac-sha256")){
+            md_type = MBEDTLS_MD_SHA256;
+            }
+        if  (!strcmp(mmode, "hmac-sha512")){
+            md_type = MBEDTLS_MD_SHA512;
+            }
+        const size_t payloadLength = strlen(payload);
+        mbedtls_md_init(&ctx);
+        if (mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1)){
+            printf("Failed to md_setup\n");
+            exit(1);
+        }
+
+        if (mbedtls_md_hmac_starts(&ctx, (const unsigned char *) key, keylen)){
+            printf("Failed hmac start\n");
+            exit(1);
+        }
+        if (mbedtls_md_hmac_update(&ctx, (const unsigned char *) payload, payloadLength)){
+            printf("Failed hmac update\n");
+            exit(1);
+        }
+        if (mbedtls_md_hmac_finish(&ctx, hmacResult)){
+            printf("Failed hmac finish\n");
+            exit(1);
+        }
+        mbedtls_md_free(&ctx);
+   
+        exit(0);
+    }
 
     cipher_info = mbedtls_cipher_info_from_string( alg );
     if( cipher_info == NULL )
@@ -176,39 +222,6 @@ int main( int argc, char *argv[] )
     if( mbedtls_md_setup( &md_ctx, md_info, 1 ) != 0 )
     {
         goto exit;
-    }
-
-    /*
-     * Read the secret key from file or command line
-     */
-    if( ( fkey = fopen( argv[6], "rb" ) ) != NULL )
-    {
-        keylen = fread( key, 1, sizeof( key ), fkey );
-        fclose( fkey );
-    }
-    else
-    {
-        if( memcmp( argv[6], "hex:", 4 ) == 0 )
-        {
-            p = &argv[6][4];
-            keylen = 0;
-
-            while( sscanf( p, "%02X", (unsigned int*) &n ) > 0 &&
-                   keylen < (int) sizeof( key ) )
-            {
-                key[keylen++] = (unsigned char) n;
-                p += 2;
-            }
-        }
-        else
-        {
-            keylen = strlen( argv[6] );
-
-            if( keylen > (int) sizeof( key ) )
-                keylen = (int) sizeof( key );
-
-            memcpy( key, argv[6], keylen );
-        }
     }
 
     if( ( filesize = lseek( fileno( fin ), 0, SEEK_END ) ) < 0 )
