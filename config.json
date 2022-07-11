@@ -14,7 +14,8 @@
                         "buildcmd-clang": ["./Configure linux-x86_64-clang $CFLAGS", "sed -i \"/^CC=/c\\CC=clang\" Makefile && sed -i \"/^AR=/c\\AR=llvm-ar\" Makefile && sed -i \"/^CXX=/c\\CXX=clang++\" Makefile", "make -j4"],
                         "buildcmd-icx": ["./Configure linux-x86_64-clang $CFLAGS -march=corei7-avx", "sed -i \"/^CC=/c\\CC=icx\" Makefile && sed -i \"/^AR=/c\\AR=llvm-ar\" Makefile && sed -i \"/^CXX=/c\\CXX=icpx\" Makefile", ". /opt/intel/oneapi/setvars.sh intel64 && make -j4"],
                         "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/include/c++/7.3.0/ -I$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/include/c++/7.3.0/x86_64-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -fuse-ld=lld -Wno-error",
-                        "cflags-gcc": "-gdwarf-4"
+                        "cflags-gcc": "-gdwarf-4",
+                        "x8664-extensions": ["AESNI-ONLY", "NONE"]
                     },
                     {
                         "name": "botan",
@@ -22,21 +23,24 @@
                         "buildcmd-clang": ["./configure.py --ldflags=\"$CFLAGS\" --cc-bin=clang++ --ar-command=llvm-ar --with-sysroot-dir=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot --extra-cxxflags=\"$CFLAGS\" && make libs -j4"],
                         "buildcmd-icx": ["./configure.py --ldflags=\"$CFLAGS\" --cc-bin=icpx --cc=icc --disable-cc-tests --ar-command=llvm-ar --extra-cxxflags=\"$CFLAGS\" && make libs -j4"],
                         "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/include/c++/7.3.0/ -I$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/include/c++/7.3.0/x86_64-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -fuse-ld=lld -Wno-error",
-                        "cflags-gcc": "-gdwarf-4"
+                        "cflags-gcc": "-gdwarf-4",
+                        "x8664-extensions": ["AESNI-ONLY", "NONE"]
                     },
                     {
                         "name": "wolfssl",
                         "buildcmd-gcc": ["./autogen.sh && ./configure  --enable-aesni --enable-intelasm - --enable-all-crypto CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" --prefix=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot/", "make -j4"],
                         "buildcmd-clang": ["./autogen.sh && ./configure  --enable-intelasm --enable-aesni -enable-shared=no --enable-all-crypto CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc --prefix=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot/ CFLAGS=\"\"  && echo 'replacing CC' && sed -i \"/^CC = /c\\CC = clang\" Makefile && echo 'replacin flags' && sed -i \"/^CFLAGS = / s,$, $CFLAGS -fuse-ld=lld,\" Makefile", "make -j4"],
                         "cflags-clang": "-fpic -gdwarf-4 --target=x86_64-elf-linux --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -Wno-error",
-                        "cflags-gcc": "-gdwarf-4"
+                        "cflags-gcc": "-gdwarf-4",
+                        "x8664-extensions": ["AESNI-ONLY", "NONE"]
                     },
                     {
                         "name": "mbedtls",
                         "buildcmd-gcc": ["SHARED=1 CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" make lib -j4 "],
                         "buildcmd-clang": ["SHARED=1 CC=clang CFLAGS=\"$CFLAGS\" make lib  -j2"],
                         "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld",
-                        "cflags-gcc": "-gdwarf-4"
+                        "cflags-gcc": "-gdwarf-4",
+                        "x8664-extensions": ["AESNI-ONLY", "NONE"]
                     }
                 ]
             },
@@ -251,7 +255,7 @@
             "libname": "libcrypto",
             "includeDirs": ["include"],
             "compiler": "gcc",
-            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-cbc", "sm4-cbc"]
+            "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" ,"camellia-cbc", "aria-cbc", "des-cbc", "sm4-cbc", "hmac-sha256", "hmac-sha512"]
         },
         {
             "name": "botan",
@@ -259,7 +263,7 @@
             "libname": "libbotan-3",
             "includeDirs": ["build/include"],
             "compiler": "g++",
-            "available-ciphers": ["aes-cbc", "camellia-cbc", "aria-cbc", "des-cbc", "sm4-cbc"]
+            "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" ,"camellia-cbc", "aria-cbc", "des-cbc", "sm4-cbc", "hmac-sha256", "hmac-sha512", "cast-cbc"]
         },
         {
             "name": "wolfssl",
@@ -267,7 +271,7 @@
             "libname": "libwolfssl",
             "includeDirs": ["", "wolfssl", "wolfssl/openssl", "wolfssl/wolfcrypt"],
             "compiler": "gcc",
-            "available-ciphers": ["aes-cbc", "camellia-cbc", "des-cbc"]
+            "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" ,"camellia-cbc", "des-cbc", "hmac-sha256", "hmac-sha512"]
         },
         {
             "name": "mbedtls",
@@ -275,7 +279,7 @@
             "libname": "libmbedcrypto",
             "includeDirs": ["include", "include/mbedtls", "include/psa"],
             "compiler": "gcc",
-            "available-ciphers": ["aes-cbc", "camellia-cbc", "des-cbc", "aria-cbc"]
+            "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" ,"camellia-cbc","aria-cbc" ,"des-cbc", "hmac-sha256", "hmac-sha512"]
         }
     ]
 }

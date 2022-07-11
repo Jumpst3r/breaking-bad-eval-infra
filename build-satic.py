@@ -8,7 +8,7 @@ import glob
 if __name__ == "__main__":    
     
     client = MongoClient('mongodb://docker:mongopw@localhost:55000/')
-    collection = 'large-scale'
+    collection = 'hmac'
     # First, all constant time ones
     result = client['microsurf'][collection].aggregate([
     {

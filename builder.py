@@ -32,7 +32,7 @@ initPath = ""
 '''
 called for every element in algomap.json
 '''
-def analyze(lib, algname, keylen):
+def analyze(lib, algname, keylen, extensions):
     global resultjson
     global initPath
     # clear previous results
@@ -77,6 +77,7 @@ def analyze(lib, algname, keylen):
         rootfs=rootfs,
         rndGen=fct,
         sharedObjects=sharedObjects,
+        x8664Extensions=extensions
     )
     print("Configuring BinaryLoader")
 
@@ -89,7 +90,7 @@ def analyze(lib, algname, keylen):
         # Secret dependent memory read detection
         DataLeakDetector(binaryLoader=binLoader, granularity=1),
         # Secret dependent control flow detection
-        CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=False)
+        CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)
     ], getAssembly=True)
     scd.exec()
     # remove driver induced leaks
@@ -114,6 +115,7 @@ def analyze(lib, algname, keylen):
         d = json.load(f)
     d['result'] = str(b64, encoding='utf8')
     d['algorithm'] = algname
+    d['extensions'] = extensions[0]
 
     resultjson.append(d)
 
@@ -168,6 +170,7 @@ def build():
             framework_url = framework['git']
             libname = framework['libname']
             includes = framework['includeDirs']
+            ciphers = framework['available-ciphers']
             compiler = u_compiler
     
     if not framework_valid:
@@ -187,6 +190,10 @@ def build():
             rootfs =  tc[toolchain_id]['rootfs']
             for options in tc[toolchain_id]['compileOptions']:
                 if options['name'] == framework_id:
+                    try: 
+                        extensions = options['x8664-extensions']
+                    except KeyError:
+                        extensions = ["DEFAULT"]
                     if u_compiler == 'gcc':
                         framework_config_cmd = options['buildcmd-gcc']
                         cflags = options['cflags-gcc'] + f" {optflag}"
@@ -325,7 +332,12 @@ def build():
     os.chdir(cwd + f'/toolchain/{rootfs}')
 
     for el in algomap:
-        analyze(libname.split('.')[0], el['algo'], int(el['keylen']))
+        if el['algo'] in ciphers:
+            if 'aes' in ['algo']:
+                for e in extensions:
+                    analyze(libname.split('.')[0], el['algo'], int(el['keylen']), [e])
+            else:
+                analyze(libname.split('.')[0], el['algo'], int(el['keylen']), ['DEFAULT'])
 
     global resultjson
     finalres = {}

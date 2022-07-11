@@ -943,6 +943,38 @@ spec:
       value: |
         [
         {
+            "algo": "sm4-ecb",
+            "keylen": 128
+        },
+        {
+            "algo": "cast-ecb",
+            "keylen": 128
+        },
+        {
+            "algo": "des-ecb",
+            "keylen": 192
+        },
+        {
+            "algo": "aria-ecb",
+            "keylen": 128
+        },
+        {
+            "algo": "camellia-ecb",
+            "keylen": 128
+        },
+        {
+            "algo": "aes-gcm",
+            "keylen": 128
+        },
+        {
+            "algo": "aes-ctr",
+            "keylen": 128
+        },
+        {
+            "algo": "aes-cbc",
+            "keylen": 128
+        },
+        {
             "algo": "hmac-sha256",
             "keylen": 256
         },
@@ -953,7 +985,6 @@ spec:
         ]
   templates:
   - name: schedule-framework-builds
-    # parallelism: 4
     inputs:
       parameters:
       - name: buildmap
@@ -1028,6 +1059,7 @@ spec:
       - name: optlvl
       - name: compiler
     container:
+      activeDeadlineSeconds: 10
       image: jumpst3r/builder:eval
       imagePullPolicy: Always
       resources:
