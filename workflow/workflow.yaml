@@ -1059,7 +1059,6 @@ spec:
       - name: optlvl
       - name: compiler
     container:
-      activeDeadlineSeconds: 10
       image: jumpst3r/builder:eval
       imagePullPolicy: Always
       resources:
@@ -1075,7 +1074,6 @@ spec:
       args: 
         - >-
             ls /mnt/vol/*.json && cp /mnt/vol/algomap.json /build/algomap.json && python3 builder.py {{inputs.parameters.toolchain}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.optlvl}} {{inputs.parameters.compiler}}
-
   - name: reduce-global
     retryStrategy:
         limit: "3"

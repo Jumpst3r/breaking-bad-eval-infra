@@ -333,7 +333,7 @@ def build():
 
     for el in algomap:
         if el['algo'] in ciphers:
-            if 'aes' in ['algo']:
+            if 'aes' in el['algo']:
                 for e in extensions:
                     analyze(libname.split('.')[0], el['algo'], int(el['keylen']), [e])
             else:
