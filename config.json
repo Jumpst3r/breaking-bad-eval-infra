@@ -41,6 +41,14 @@
                         "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld",
                         "cflags-gcc": "-gdwarf-4",
                         "x8664-extensions": ["AESNI-ONLY", "NONE"]
+                    },
+                    {
+                        "name": "hacl-star",
+                        "buildcmd-gcc": ["cd dist/gcc64-only && SHARED=1 CC=$(pwd)/../../../toolchain/bin/x86_64-linux-gcc AR=$(pwd)/../../../toolchain/bin/x86_64-linux-ar LD=$(pwd)/../../../toolchain/bin/x86_64-linux-ld CFLAGS=\"$CFLAGS\" make -j4"],
+                        "buildcmd-clang": ["SHARED=1 CC=clang CFLAGS=\"$CFLAGS\" make lib  -j2"],
+                        "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -Wno-error -fuse-ld=lld",
+                        "cflags-gcc": "-gdwarf-4",
+                        "x8664-extensions": ["AESNI-ONLY", "NONE"]
                     }
                 ]
             },
@@ -280,6 +288,14 @@
             "includeDirs": ["include", "include/mbedtls", "include/psa"],
             "compiler": "gcc",
             "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" ,"camellia-cbc","aria-cbc" ,"des-cbc", "hmac-sha256", "hmac-sha512"]
+        },
+        {
+            "name": "hacl-star",
+            "git": "https://github.com/project-everest/hacl-star.git",
+            "libname": "libevercrypt",
+            "includeDirs": ["dist/gcc64-only"],
+            "compiler": "gcc",
+            "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" , "hmac-sha256", "hmac-sha512"]
         }
     ]
 }

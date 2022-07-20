@@ -3,7 +3,26 @@ file @builder.py
 
 @author nicolas
 
-builder.py <toolchain> <framework> <commit> <optlvl> <compiler> <alg> <keylen>
+builder.py <toolchain> <framework> <commit> <optlvl> <compiler>
+
+example:
+
+python3 builder.py x86-64-core-i7--glibc--stable-2018.11-1 openssl 8e0cb23c2e5dde8ef23a0292f4dfb962943742a5 -O3 gcc
+
+primitives to test are located in the algomap.json file. Must contain data in the following form:
+
+[
+	{
+		"algo": "sm4-ecb",
+		"keylen": 128
+	},
+    {
+        ...
+    }
+]
+
+between runs, call run clean.sh to remove toolchains, repos etc
+
 """
 
 
