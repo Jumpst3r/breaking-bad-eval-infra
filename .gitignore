@@ -2,3 +2,4 @@
 .vscode/
 k8s-config/
 *.html
+*.so

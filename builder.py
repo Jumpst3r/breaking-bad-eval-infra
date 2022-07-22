@@ -26,7 +26,7 @@ between runs, call run clean.sh to remove toolchains, repos etc
 """
 
 
-import multiprocessing
+import random
 import os
 import sys
 import json
@@ -34,7 +34,7 @@ import subprocess
 from microsurf.microsurf import SCDetector
 from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
-from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator
+from microsurf.utils.generators import hex_key_generator, mbedTLS_hex_key_generator, SecretGenerator
 import base64
 import uuid
 
@@ -47,6 +47,20 @@ def checkretcode(result):
 
 resultjson = []
 initPath = ""
+
+
+class bit_generator(SecretGenerator):
+    # we pass asFile=True because our secrets are directly included as command line arguments (hex strings)
+    def __init__(self, keylen):
+        super().__init__(keylen, asFile=False)
+
+    def __call__(self, *args, **kwargs) -> str:
+        a = random.randint(0,10)
+        self.str = '0' if a < 5 else '1'
+        return self.str
+
+    def getSecret(self) -> int:
+        return int(self.str, 10)
 
 '''
 called for every element in algomap.json
@@ -77,9 +91,8 @@ def analyze(lib, algname, keylen, extensions):
         result = subprocess.run('touch output', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
         args = f"0 input output {algname} SHA1 @".split()
-    
-    #if algname == 'ecdsa':
-        #fct = ecdsa_privkey_generator(keylen)
+    if 'compare' in lib:
+        fct = bit_generator(1)
 
     rootfs = os.getcwd()
     
@@ -248,38 +261,38 @@ def build():
     os.environ["ROOTFS"] = os.getcwd() + '/toolchain/' + rootfs
     print(f'- Set ROOTFS to {os.environ.get("ROOTFS")}')
 
-    if DOWNLOAD:
-        print(f'- Cloning {framework_id}')
-        result = subprocess.run(['git', 'clone', framework_url], stderr=subprocess.PIPE)
-        checkretcode(result)
+    if framework_id != 'compare':
+        if DOWNLOAD:
+            print(f'- Cloning {framework_id}')
+            result = subprocess.run(['git', 'clone', framework_url], stderr=subprocess.PIPE)
+            checkretcode(result)
 
-    os.environ["FRAMEWORK"] = os.getcwd() + '/' +framework_id
-    print(f'- Set FRAMEWORK to {os.environ.get("FRAMEWORK")}')
+        os.environ["FRAMEWORK"] = os.getcwd() + '/' +framework_id
+        print(f'- Set FRAMEWORK to {os.environ.get("FRAMEWORK")}')
 
-    os.chdir(os.environ.get("FRAMEWORK"))
+        os.chdir(os.environ.get("FRAMEWORK"))
 
-    print(f'- Checking out {framework_commit}')
-    if DOWNLOAD:
-        result = subprocess.run(['git', 'checkout', framework_commit], stderr=subprocess.PIPE)
-        checkretcode(result)
+        print(f'- Checking out {framework_commit}')
+        if DOWNLOAD:
+            result = subprocess.run(['git', 'checkout', framework_commit], stderr=subprocess.PIPE)
+            checkretcode(result)
+    else:
+        os.environ["FRAMEWORK"] = os.getcwd() + '/' + f'{framework_id}-builder'
+        print(f'- Set FRAMEWORK to {os.environ.get("FRAMEWORK")}')
+        os.chdir(os.environ.get("FRAMEWORK"))
+    
     cflags = cflags.replace('$(pwd)', os.getcwd())
-    print(f"SSSS_ {cflags}")
     os.environ["CFLAGS"] = cflags
     os.environ["SHARED"] = '1'
     if DOWNLOAD:
-        if 'powerpc' in toolchain_id:
+        if 'powerpc' in toolchain_id or framework_id == 'compare':
             print(f"- Updating LD_LIBRARY_PATH to {os.getcwd() + '/../toolchain/' + 'lib/'}")
             os.environ["LD_LIBRARY_PATH"] = os.getcwd() + '/../toolchain/' + 'lib/'
+        subprocess.run('make clean', stderr=subprocess.PIPE, shell=True)
         for cmd in framework_config_cmd:
             print(f'- Configuring/Compiling {framework_id} with {cmd.split()}')
             result = subprocess.run(cmd, stderr=subprocess.PIPE, shell=True)
             checkretcode(result)
-
-    result = subprocess.run(f'find ./ -name "{libname}*.so"', stderr=subprocess.PIPE, shell=True)
-    checkretcode(result)
-
-    result = subprocess.run(f'find ./ -name "{libname}*.so.*"', stderr=subprocess.PIPE, shell=True)
-    checkretcode(result)
 
     print(f'- Copying files to {rootfs}/{libdir}')
 
@@ -291,10 +304,10 @@ def build():
         result = subprocess.run(f'cp --backup=numbered $(find ./ -name "{libname}*.a") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
     else:
+        print(f"pwd = {os.getcwd()}")
+        print(f"find ./ -name '{libname}*.so'")
         result = subprocess.run(f'cp $(find ./ -name "{libname}*.so") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
-        checkretcode(result)
         result = subprocess.run(f'cp $(find ./ -name "{libname}*.so.*") {os.getcwd()}/../toolchain/{rootfs}/{libdir}', stderr=subprocess.PIPE, shell=True)
-        checkretcode(result)
     
     # emulation for ppc requires libs in a different dir
     if 'powerpc' in toolchain_id:
@@ -303,46 +316,53 @@ def build():
 
     os.chdir(cwd)
 
-    print(f'- Copying driver to {rootfs}')
-    result = subprocess.run(f'cp {framework_id}-builder/driver.c {os.getcwd()}/toolchain/{rootfs}/driver.c', stderr=subprocess.PIPE, shell=True)
-    checkretcode(result)
+    print(f'- Copying driver to {rootfs} (framework_id={framework_id})')
+    if 'compare' not in framework_id:
+        result = subprocess.run(f'cp {framework_id}-builder/driver.c {os.getcwd()}/toolchain/{rootfs}/driver.c', stderr=subprocess.PIPE, shell=True)
+        checkretcode(result)
+    else:
+        print("compare framework")
+        print(f'cp {framework_id}-builder/driver.bin {os.getcwd()}/toolchain/{rootfs}/driver.bin')
+        result = subprocess.run(f'cp {framework_id}-builder/driver.bin {os.getcwd()}/toolchain/{rootfs}/driver.bin', stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        checkretcode(result)
 
     os.chdir(cwd + '/toolchain')
 
-    print(f'- Compiling driver')
-    print(f'- Updating LD_LIBRARY_PATH to {os.getcwd() + "/" + "lib"}')
-    os.environ["LD_LIBRARY_PATH"] = os.getcwd() + '/' + 'lib'
-    includestr = ' '.join([f"-I{os.getcwd()}/../{framework_id}/{d}" for d in includes])
-    canonicalLibName = libname[3:].split('.')[0]
-    # check if we got a static .a object, for wolfssl shared object don't seem to get created on non x86 so we need to create them. Ugly hack
-    flist = ""
-    if 'wolf' in libname:
-        import glob
-        flist = glob.glob(f'{os.getcwd()}/{rootfs}/{libdir}/{libname.split(".")[0]}.a')
-    if flist:
-        static = True
-        statObj = flist[0]
-    else:
-        static = False
-        statObj = ""
-    flist = " ".join(flist)
-    print(f'CWD={os.getcwd()}')
-
-    if compiler == 'gcc':
-        if framework_id == 'botan':
-            result = subprocess.run(f'{os.getcwd()}/{prefix}g++ {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+    if framework_id != 'compare':
+        print(f'- Compiling driver')
+        print(f'- Updating LD_LIBRARY_PATH to {os.getcwd() + "/" + "lib"}')
+        os.environ["LD_LIBRARY_PATH"] = os.getcwd() + '/' + 'lib'
+        includestr = ' '.join([f"-I{os.getcwd()}/../{framework_id}/{d}" for d in includes])
+        canonicalLibName = libname[3:].split('.')[0]
+        # check if we got a static .a object, for wolfssl shared object don't seem to get created on non x86 so we need to create them. Ugly hack
+        flist = ""
+        if 'wolf' in libname:
+            import glob
+            flist = glob.glob(f'{os.getcwd()}/{rootfs}/{libdir}/{libname.split(".")[0]}.a')
+        if flist:
+            static = True
+            statObj = flist[0]
         else:
-            result = subprocess.run(f'{os.getcwd()}/{prefix}gcc {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
-    elif compiler == 'clang':
-        if framework_id == 'botan':
-            compiler = 'clang++'
-        result = subprocess.run(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin -fuse-ld=lld', stderr=subprocess.PIPE, shell=True)
-    elif compiler == 'icx':
-        result = subprocess.run(f'. /opt/intel/oneapi/setvars.sh intel64 && {compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin -fuse-ld=lld', stderr=subprocess.PIPE, shell=True)
+            static = False
+            statObj = ""
+        flist = " ".join(flist)
+        print(f'CWD={os.getcwd()}')
 
-    print(f'CWD={os.getcwd()}')
-    print(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
-    checkretcode(result)
+        if compiler == 'gcc':
+            if framework_id == 'botan':
+                result = subprocess.run(f'{os.getcwd()}/{prefix}g++ {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+            else:
+                result = subprocess.run(f'{os.getcwd()}/{prefix}gcc {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} -lm -o {os.getcwd()}/{rootfs}/driver.bin', stderr=subprocess.PIPE, shell=True)
+        elif compiler == 'clang':
+            if framework_id == 'botan':
+                compiler = 'clang++'
+            result = subprocess.run(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin -fuse-ld=lld', stderr=subprocess.PIPE, shell=True)
+        elif compiler == 'icx':
+            result = subprocess.run(f'. /opt/intel/oneapi/setvars.sh intel64 && {compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin -fuse-ld=lld', stderr=subprocess.PIPE, shell=True)
+
+        print(f'CWD={os.getcwd()}')
+        print(f'{compiler} {includestr} -l{canonicalLibName} {os.getcwd()}/{rootfs}/driver.c {flist} {cflags} -o {os.getcwd()}/{rootfs}/driver.bin')
+        checkretcode(result)
 
     # parse algomap file
     with open('../algomap.json', 'r') as f:

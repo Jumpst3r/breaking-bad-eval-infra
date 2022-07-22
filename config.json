@@ -18,6 +18,13 @@
                         "x8664-extensions": ["AESNI-ONLY", "NONE"]
                     },
                     {
+                        "name": "compare",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/x86_64-linux-gcc make"],
+                        "buildcmd-clang": ["export CC=clang", "make"],
+                        "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/include/c++/7.3.0/ -I$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/include/c++/7.3.0/x86_64-buildroot-linux-gnu/ --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-gnu/7.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-gdwarf-4 -fPIC"
+                    },
+                    {
                         "name": "botan",
                         "buildcmd-gcc": ["./configure.py --cc-bin=$(pwd)/../toolchain/bin/x86_64-linux-g++ --extra-cxxflags=\"$CFLAGS\" && cat Makefile | grep -v '^WARN_FLAGS' > Makefile2 && mv Makefile2 Makefile && make libs -j4 "],
                         "buildcmd-clang": ["./configure.py --ldflags=\"$CFLAGS\" --cc-bin=clang++ --ar-command=llvm-ar --with-sysroot-dir=$(pwd)/../toolchain/x86_64-buildroot-linux-gnu/sysroot --extra-cxxflags=\"$CFLAGS\" && make libs -j4"],
@@ -290,12 +297,12 @@
             "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" ,"camellia-cbc","aria-cbc" ,"des-cbc", "hmac-sha256", "hmac-sha512"]
         },
         {
-            "name": "hacl-star",
-            "git": "https://github.com/project-everest/hacl-star.git",
-            "libname": "libevercrypt",
-            "includeDirs": ["dist/gcc64-only"],
+            "name": "compare",
+            "git": "local",
+            "libname": "libcompare",
+            "includeDirs": [""],
             "compiler": "gcc",
-            "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" , "hmac-sha256", "hmac-sha512"]
+            "available-ciphers": ["ct_select_v0", "ct_select_v1", "ct_select_v3"]
         }
     ]
 }
