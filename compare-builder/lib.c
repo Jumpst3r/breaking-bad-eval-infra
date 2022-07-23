@@ -1,5 +1,5 @@
 /*
-A list of constant time comparisons which can potentially be compiled to 
+A list of comparisons which can potentially be compiled to 
 non-constant time code.
 
 Originally shown by [1] to exhibit this behavior on x86 with gcc & clang.

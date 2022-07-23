@@ -98,7 +98,7 @@ def analyze(lib, algname, keylen, extensions):
     
     binpath = rootfs + '/driver.bin'
     # can't get wolfssl to create shared objects on some archs, so hard code a fix here (track static object)
-    if 'wolfssl' in lib:
+    if 'wolfssl' in lib or 'compare' in lib:
         sharedObjects = ['driver.bin']
     else:
         sharedObjects = [lib]
@@ -128,7 +128,6 @@ def analyze(lib, algname, keylen, extensions):
     # remove driver induced leaks
     try:
         if 'wolfssl' in lib:
-            # all wolfssl crypto routines start with wc_
             mask = scd.DF['Symbol Name'].str.contains('hextobin')
             scd.DF = scd.DF[~mask]
             # recreate reports:
@@ -291,7 +290,7 @@ def build():
         subprocess.run('make clean', stderr=subprocess.PIPE, shell=True)
         for cmd in framework_config_cmd:
             print(f'- Configuring/Compiling {framework_id} with {cmd.split()}')
-            result = subprocess.run(cmd, stderr=subprocess.PIPE, shell=True)
+            result = subprocess.run(f'{". /opt/intel/oneapi/setvars.sh intel64 && " if compiler=="icx" else ""} {cmd}', stderr=subprocess.PIPE, shell=True)
             checkretcode(result)
 
     print(f'- Copying files to {rootfs}/{libdir}')
@@ -321,7 +320,7 @@ def build():
         result = subprocess.run(f'cp {framework_id}-builder/driver.c {os.getcwd()}/toolchain/{rootfs}/driver.c', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
     else:
-        print("compare framework")
+        print(f"compare framework {os.getcwd()}")
         print(f'cp {framework_id}-builder/driver.bin {os.getcwd()}/toolchain/{rootfs}/driver.bin')
         result = subprocess.run(f'cp {framework_id}-builder/driver.bin {os.getcwd()}/toolchain/{rootfs}/driver.bin', stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         checkretcode(result)

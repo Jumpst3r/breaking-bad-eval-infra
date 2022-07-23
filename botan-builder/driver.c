@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     Botan::AutoSeeded_RNG rng;
     if (!strcmp(umode, "aes-cbc"))
     {   
-        std::string mode = "PKCS7";
+        mode = "PKCS7";
         botan_cipher_id = "AES-128/";
         mode.insert(0, "CBC/");
         mode.insert(0, botan_cipher_id);
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     }
     else if (!strcmp(umode, "aria-cbc"))
     {
-        std::string mode = "PKCS7";
+        mode = "PKCS7";
         botan_cipher_id = "ARIA-128/";
         mode.insert(0, "CBC/");
         mode.insert(0, botan_cipher_id);
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     }
     else if (!strcmp(umode, "cast-cbc"))
     {
-        std::string mode = "PKCS7";
+        mode = "PKCS7";
         botan_cipher_id = "CAST-128/";
         mode.insert(0, "CBC/");
         mode.insert(0, botan_cipher_id);
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     }
     else if (!strcmp(umode, "camellia-cbc"))
     {
-        std::string mode = "PKCS7";
+        mode = "PKCS7";
         botan_cipher_id = "Camellia-128/";
         mode.insert(0, "CBC/");
         mode.insert(0, botan_cipher_id);
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     }
     else if (!strcmp(umode, "des-cbc"))
     {
-        std::string mode = "PKCS7";
+        mode = "PKCS7";
         botan_cipher_id = "3DES/";
         mode.insert(0, "CBC/");
         mode.insert(0, botan_cipher_id);
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
     }
     else if (!strcmp(umode, "sm4-cbc"))
     {
-        std::string mode = "PKCS7";
+        mode = "PKCS7";
         botan_cipher_id = "SM4/";
         mode.insert(0, "CBC/");
         mode.insert(0, botan_cipher_id);
