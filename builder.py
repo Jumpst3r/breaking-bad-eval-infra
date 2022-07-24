@@ -118,12 +118,13 @@ def analyze(lib, algname, keylen, extensions):
         print("failed to configure BinaryLoader")
         resultjson.append({"algorithm":algname,"CF Leak Count":-1,"Memory Leak Count":-1})
         return 0
-    scd = SCDetector(modules=[
-        # Secret dependent memory read detection
-        DataLeakDetector(binaryLoader=binLoader, granularity=1),
-        # Secret dependent control flow detection
-        CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)
-    ], getAssembly=True)
+    # for ct_select we only care about CF
+    if 'compare' in lib:
+        lmodues = [CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)]
+    else:
+        lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)]
+
+    scd = SCDetector(modules=lmodues, getAssembly=True)
     scd.exec()
     # remove driver induced leaks
     try:

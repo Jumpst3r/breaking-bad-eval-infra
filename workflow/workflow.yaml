@@ -15,139 +15,259 @@ spec:
       value: |
         [
         {
-        "toolchain": "x86-64-core-i7--glibc--stable-2018.11-1",
-        "framework": "openssl",
-        "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-O0",
         "compiler": "clang"
         },
         {
-        "toolchain": "armv5-eabi--glibc--stable-2020.02-2",
-        "framework": "openssl",
-        "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
-        "optlvl": "-O0",
-        "compiler": "clang"
-        },
-        {
-        "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
-        "framework": "openssl",
-        "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
-        "optlvl": "-O0",
-        "compiler": "clang"
-        },
-        {
-        "toolchain": "armv5-eabi--glibc--stable-2020.02-2",
-        "framework": "botan",
-        "commit": "8739125c21523b0d4d4012833ef30da76644dbc8",
-        "optlvl": "-O3",
-        "compiler": "clang"
-        },
-        {
-        "toolchain": "armv5-eabi--glibc--stable-2020.02-2",
-        "framework": "botan",
-        "commit": "8739125c21523b0d4d4012833ef30da76644dbc8",
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-Os",
         "compiler": "clang"
         },
         {
-        "toolchain": "armv5-eabi--glibc--stable-2020.02-2",
-        "framework": "botan",
-        "commit": "8739125c21523b0d4d4012833ef30da76644dbc8",
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O0",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O0",
+        "compiler": "icx"
+        },
+        {
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "icx"
+        },
+        {
+        "toolchain": "x86-64--musl--stable-2021.11-5",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "icx"
+        },
+        {
+        "toolchain": "aarch64--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-O0",
         "compiler": "clang"
         },
         {
-        "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
-        "framework": "botan",
-        "commit": "8739125c21523b0d4d4012833ef30da76644dbc8",
-        "optlvl": "-O0",
-        "compiler": "clang"
-        },
-        {
-        "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
-        "framework": "botan",
-        "commit": "8739125c21523b0d4d4012833ef30da76644dbc8",
+        "toolchain": "aarch64--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-Os",
         "compiler": "clang"
         },
         {
-        "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
-        "framework": "botan",
-        "commit": "8739125c21523b0d4d4012833ef30da76644dbc8",
+        "toolchain": "aarch64--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-O3",
         "compiler": "clang"
         },
         {
-        "toolchain": "x86-64-core-i7--glibc--stable-2018.11-1",
-        "framework": "openssl",
-        "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
+        "toolchain": "aarch64--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O0",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "aarch64--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "aarch64--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-O3",
         "compiler": "gcc"
         },
         {
-        "toolchain": "x86-64-core-i7--glibc--stable-2018.11-1",
-        "framework": "openssl",
-        "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
+        "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O0",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
         },
         {
-        "toolchain": "armv5-eabi--glibc--stable-2020.02-2",
-        "framework": "openssl",
-        "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
+        "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "mips32el--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O0",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "mips32el--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "mips32el--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "mips32el--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
         },
         {
-        "toolchain": "armv7-eabihf--glibc--stable-2018.11-1",
-        "framework": "openssl",
-        "commit": "fed8dbea27b7e01ee934951b25c6ffd40ad1d5c3",
+        "toolchain": "mips32el--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "mips32el--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O0",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "clang"
+        },
+        {
+        "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
-        }
+        },
+        {
+        "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-Os",
+        "compiler": "gcc"
+        },
+        {
+        "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
+        "framework": "compare",
+        "commit": "local",
+        "optlvl": "-O3",
+        "compiler": "gcc"
+        },
         ]
     - name: algomap
       value: |
         [
         {
-            "algo": "sm4-ecb",
-            "keylen": 128
+            "algo": "ct_select_v0",
+            "keylen": 1
         },
         {
-            "algo": "cast-ecb",
-            "keylen": 128
+            "algo": "ct_select_v1",
+            "keylen": 1
         },
         {
-            "algo": "des-ecb",
-            "keylen": 192
+            "algo": "ct_select_v2",
+            "keylen": 1
         },
         {
-            "algo": "aria-ecb",
-            "keylen": 128
+            "algo": "ct_select_v3",
+            "keylen": 1
         },
         {
-            "algo": "camellia-ecb",
-            "keylen": 128
-        },
-        {
-            "algo": "aes-gcm",
-            "keylen": 128
-        },
-        {
-            "algo": "aes-ctr",
-            "keylen": 128
-        },
-        {
-            "algo": "aes-cbc",
-            "keylen": 128
-        },
-        {
-            "algo": "hmac-sha256",
-            "keylen": 256
-        },
-        {
-            "algo": "hmac-sha512",
-            "keylen": 512
+            "algo": "ct_select_v4",
+            "keylen": 1
         }
         ]
   templates:
