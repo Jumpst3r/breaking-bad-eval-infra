@@ -12,7 +12,7 @@
                         "name": "compare",
                         "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/x86_64-buildroot-linux-musl-gcc make"],
                         "buildcmd-clang": ["CC=clang make"],
-                        "buildcmd-icx": ["CC=icpx make"],
+                        "buildcmd-icx": ["CC=icx make"],
                         "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
                         "cflags-gcc": "-gdwarf-4 -fPIC"
                     }
