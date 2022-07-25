@@ -2,6 +2,22 @@
     "version":1.0,
     "toolchains": [
         {
+            "x86-i686--musl--stable-2021.11-1": {
+                "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2021.11-1.tar.bz2",
+                "rootfs": "i686-buildroot-linux-musl/sysroot",
+                "libdir": "lib/",
+                "prefix": "bin/i686-buildroot-linux-musl-",
+                "compileOptions": [
+                    {
+                        "name": "compare",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/i686-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "buildcmd-icx": ["CC=icx make"],
+                        "cflags-clang": "-gdwarf-4 -m32 -march=i386 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/i686-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/i686-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/i686-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-gdwarf-4 -m32 -march=i386 -fPIC"
+                    }
+                ]
+            },
             "x86-64--musl--stable-2021.11-5": {
                 "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--musl--stable-2021.11-5.tar.bz2",
                 "rootfs": "x86_64-buildroot-linux-musl/sysroot",
