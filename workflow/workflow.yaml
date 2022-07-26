@@ -8,7 +8,7 @@ spec:
     persistentVolumeClaim:
       claimName: res-volume
   imagePullSecrets:
-  - name: regcred2
+  - name: regcred3
   arguments:
     parameters:
     - name: buildmap
