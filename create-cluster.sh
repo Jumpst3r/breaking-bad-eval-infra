@@ -5,4 +5,3 @@ kubectl create secret -n argo docker-registry regcred2 --docker-server="https://
 kubectl apply -n argo -f https://raw.githubusercontent.com/argoproj/argo-workflows/master/manifests/quick-start-postgres.yaml
 kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml
 kubectl apply -n argo -f k8s-config/pvol-claim.yaml
-argo submit -n argo --watch workflow/workflow.yaml

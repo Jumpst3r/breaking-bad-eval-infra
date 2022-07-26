@@ -139,7 +139,9 @@ def analyze(lib, algname, keylen, extensions):
     result = subprocess.run('find ./results/ -name "*.json" -type f -delete', stderr=subprocess.PIPE, shell=True)
     result = subprocess.run('find ./results/ -name "*.png" -type f -delete', stderr=subprocess.PIPE, shell=True)
     result = subprocess.run('zip -9 -r results.zip results', stderr=subprocess.PIPE, shell=True)
+    result = subprocess.run('find ./results/ -name "*.html" -type f -delete', stderr=subprocess.PIPE, shell=True)
     subprocess.run(f'cp results.zip /build/results.zip', stderr=subprocess.PIPE, shell=True)
+    
     with open("results.zip", "rb") as f:
         b64 = base64.b64encode(f.read())
 
@@ -228,13 +230,13 @@ def build():
                         extensions = ["DEFAULT"]
                     if u_compiler == 'gcc':
                         framework_config_cmd = options['buildcmd-gcc']
-                        cflags = options['cflags-gcc'] + f" {optflag}"
+                        cflags = options['cflags-gcc'] + " " + optflag.strip('"')
                     elif u_compiler == 'clang':
                         framework_config_cmd = options['buildcmd-clang']
-                        cflags = options['cflags-clang'] + f" {optflag}"
+                        cflags = options['cflags-clang'] + " " + optflag.strip('"')
                     elif u_compiler == 'icx':
                         framework_config_cmd = options['buildcmd-icx']
-                        cflags = options['cflags-clang'] + f" {optflag}"
+                        cflags = options['cflags-clang'] + " " + optflag.strip('"')
 
     ICX_LIB_DIR = '/opt/intel/oneapi/compiler/2022.1.0/linux/compiler/lib/intel64_lin/'
 
