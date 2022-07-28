@@ -98,7 +98,7 @@ def analyze(lib, algname, keylen, extensions):
     
     binpath = rootfs + '/driver.bin'
     # can't get wolfssl to create shared objects on some archs, so hard code a fix here (track static object)
-    if 'wolfssl' in lib or 'compare' in lib or 'hacl' in lib:
+    if 'wolfssl' in lib or 'compare' in lib or 'hacl' in lib or 'util':
         sharedObjects = ['driver.bin']
     else:
         sharedObjects = [lib]
@@ -118,18 +118,15 @@ def analyze(lib, algname, keylen, extensions):
         print("failed to configure BinaryLoader")
         resultjson.append({"algorithm":algname,"CF Leak Count":-1,"Memory Leak Count":-1})
         return 0
-    # for ct_select we only care about CF
-    if 'compare' in lib:
-        lmodues = [CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)]
-    else:
-        lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)]
+    
+    lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)]
 
     scd = SCDetector(modules=lmodues, getAssembly=True)
     scd.initTraceCount = 50
     scd.exec()
     # remove driver induced leaks
     try:
-        if 'wolfssl' in lib or 'hacl' in lib:
+        if 'wolfssl' in lib or 'hacl' in lib or 'util' in lib:
             mask = scd.DF['Symbol Name'].str.contains('hextobin')
             scd.DF = scd.DF[~mask]
             # recreate reports:

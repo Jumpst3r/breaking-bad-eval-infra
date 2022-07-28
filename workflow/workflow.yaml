@@ -315,6 +315,7 @@ spec:
         {
             "algo": "compare",
             "keylen": 128
+        }
         ]
   templates:
   - name: schedule-framework-builds
