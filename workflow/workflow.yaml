@@ -16,294 +16,294 @@ spec:
         [
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "clang"
         },
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "clang"
         },
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "clang"
         },
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
         },
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "gcc"
         },
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "gcc"
         },
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "icx"
         },
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "icx"
         },
         {
         "toolchain": "x86-64--musl--stable-2021.11-5",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "icx"
         },
         {
         "toolchain": "aarch64--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "clang"
         },
         {
         "toolchain": "aarch64--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "clang"
         },
         {
         "toolchain": "aarch64--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "clang"
         },
         {
         "toolchain": "aarch64--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
         },
         {
         "toolchain": "aarch64--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "gcc"
         },
         {
         "toolchain": "aarch64--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "gcc"
         },
         {
         "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "clang"
         },
         {
         "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "clang"
         },
         {
         "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "clang"
         },
         {
         "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
         },
         {
         "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "gcc"
         },
         {
         "toolchain": "riscv64-lp64d--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "gcc"
         },
         {
         "toolchain": "mips32el--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "clang"
         },
         {
         "toolchain": "mips32el--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "clang"
         },
         {
         "toolchain": "mips32el--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "clang"
         },
         {
         "toolchain": "mips32el--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
         },
         {
         "toolchain": "mips32el--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "gcc"
         },
         {
         "toolchain": "mips32el--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "gcc"
         },
         {
         "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "clang"
         },
         {
         "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "clang"
         },
         {
         "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "clang"
         },
         {
         "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
         },
         {
         "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "gcc"
         },
         {
         "toolchain": "powerpc-440fp--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "gcc"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "clang"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "clang"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "clang"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "gcc"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "gcc"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "gcc"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O0",
         "compiler": "icx"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-Os",
         "compiler": "icx"
         },
         {
         "toolchain": "x86-i686--musl--stable-2021.11-1",
-        "framework": "compare",
+        "framework": "opensslutils",
         "commit": "local",
         "optlvl": "-O3",
         "compiler": "icx"
@@ -313,25 +313,8 @@ spec:
       value: |
         [
         {
-            "algo": "ct_select_v0",
-            "keylen": 1
-        },
-        {
-            "algo": "ct_select_v1",
-            "keylen": 1
-        },
-        {
-            "algo": "ct_select_v2",
-            "keylen": 1
-        },
-        {
-            "algo": "ct_select_v3",
-            "keylen": 1
-        },
-        {
-            "algo": "ct_select_v4",
-            "keylen": 1
-        }
+            "algo": "compare",
+            "keylen": 128
         ]
   templates:
   - name: schedule-framework-builds
