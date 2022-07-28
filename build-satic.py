@@ -8,7 +8,7 @@ import glob
 if __name__ == "__main__":    
     
     client = MongoClient('mongodb://docker:mongopw@localhost:55000/')
-    collection = 'ct_select'
+    collection = 'ct_select_no_inline'
     # First, all constant time ones
     result = client['microsurf'][collection].aggregate([
     {

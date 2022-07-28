@@ -98,7 +98,7 @@ def analyze(lib, algname, keylen, extensions):
     
     binpath = rootfs + '/driver.bin'
     # can't get wolfssl to create shared objects on some archs, so hard code a fix here (track static object)
-    if 'wolfssl' in lib or 'compare' in lib:
+    if 'wolfssl' in lib or 'compare' in lib or 'hacl' in lib:
         sharedObjects = ['driver.bin']
     else:
         sharedObjects = [lib]
@@ -125,10 +125,11 @@ def analyze(lib, algname, keylen, extensions):
         lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)]
 
     scd = SCDetector(modules=lmodues, getAssembly=True)
+    scd.initTraceCount = 50
     scd.exec()
     # remove driver induced leaks
     try:
-        if 'wolfssl' in lib:
+        if 'wolfssl' in lib or 'hacl' in lib:
             mask = scd.DF['Symbol Name'].str.contains('hextobin')
             scd.DF = scd.DF[~mask]
             # recreate reports:
@@ -263,7 +264,7 @@ def build():
     os.environ["ROOTFS"] = os.getcwd() + '/toolchain/' + rootfs
     print(f'- Set ROOTFS to {os.environ.get("ROOTFS")}')
 
-    if framework_id != 'compare':
+    if framework_id not in ['compare', 'haclutil', 'opensslutils']:
         if DOWNLOAD:
             print(f'- Cloning {framework_id}')
             result = subprocess.run(['git', 'clone', framework_url], stderr=subprocess.PIPE)
@@ -287,7 +288,7 @@ def build():
     os.environ["CFLAGS"] = cflags
     os.environ["SHARED"] = '1'
     if DOWNLOAD:
-        if 'powerpc' in toolchain_id or framework_id == 'compare':
+        if 'powerpc' in toolchain_id or framework_id in ['compare', 'haclutil', 'opensslutils']:
             print(f"- Updating LD_LIBRARY_PATH to {os.getcwd() + '/../toolchain/' + 'lib/'}")
             os.environ["LD_LIBRARY_PATH"] = os.getcwd() + '/../toolchain/' + 'lib/'
         subprocess.run('make clean', stderr=subprocess.PIPE, shell=True)
@@ -319,7 +320,7 @@ def build():
     os.chdir(cwd)
 
     print(f'- Copying driver to {rootfs} (framework_id={framework_id})')
-    if 'compare' not in framework_id:
+    if framework_id not in ['compare', 'haclutil', 'opensslutils']:
         result = subprocess.run(f'cp {framework_id}-builder/driver.c {os.getcwd()}/toolchain/{rootfs}/driver.c', stderr=subprocess.PIPE, shell=True)
         checkretcode(result)
     else:
@@ -330,7 +331,7 @@ def build():
 
     os.chdir(cwd + '/toolchain')
 
-    if framework_id != 'compare':
+    if framework_id not in ['compare', 'haclutil', 'opensslutils']:
         print(f'- Compiling driver')
         print(f'- Updating LD_LIBRARY_PATH to {os.getcwd() + "/" + "lib"}')
         os.environ["LD_LIBRARY_PATH"] = os.getcwd() + '/' + 'lib'

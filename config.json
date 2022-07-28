@@ -15,6 +15,22 @@
                         "buildcmd-icx": ["CC=icx make"],
                         "cflags-clang": "-gdwarf-4 -m32 -march=i386 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/i686-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/i686-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/i686-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
                         "cflags-gcc": "-gdwarf-4 -m32 -march=i386 -fPIC"
+                    },
+                    {
+                        "name": "haclutil",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/i686-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "buildcmd-icx": ["CC=icx make"],
+                        "cflags-clang": "-gdwarf-4 -m32 -march=i386 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/i686-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/i686-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/i686-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-gdwarf-4 -m32 -march=i386 -fPIC"
+                    },
+                    {
+                        "name": "opensslutils",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/i686-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "buildcmd-icx": ["CC=icx make"],
+                        "cflags-clang": "-gdwarf-4 -m32 -march=i386 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/i686-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/i686-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/i686-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-gdwarf-4 -m32 -march=i386 -fPIC"
                     }
                 ]
             },
@@ -26,6 +42,22 @@
                 "compileOptions": [
                     {
                         "name": "compare",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/x86_64-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "buildcmd-icx": ["CC=icx make"],
+                        "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-gdwarf-4 -fPIC"
+                    },
+                    {
+                        "name": "haclutil",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/x86_64-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "buildcmd-icx": ["CC=icx make"],
+                        "cflags-clang": "--target=x86_64-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/x86_64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/x86_64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-gdwarf-4 -fPIC"
+                    },
+                    {
+                        "name": "opensslutils",
                         "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/x86_64-buildroot-linux-musl-gcc make"],
                         "buildcmd-clang": ["CC=clang make"],
                         "buildcmd-icx": ["CC=icx make"],
@@ -46,6 +78,20 @@
                         "buildcmd-clang": ["CC=clang make"],
                         "cflags-clang": "--target=aarch64-elf-linux -gdwarf-4 -march=armv8-a --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/aarch64-buildroot-linux-musl/include/ --sysroot=$(pwd)/../toolchain/aarch64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
                         "cflags-gcc": "-march=armv8-a -gdwarf-4 -fPIC"
+                    },
+                    {
+                        "name": "haclutil",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/aarch64-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "cflags-clang": "--target=aarch64-elf-linux -gdwarf-4 -march=armv8-a --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/aarch64-buildroot-linux-musl/include/ --sysroot=$(pwd)/../toolchain/aarch64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-march=armv8-a -gdwarf-4 -fPIC"
+                    },
+                    {
+                        "name": "opensslutils",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/aarch64-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "cflags-clang": "--target=aarch64-elf-linux -gdwarf-4 -march=armv8-a --gcc-toolchain=$(pwd)/../toolchain/ -I$(pwd)/../toolchain/aarch64-buildroot-linux-musl/include/ --sysroot=$(pwd)/../toolchain/aarch64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/aarch64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-march=armv8-a -gdwarf-4 -fPIC"
                     }
                 ]
             },
@@ -57,6 +103,20 @@
                 "compileOptions": [
                     {
                         "name": "compare",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/riscv64-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "cflags-clang": "--target=riscv64-unknown-linux-elf -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/  -I$(pwd)/../toolchain/riscv64-buildroot-linux-musl/include/  --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-gdwarf-4"
+                    },
+                    {
+                        "name": "haclutil",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/riscv64-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "cflags-clang": "--target=riscv64-unknown-linux-elf -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/  -I$(pwd)/../toolchain/riscv64-buildroot-linux-musl/include/  --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
+                        "cflags-gcc": "-gdwarf-4"
+                    },
+                    {
+                        "name": "opensslutils",
                         "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/riscv64-buildroot-linux-musl-gcc make"],
                         "buildcmd-clang": ["CC=clang make"],
                         "cflags-clang": "--target=riscv64-unknown-linux-elf -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/  -I$(pwd)/../toolchain/riscv64-buildroot-linux-musl/include/  --sysroot=$(pwd)/../toolchain/riscv64-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/riscv64-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error",
@@ -76,6 +136,20 @@
                         "buildcmd-clang": ["CC=clang make"],
                         "cflags-clang": "--target=mipsel-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/mipsel-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error -Wl,-z,notext",
                         "cflags-gcc": "-gdwarf-4"
+                    },
+                    {
+                        "name": "haclutil",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/mipsel-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "cflags-clang": "--target=mipsel-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/mipsel-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error -Wl,-z,notext",
+                        "cflags-gcc": "-gdwarf-4"
+                    },
+                    {
+                        "name": "opensslutils",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/mipsel-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "cflags-clang": "--target=mipsel-elf-linux -gdwarf-4 --gcc-toolchain=$(pwd)/../toolchain/ --sysroot=$(pwd)/../toolchain/mipsel-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/mipsel-buildroot-linux-musl/10.3.0/ -fuse-ld=lld -Wno-error -Wl,-z,notext",
+                        "cflags-gcc": "-gdwarf-4"
                     }
                 ]
             },
@@ -87,6 +161,20 @@
                 "compileOptions": [
                     {
                         "name": "compare",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "cflags-clang": "-Wl,-z,notext -gdwarf-4 --target=powerpc-elf-linux --sysroot=$(pwd)/../toolchain/powerpc-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-musl/10.3.0/ -Wno-error -fuse-ld=lld",
+                        "cflags-gcc": "-gdwarf-4"
+                    },
+                    {
+                        "name": "haclutil",
+                        "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-musl-gcc make"],
+                        "buildcmd-clang": ["CC=clang make"],
+                        "cflags-clang": "-Wl,-z,notext -gdwarf-4 --target=powerpc-elf-linux --sysroot=$(pwd)/../toolchain/powerpc-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-musl/10.3.0/ -Wno-error -fuse-ld=lld",
+                        "cflags-gcc": "-gdwarf-4"
+                    },
+                    {
+                        "name": "opensslutils",
                         "buildcmd-gcc": ["CC=$(pwd)/../toolchain/bin/powerpc-buildroot-linux-musl-gcc make"],
                         "buildcmd-clang": ["CC=clang make"],
                         "cflags-clang": "-Wl,-z,notext -gdwarf-4 --target=powerpc-elf-linux --sysroot=$(pwd)/../toolchain/powerpc-buildroot-linux-musl/sysroot -L$(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-musl/10.3.0/ -B $(pwd)/../toolchain/lib/gcc/powerpc-buildroot-linux-musl/10.3.0/ -Wno-error -fuse-ld=lld",
@@ -396,7 +484,7 @@
             "libname": "libcrypto",
             "includeDirs": ["include"],
             "compiler": "gcc",
-            "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" ,"camellia-cbc", "aria-cbc", "des-cbc", "sm4-cbc", "hmac-sha256", "hmac-sha512"]
+            "available-ciphers": ["aes-cbc","aes-ctr", "aes-gcm" ,"camellia-cbc", "aria-cbc", "des-cbc", "sm4-cbc", "hmac-sha256", "hmac-sha512", "compare"]
         },
         {
             "name": "botan",
@@ -429,6 +517,22 @@
             "includeDirs": [""],
             "compiler": "gcc",
             "available-ciphers": ["ct_select_v0", "ct_select_v1", "ct_select_v2" ,"ct_select_v3", "ct_select_v4"]
+        },
+        {
+            "name": "haclutil",
+            "git": "local",
+            "libname": "libhacl",
+            "includeDirs": [""],
+            "compiler": "gcc",
+            "available-ciphers": ["compare"]
+        },
+        {
+            "name": "opensslutils",
+            "git": "local",
+            "libname": "opensslutils",
+            "includeDirs": [""],
+            "compiler": "gcc",
+            "available-ciphers": ["compare"]
         }
     ]
 }
