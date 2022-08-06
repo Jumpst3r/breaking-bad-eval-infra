@@ -120,9 +120,10 @@ def analyze(lib, algname, keylen, extensions):
         return 0
     
     lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)]
-
+    if 'compare' in lib or 'hacl' in lib:
+        lmodues = [CFLeakDetector(binaryLoader=binLoader, flagVariableHitCount=True)]
     scd = SCDetector(modules=lmodues, getAssembly=True)
-    scd.initTraceCount = 50
+    scd.initTraceCount = 500
     scd.exec()
     # remove driver induced leaks
     try:
