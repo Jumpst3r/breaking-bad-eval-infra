@@ -17,10 +17,10 @@ RUN apt update && apt install --no-install-recommends -y \
     software-properties-common \
     gnupg
 RUN pip3 install Jinja2
-RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 15
-RUN ln -s /usr/bin/clang-15 /usr/bin/clang
-RUN ln -s /usr/bin/clang++-15 /usr/bin/clang++
-RUN ln -s /usr/bin/llvm-ar-15 /usr/bin/llvm-ar
+RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 13
+RUN ln -s /usr/bin/clang-13 /usr/bin/clang
+RUN ln -s /usr/bin/clang++-13 /usr/bin/clang++
+
 #RUN wget https://registrationcenter-download.intel.com/akdlm/irc_nas/18673/l_BaseKit_p_2022.2.0.262.sh && sh ./l_BaseKit_p_2022.2.0.262.sh -a --components intel.oneapi.lin.dpcpp-cpp-compiler -s --eula accept 
 # WORKDIR /build
 # ADD ../../ /build

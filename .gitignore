@@ -3,3 +3,5 @@
 k8s-config/
 *.html
 *.so
+test/**
+**/__pycache__/**
