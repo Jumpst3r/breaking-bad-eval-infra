@@ -115,22 +115,20 @@ def set_toolchain_params(settings: Settings, toolchain_data: Dict = None):
     print(f'- Set ROOTFS to {os.environ.get("ROOTFS")}')
 
 
-def build_framework(settings: Settings, rootfs = 'rootfs'):
+def build_framework(settings: Settings, rootfs='rootfs'):
     # logger = logging.getLogger()
     # logger.setLevel(logging.INFO)
     logging.root.setLevel(logging.INFO)
 
     if validate_settings(settings) == False:
         exit(0)
-    
+
     if settings.framework == "openssl":
         f = Openssl(settings, rootfs)
 
         f.download()
 
         f.build()
-
-
 
 
 if __name__ == "__main__":

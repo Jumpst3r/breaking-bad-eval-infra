@@ -72,6 +72,18 @@ class Openssl():
         if not os.path.isdir(self.name):
             git_clone(self.url, self.settings.commit, self.name)
 
+    def llvm_cflags(self, toolchain_dir):
+        cflags = f' --target={arch_str_target[self.settings.arch]}'
+        cflags += f' --gcc-toolchain={toolchain_dir}/'
+        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
+        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{get_toolchain_name(self.settings)}/'
+        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/'
+        cflags += f' --sysroot={toolchain_dir}/{get_toolchain_name(self.settings)}/sysroot/'
+        cflags += f' -L{toolchain_dir}/lib/gcc/{get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+        cflags += f' -B{toolchain_dir}/lib/gcc/{get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+        cflags += ' -fuse-ld=lld -Wno-error'
+        return cflags
+
     def build_lib(self):
         os.chdir(self.name)
 
@@ -89,15 +101,7 @@ class Openssl():
             if self.settings.arch == 'armv4':
                 cflags += " -march=armv4"
         if self.settings.compiler == 'llvm':
-            cflags += f' --target={arch_str_target[self.settings.arch]}'
-            cflags += f' --gcc-toolchain={cwd}/../toolchain/'
-            cflags += f' -I{cwd}/../toolchain/{get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
-            cflags += f' -I{cwd}/../toolchain/{get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{get_toolchain_name(self.settings)}/'
-            cflags += f' -I{cwd}/../toolchain/{get_toolchain_name(self.settings)}/include/'
-            cflags += f' --sysroot={cwd}/../toolchain/{get_toolchain_name(self.settings)}/sysroot/'
-            cflags += f' -L{cwd}/../toolchain/lib/gcc/{get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-            cflags += f' -B{cwd}/../toolchain/lib/gcc/{get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-            cflags += ' -fuse-ld=lld -Wno-error'
+            cflags += self.llvm_cflags(f'{cwd}/../toolchain')
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv4':
@@ -161,22 +165,20 @@ class Openssl():
         self.build_lib()
         self.copy_lib_rootfs()
 
-        # copy driver.c to current dir
-        # run_subprocess(f'cp ../frameworks/{self.name}/driver.c {self.rootfs}')
+        print(f'- Building driver.c')
 
         cwd = os.getcwd()
-
-        # os.chdir(self.rootfs)
 
         includestr = f'-I{self.name}/include'
         librarystr = f'-L{cwd}/{self.rootfs}/{self.libdir} -lcrypto'
 
         gcc_toolchain = f'{cwd}/toolchain/bin/{get_toolchain_name(self.settings)}-gcc'
-        compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang -fuse-ld=lld'
+        compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang'
+
+        cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
+            './toolchain')
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {librarystr} {cwd}/../frameworks/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../frameworks/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
 
-        # os.chdir(cwd)
-
-    def run(self):
+    def run(self, algo: str):
         pass
