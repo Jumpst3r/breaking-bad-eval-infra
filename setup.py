@@ -131,6 +131,10 @@ def build_framework(settings: Settings, rootfs='rootfs'):
         f = Mbedtls(settings, rootfs)
         f.download()
         f.build()
+    if settings.framework == 'wolfssl':
+        f = Wolfssl(settings, rootfs)
+        f.download()
+        f.build()
 
 
 if __name__ == "__main__":
