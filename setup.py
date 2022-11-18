@@ -125,9 +125,11 @@ def build_framework(settings: Settings, rootfs='rootfs'):
 
     if settings.framework == "openssl":
         f = Openssl(settings, rootfs)
-
         f.download()
-
+        f.build()
+    if settings.framework == 'mbedtls':
+        f = Mbedtls(settings, rootfs)
+        f.download()
         f.build()
 
 
@@ -135,7 +137,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     settings = Settings(
-        arch=sys.argv[1], compiler=sys.argv[2], version=sys.argv[3], framework=sys.argv[4], commit='openssl-3.0.7')
+        arch=sys.argv[1], compiler=sys.argv[2], version=sys.argv[3], framework=sys.argv[4], commit=sys.argv[5])
     toolchain(settings)
     # set_toolchain_params(settings)
     build_framework(settings)
