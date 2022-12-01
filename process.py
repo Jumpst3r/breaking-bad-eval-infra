@@ -33,13 +33,14 @@ def run_subprocess(args, *additionalargs, **kwargs):
     return result
 
 
-def run_subprocess_env(args, cc='', ar='', cxx='', ld_lib='', ld='', cflags='', ldflags=''):
+def run_subprocess_env(args, cc='', ar='', cxx='', ld_lib='', ld='', cflags='', ldflags='', ranlib=''):
     """A wrapper around `subprocess.run` that sets the CC, CXX, and AR env variables."""
     my_env = os.environ.copy()
     my_env['CC'] = cc
     my_env['CXX'] = cxx
     my_env['AR'] = ar
     my_env['LD'] = ld
+    my_env['RANLIB'] = ranlib
     my_env['CFLAGS'] = cflags
     my_env['LDFLAGS'] = ldflags
     my_env['LD_LIBRARY_PATH'] = ld_lib
