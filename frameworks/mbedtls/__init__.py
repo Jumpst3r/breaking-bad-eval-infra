@@ -6,11 +6,6 @@ import logging
 
 logging.getLogger().setLevel(logging.DEBUG)
 
-compile_options = {"buildcmd-gcc": ["./Configure linux-aarch64 --cross-compile-prefix={cwd}/../toolchain/bin/aarch64-linux- $CFLAGS", "make -j4"],
-                   "buildcmd-clang": ["./Configure linux-aarch64 $CFLAGS", "sed -i \"/^CC=/c\\CC=clang\" Makefile && sed -i \"/^AR=/c\\AR=llvm-ar\" Makefile && sed -i \"/^CXX=/c\\CXX=clang++\" Makefile", "make -j4"],
-                   "cflags-clang": "--target=aarch64-elf-linux -gdwarf-4 -march=armv8-a --gcc-toolchain={cwd}/../toolchain/ -I{cwd}/../toolchain/aarch64-buildroot-linux-gnu/include/c++/7.3.0/ -I{cwd}/../toolchain/aarch64-buildroot-linux-gnu/include/c++/7.3.0/aarch64-buildroot-linux-gnu/ -I{cwd}/../toolchain/aarch64-buildroot-linux-gnu/include/ --sysroot={cwd}/../toolchain/aarch64-buildroot-linux-gnu/sysroot -L{cwd}/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -B {cwd}/../toolchain/lib/gcc/aarch64-buildroot-linux-gnu/7.3.0/ -fuse-ld=lld -Wno-error",
-                                   "cflags-gcc": "-march=armv8-a -gdwarf-4"}
-
 arch_str_target = {
     'x86-64': 'x86_64-unknown-linux-elf',
     'aarch64': 'aarch64-unknown-linux-elf',
