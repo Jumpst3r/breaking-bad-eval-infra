@@ -5,3 +5,4 @@ from .wolfssl import Wolfssl
 from .mbedtls import Mbedtls
 from .openssl import Openssl
 from .opensslutils import Opensslutils
+from .haclstar import Haclstar

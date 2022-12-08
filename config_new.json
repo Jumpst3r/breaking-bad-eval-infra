@@ -309,6 +309,17 @@
         "ct_select_v4"
       ]
     },
+    "haclstar": {
+      "git": "https://github.com/hacl-star/hacl-star.git",
+      "libname": "libhacl",
+      "includeDirs": [
+        ""
+      ],
+      "compiler": "gcc",
+      "available-ciphers": [
+        "compare"
+      ]
+    },
     "haclutil": {
       "git": "local",
       "libname": "libhacl",

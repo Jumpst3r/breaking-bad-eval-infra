@@ -125,16 +125,19 @@ def build_framework(settings: Settings, rootfs='rootfs'):
 
     if settings.framework == "openssl":
         f = Openssl(settings, rootfs)
-        
+
     if settings.framework == 'mbedtls':
         f = Mbedtls(settings, rootfs)
-        
+
     if settings.framework == 'wolfssl':
         f = Wolfssl(settings, rootfs)
-        
+
     if settings.framework == 'botan':
         f = Botan(settings, rootfs)
-        
+
+    if settings.framework == 'haclstar':
+        f = Haclstar(settings, rootfs)
+
     f.download()
     f.build()
 
