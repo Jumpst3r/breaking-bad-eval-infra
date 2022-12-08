@@ -65,7 +65,7 @@ class Botan():
             f'Configuring {self.name} for {self.settings.compiler} on {self.settings.arch}')
 
         cflags = "-gdwarf-4"
-        cflags += self.settings.optflag
+        cflags += f" {self.settings.optflag}"
         if self.settings.compiler == 'gcc':
             # if self.settings.arch == 'x86-686':
             #     cflags += " -m32 -march=i386"
