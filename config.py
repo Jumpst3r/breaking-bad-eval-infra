@@ -6,9 +6,14 @@ import logging
 from dataclasses import dataclass
 from xmlrpc.client import Boolean
 
-with open('../config_new.json', 'r') as f:
-    config = json.load(f)
-
+try:
+    with open('../config_new.json', 'r') as f:
+        config = json.load(f)
+except:
+    with open('./config_new.json', 'r') as f:
+        config = json.load(f)
+# except:
+#     exit(0)
 
 @dataclass
 class Settings:
