@@ -1,17 +1,3 @@
-"""
-file @setup.py
-
-@author Moritz Schneider
-
-setup.py <arch> <compiler> <version> <framework>
-
-example:
-
-python3 setup.py x86-i686 gcc 11.3.0 openssl
-
-"""
-
-
 import random
 import os
 import sys
@@ -24,7 +10,6 @@ from typing import Dict
 
 from config import *
 from process import run_subprocess
-from frameworks import *
 
 
 resultjson = []
@@ -114,39 +99,3 @@ def set_toolchain_params(settings: Settings, toolchain_data: Dict = None):
         toolchain_data['gcc']['rootfs']
     print(f'- Set ROOTFS to {os.environ.get("ROOTFS")}')
 
-
-def build_framework(settings: Settings, rootfs='rootfs'):
-    # logger = logging.getLogger()
-    # logger.setLevel(logging.INFO)
-    logging.root.setLevel(logging.INFO)
-
-    if validate_settings(settings) == False:
-        exit(0)
-
-    if settings.framework == "openssl":
-        f = Openssl(settings, rootfs)
-
-    if settings.framework == 'mbedtls':
-        f = Mbedtls(settings, rootfs)
-
-    if settings.framework == 'wolfssl':
-        f = Wolfssl(settings, rootfs)
-
-    if settings.framework == 'botan':
-        f = Botan(settings, rootfs)
-
-    if settings.framework == 'haclstar':
-        f = Haclstar(settings, rootfs)
-
-    f.download()
-    f.build()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-
-    settings = Settings(
-        arch=sys.argv[1], compiler=sys.argv[2], version=sys.argv[3], framework=sys.argv[4], commit=sys.argv[5])
-    toolchain(settings)
-    # set_toolchain_params(settings)
-    build_framework(settings)
