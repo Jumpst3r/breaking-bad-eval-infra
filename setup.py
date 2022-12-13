@@ -65,7 +65,7 @@ def check_llvm(version: str):
         exit(-1)
 
 
-def toolchain(settings: Settings, DOWNLOAD=True):
+def toolchain(config: Config, settings: Settings, DOWNLOAD=True):
     """Download and setup the specified toolchain
 
     Args:
@@ -75,11 +75,7 @@ def toolchain(settings: Settings, DOWNLOAD=True):
         version (str): Version string of the compiler.
         DOWNLOAD (bool, optional): Download the toolchain. Defaults to True.
     """
-
-    if validate_settings(settings) == False:
-        exit(0)
-
-    toolchain_data = get_toolchain_data(settings)
+    toolchain_data = config.get_toolchain_data(settings)
 
     download_gcc(toolchain_data['gcc']['versions'][settings.gcc_ver]['url'],
                  toolchain_data['gcc']['versions'][settings.gcc_ver]['sha256'])
@@ -88,9 +84,9 @@ def toolchain(settings: Settings, DOWNLOAD=True):
     set_toolchain_params(settings, toolchain_data)
 
 
-def set_toolchain_params(settings: Settings, toolchain_data: Dict = None):
+def set_toolchain_params(config: Config, settings: Settings, toolchain_data: Dict = None):
     if toolchain_data == None:
-        toolchain_data = get_toolchain_data(settings)
+        toolchain_data = config.get_toolchain_data(settings)
 
     os.environ["TOOLCHAIN_ROOT"] = os.getcwd() + '/toolchain'
     print(f'- Set TOOLCHAIN_ROOT to {os.environ.get("TOOLCHAIN_ROOT")}')

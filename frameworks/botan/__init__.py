@@ -1,7 +1,7 @@
 from ..util import git_clone
 import os
 from process import run_subprocess, run_subprocess_env
-from config import Settings, get_prefix, get_toolchain_name
+from config import Settings, Config
 import logging
 
 logging.getLogger().setLevel(logging.DEBUG)
@@ -28,13 +28,14 @@ host_str = {
 
 
 class Botan():
-    def __init__(self, settings: Settings, rootfs: str):
+    def __init__(self, settings: Settings, config: Config, rootfs: str):
         self.name = 'botan'
         self.url = 'https://github.com/randombit/botan.git'
         self.settings = settings
-        self.prefix = get_prefix(settings)
+        self.prefix = config.get_prefix(settings)
         self.rootfs = rootfs
         self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
+        self.config = config
 
         if not os.path.isdir(self.rootfs):
             os.mkdir(self.rootfs)
@@ -47,12 +48,12 @@ class Botan():
 
     def llvm_cflags(self, toolchain_dir):
         cflags = f' --target={arch_str_target[self.settings.arch]}'
-        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
-        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{get_toolchain_name(self.settings)}/'
-        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/'
-        cflags += f' --sysroot={toolchain_dir}/{get_toolchain_name(self.settings)}/sysroot/'
-        cflags += f' -L{toolchain_dir}/lib/gcc/{get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += f' -B{toolchain_dir}/lib/gcc/{get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{self.config.get_toolchain_name(self.settings)}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/'
+        cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
+        cflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+        cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
         cflags += ' -fuse-ld=lld -Wno-error'
         return cflags
 
@@ -90,7 +91,7 @@ class Botan():
         logging.info(f'Configuring {self.name} (configure.py)')
         common = f'--cpu={host_str[self.settings.arch]}'
 
-        prefix = f'{cwd}/../toolchain/bin/{get_toolchain_name(self.settings)}'
+        prefix = f'{cwd}/../toolchain/bin/{self.config.get_toolchain_name(self.settings)}'
         if self.settings.compiler == 'gcc':
             comp_configure = f'--cc-bin={prefix}-g++ --ar-command={prefix}-ar'
             comp_configure += f' --extra-cxxflags="{cflags}" --no-optimizations'
@@ -98,9 +99,9 @@ class Botan():
             comp_configure = f'--cc-bin=clang++ --disable-cc-tests'
             comp_configure += f' --ldflags="{cflags}" --extra-cxxflags="{cflags}"'
             comp_configure += f' --ar-command=llvm-ar --no-optimizations'
-            comp_configure += f' --with-sysroot-dir={cwd}/../toolchain/{get_toolchain_name(self.settings)}/sysroot'
+            comp_configure += f' --with-sysroot-dir={cwd}/../toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot'
 
-        run_subprocess_env(f'./configure.py {common} {comp_configure}')        
+        run_subprocess_env(f'./configure.py {common} {comp_configure}')
 
         logging.info(f'Building {self.name} (make)')
         run_subprocess_env('make libs -j6')
@@ -113,7 +114,7 @@ class Botan():
         cwd = os.getcwd()
 
         run_subprocess(
-            f'cp -r {cwd}/toolchain/{get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
+            f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
         print(f"pwd = {os.getcwd()}")
         print(f"find ./ -name '{self.name}*.so'")
@@ -146,7 +147,7 @@ class Botan():
         else:
             librarystr = f'-L{cwd}/{self.rootfs}/{self.libdir} -lbotan-3'
 
-        gcc_toolchain = f'{cwd}/toolchain/bin/{get_toolchain_name(self.settings)}-g++'
+        gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-g++'
         compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang++'
 
         cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(

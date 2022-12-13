@@ -6,14 +6,6 @@ import logging
 from dataclasses import dataclass
 from xmlrpc.client import Boolean
 
-try:
-    with open('../config_new.json', 'r') as f:
-        config = json.load(f)
-except:
-    with open('./config_new.json', 'r') as f:
-        config = json.load(f)
-# except:
-#     exit(0)
 
 @dataclass
 class Settings:
@@ -35,12 +27,6 @@ class Settings:
         self.framework = framework
         self.optflag = optflag
         self.commit = commit
-
-
-# def load_config() -> Dict:
-#     with open('../config_new.json', 'r') as f:
-#         config = json.load(f)
-#     return config
 
 
 def replace_placholders(toolchain_name: str, gcc_ver: str, llvm_ver: str, obj: Dict) -> Dict:
@@ -77,87 +63,92 @@ def replace_placholders(toolchain_name: str, gcc_ver: str, llvm_ver: str, obj: D
     return obj
 
 
-def get_toolchain_data(settings: Settings) -> Dict:
-    """Get toolchain data
+class Config:
+    def __init__(self, path='../config_new.json'):
+        with open(path, 'r') as f:
+            self.config = json.load(f)
+        if self.validate_settings():
+            raise Exception("Config failed to validate")
 
-    Args:
-        settings (Settings): 
+    def get_toolchain_data(self, settings: Settings) -> Dict:
+        """Get toolchain data
 
-
-    Returns:
-        Dict: Toolchain data
-    """
-    data = {}
-    data['gcc'] = config['gcc'][settings.arch]
-    data['llvm'] = config['llvm']
-    toolchain_name = data['gcc']['toolchain']
-    return replace_placholders(toolchain_name, settings.gcc_ver, settings.llvm_ver, data)
+        Args:
+            settings (Settings): 
 
 
-def get_framework_data(settings: Settings) -> Dict:
-    """Get framework data
+        Returns:
+            Dict: Toolchain data
+        """
+        data = {}
+        data['gcc'] = self.config['gcc'][settings.arch]
+        data['llvm'] = self.config['llvm']
+        toolchain_name = data['gcc']['toolchain']
+        return replace_placholders(toolchain_name, settings.gcc_ver, settings.llvm_ver, data)
 
-    Args:
-        settings (Settings): 
+    def get_framework_data(self, settings: Settings) -> Dict:
+        """Get framework data
 
-    Returns:
-        Dict: framework data
-    """
+        Args:
+            settings (Settings): 
 
-    data = config['frameworks'][settings.framework]
-    return data
+        Returns:
+            Dict: framework data
+        """
 
+        data = self.config['frameworks'][settings.framework]
+        return data
 
-def get_framework_config(settings: Settings) -> Dict:
-    """Get framework config
+    def get_framework_config(self, settings: Settings) -> Dict:
+        """Get framework config
 
-    Args:
-        settings (Settings): 
+        Args:
+            settings (Settings): 
 
-    Returns:
-        Dict: Framework config
-    """
-    toolchain_name = config[settings.compiler][settings.arch]["toolchain"]
-    data = config['architectures'][settings.arch][settings.framework]
-    return replace_placholders(toolchain_name, settings.gcc_ver, settings.llvm_ver, data)
+        Returns:
+            Dict: Framework config
+        """
+        toolchain_name = self.config[settings.compiler][settings.arch]["toolchain"]
+        data = self.config['architectures'][settings.arch][settings.framework]
+        return replace_placholders(toolchain_name, settings.gcc_ver, settings.llvm_ver, data)
 
-def get_prefix(settings: Settings) -> str:
-    return get_toolchain_data(settings)['gcc']['prefix']
+    def get_prefix(self, settings: Settings) -> str:
+        return self.get_toolchain_data(settings)['gcc']['prefix']
 
-def get_toolchain_name(settings: Settings) -> str:
-    return get_toolchain_data(settings)['gcc']['toolchain']
+    def get_toolchain_name(self, settings: Settings) -> str:
+        return self.get_toolchain_data(settings)['gcc']['toolchain']
 
-def validate_settings(settings: Settings) -> Boolean:
-    # Validate compiler
-    if settings.compiler not in ['gcc', 'llvm']:
-        logging.error('Invalid compiler.')
-        return False
+    def validate_settings(self, settings: Settings) -> Boolean:
+        # Validate compiler
+        if settings.compiler not in ['gcc', 'llvm']:
+            logging.error('Invalid compiler.')
+            return False
 
-    # validate that we have a gcc toolchain with the correct architecture
-    if settings.arch not in config['gcc']:
-        logging.error('Invalid architecture.')
-        return False
+        # validate that we have a gcc toolchain with the correct architecture
+        if settings.arch not in self.config['gcc']:
+            logging.error('Invalid architecture.')
+            return False
 
-    # validate that the compiler version exists
-    if settings.gcc_ver not in config['gcc'][settings.arch]['versions']:
-        logging.error('Invalid version.')
-        return False
+        # validate that the compiler version exists
+        if settings.gcc_ver not in self.config['gcc'][settings.arch]['versions']:
+            logging.error('Invalid version.')
+            return False
 
-    if settings.llvm_ver not in config['llvm']['versions']:
-        logging.error('Invalid version.')
-        return False
+        if settings.llvm_ver not in self.config['llvm']['versions']:
+            logging.error('Invalid version.')
+            return False
 
-    # validate that the framework compiler settings exist
-    # if settings.arch not in config['architectures']:
-    #     logging.error('Invalid architecture.')
-    #     return False
-    # if settings.framework not in config['architectures'][settings.arch]:
-    #     logging.error('Framework missing')
-    #     return False
+        # validate that the framework compiler settings exist
+        # if settings.arch not in config['architectures']:
+        #     logging.error('Invalid architecture.')
+        #     return False
+        # if settings.framework not in config['architectures'][settings.arch]:
+        #     logging.error('Framework missing')
+        #     return False
 
-    # validate the framework entries exist
-    if settings.framework not in config['frameworks']:
-        logging.error('Framework missing')
-        return False
+        # validate the framework entries exist
+        if settings.framework not in self.config['frameworks']:
+            logging.error('Framework missing')
+            return False
 
-    return True
+        return True

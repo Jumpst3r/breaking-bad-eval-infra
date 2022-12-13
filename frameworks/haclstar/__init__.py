@@ -1,7 +1,7 @@
 from ..util import git_clone, git_reset
 import os
 from process import run_subprocess, run_subprocess_env
-from config import Settings, get_prefix, get_toolchain_name
+from config import Settings, Config
 import logging
 
 logging.getLogger().setLevel(logging.DEBUG)
@@ -28,13 +28,14 @@ march = {
 
 
 class Haclstar():
-    def __init__(self, settings: Settings, rootfs: str):
+    def __init__(self, settings: Settings, config: Config, rootfs: str):
         self.name = 'hacl-star'
         self.url = 'https://github.com/hacl-star/hacl-star.git'
         self.settings = settings
-        self.prefix = get_prefix(settings)
+        self.prefix = config.get_prefix(settings)
         self.rootfs = rootfs
         self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
+        self.config = config
 
         if not os.path.isdir(self.rootfs):
             os.mkdir(self.rootfs)
@@ -50,17 +51,17 @@ class Haclstar():
     def llvm_cflags(self, toolchain_dir):
         cflags = f' --target={arch_str_target[self.settings.arch]}'
         cflags += f' --gcc-toolchain={toolchain_dir}/'
-        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
-        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{get_toolchain_name(self.settings)}/'
-        cflags += f' -I{toolchain_dir}/{get_toolchain_name(self.settings)}/include/'
-        cflags += f' --sysroot={toolchain_dir}/{get_toolchain_name(self.settings)}/sysroot/'
-        cflags += f' -B{toolchain_dir}/lib/gcc/{get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{self.config.get_toolchain_name(self.settings)}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/'
+        cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
+        cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
         cflags += f' -Wno-error'
         return cflags
 
     def llvm_ldflags(self, toolchain_dir):
         ldflags = " -fuse-ld=lld"
-        ldflags += f' -L{toolchain_dir}/lib/gcc/{get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+        ldflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
         return ldflags
 
     def gen_config(self):
@@ -86,8 +87,8 @@ class Haclstar():
         result += f"LDFLAGS	+= -Xlinker -z -Xlinker noexecstack -Xlinker --unresolved-symbols=report-all\n"
 
         if self.settings.compiler == 'gcc':
-            cc = f"{toolchain_dir}/bin/{get_toolchain_name(self.settings)}-gcc"
-            ar = f"{toolchain_dir}/bin/{get_toolchain_name(self.settings)}-ar"
+            cc = f"{toolchain_dir}/bin/{self.config.get_toolchain_name(self.settings)}-gcc"
+            ar = f"{toolchain_dir}/bin/{self.config.get_toolchain_name(self.settings)}-ar"
         else:
             cc = "clang"
             ar = "llvm-ar"
@@ -141,7 +142,7 @@ class Haclstar():
 
         logging.info('Removing hardcoded optimization level in Makefile')
         # Read the Makefile
-        with open('Makefile', 'r') as file :
+        with open('Makefile', 'r') as file:
             filedata = file.read()
 
         # Replace the target string
@@ -162,7 +163,7 @@ class Haclstar():
         cwd = os.getcwd()
 
         run_subprocess(
-            f'cp -r {cwd}/toolchain/{get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
+            f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
         print(f"pwd = {os.getcwd()}")
         print(f"find ./ -name '{self.name}*.so'")
@@ -189,7 +190,7 @@ class Haclstar():
         includestr += f' -Ihacl-star/dist/karamel/krmllib/dist/minimal'
         librarystr = f'-L{cwd}/{self.rootfs}/{self.libdir} -levercrypt'
 
-        gcc_toolchain = f'{cwd}/toolchain/bin/{get_toolchain_name(self.settings)}-gcc'
+        gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-gcc'
         compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang'
 
         cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(

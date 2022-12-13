@@ -26,32 +26,31 @@ parser.add_argument('-c', '--commit', type=str,
 
 parser.add_argument('-o', '--opt', '--optimization', type=str,
                     help='Optimization (default: -O2)', default='-O2')
+parser.add_argument('-p', '--path', type=str,
+                    help='config file', default='../config_new.json')
 
 args = parser.parse_args()
 
 
-def build_framework(settings: Settings, rootfs='rootfs'):
+def build_framework(config: Config, settings: Settings, rootfs='rootfs'):
     # logger = logging.getLogger()
     # logger.setLevel(logging.INFO)
     logging.root.setLevel(logging.INFO)
 
-    if validate_settings(settings) == False:
-        exit(0)
-
     if settings.framework == "openssl":
-        f = Openssl(settings, rootfs)
+        f = Openssl(settings, config, rootfs)
 
     if settings.framework == 'mbedtls':
-        f = Mbedtls(settings, rootfs)
+        f = Mbedtls(settings, config, rootfs)
 
     if settings.framework == 'wolfssl':
-        f = Wolfssl(settings, rootfs)
+        f = Wolfssl(settings, config, rootfs)
 
     if settings.framework == 'botan':
-        f = Botan(settings, rootfs)
+        f = Botan(settings, config, rootfs)
 
     if settings.framework == 'haclstar':
-        f = Haclstar(settings, rootfs)
+        f = Haclstar(settings, config, rootfs)
 
     f.download()
     f.build()
@@ -62,5 +61,6 @@ settings = Settings(
     arch=args.arch, compiler=args.toolchain, version=args.version,
     framework=args.framework, commit=args.commit, optflag=args.opt
 )
-toolchain(settings)
-build_framework(settings)
+config = Config(args.path)
+toolchain(config, settings)
+build_framework(config, settings)
