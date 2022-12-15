@@ -81,7 +81,7 @@ def toolchain(config: Config, settings: Settings, DOWNLOAD=True):
                  toolchain_data['gcc']['versions'][settings.gcc_ver]['sha256'])
 
     check_llvm(settings.llvm_ver)
-    set_toolchain_params(settings, toolchain_data)
+    set_toolchain_params(config, settings, toolchain_data)
 
 
 def set_toolchain_params(config: Config, settings: Settings, toolchain_data: Dict = None):
