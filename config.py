@@ -64,10 +64,10 @@ def replace_placholders(toolchain_name: str, gcc_ver: str, llvm_ver: str, obj: D
 
 
 class Config:
-    def __init__(self, path='../config_new.json'):
+    def __init__(self, settings: Settings, path='../config_new.json'):
         with open(path, 'r') as f:
             self.config = json.load(f)
-        if self.validate_settings():
+        if not self.validate_settings(settings):
             raise Exception("Config failed to validate")
 
     def get_toolchain_data(self, settings: Settings) -> Dict:

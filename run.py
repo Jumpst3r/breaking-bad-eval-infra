@@ -61,6 +61,6 @@ settings = Settings(
     arch=args.arch, compiler=args.toolchain, version=args.version,
     framework=args.framework, commit=args.commit, optflag=args.opt
 )
-config = Config(args.path)
+config = Config(settings, args.path)
 toolchain(config, settings)
 build_framework(config, settings)
