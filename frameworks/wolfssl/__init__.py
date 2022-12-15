@@ -1,4 +1,4 @@
-from ..util import git_clone, llvm_cflags
+from ..util import git_clone
 import os
 from process import run_subprocess, run_subprocess_env
 from config import Settings, Config
