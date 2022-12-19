@@ -4,6 +4,11 @@ from process import run_subprocess, run_subprocess_env
 from config import Settings, Config
 import logging
 
+from microsurf.microsurf import SCDetector
+from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
+from microsurf.pipeline.Stages import BinaryLoader
+from microsurf.utils.generators import hex_key_generator, SecretGenerator
+
 logging.getLogger().setLevel(logging.DEBUG)
 
 arch_str_target = {
@@ -198,5 +203,34 @@ class Haclstar():
         run_subprocess_env(
             f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../frameworks/haclstar/driver.c -lm -o {self.rootfs}/driver.bin')
 
-    def run(self, algo: str):
+    def run(self, algo='hmac-sha1'):
+        rootfs = os.getcwd() + '/rootfs'
+        binpath = rootfs + '/driver.bin'
+
+        sharedObjects = ['libevercrypt']
+
+        fct = hex_key_generator(128)
+
+        args = f'{algo} @'.split()
+
+        print("Creating BinaryLoader")
+        binLoader = BinaryLoader(
+            path=binpath,
+            args=args,
+            rootfs=rootfs,
+            rndGen=fct,
+            sharedObjects=sharedObjects
+        )
+        print("Configuring BinaryLoader")
+        errno = binLoader.configure()
+        if errno:
+            print("failed to configure BinaryLoader")
+            return -1
+
+        lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(
+            binaryLoader=binLoader, flagVariableHitCount=True)]
+        scd = SCDetector(modules=lmodues, getAssembly=True)
+        scd.initTraceCount = 10
+        scd.exec()
+
         pass
