@@ -191,6 +191,11 @@ int main(int argc, char *argv[])
     }
 
     // Do something with the output to prevent the compiler optimizing stuff away
+    printf("Plaintext: ");
+    for(int i = 0; i < 16; i++) {
+        printf("%02x", plaintext[i]);
+    }
+    printf(" -- ");
     printf("Output: ");
     for(int i = 0; i < 16; i++) {
         printf("%02x", output[i]);
