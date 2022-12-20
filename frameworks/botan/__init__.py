@@ -13,13 +13,13 @@ arch_str_target = {
     'armv7': 'arm-unknown-linux-elf',
     'riscv64': 'riscv64-unknown-linux-elf',
     'mips32el': 'mipsel-unknown-linux-elf',
-    'x86-686': 'i686-unknown-linux-elf'
+    'x86-i686': 'i686-unknown-linux-elf'
 }
 
 host_str = {
     'riscv64': 'riscv64',
     'x86-64': 'x86_64',
-    'x86': 'x86_32',
+    'x86-i686': 'x86_32',
     'armv4': 'arm',
     'armv7': 'arm',
     'aarch64': 'armv8',
@@ -68,8 +68,8 @@ class Botan():
         cflags = "-gdwarf-4"
         cflags += f" {self.settings.optflag}"
         if self.settings.compiler == 'gcc':
-            # if self.settings.arch == 'x86-686':
-            #     cflags += " -m32 -march=i386"
+            if self.settings.arch == 'x86-i686':
+                cflags += " -m32 -march=i386"
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv4':

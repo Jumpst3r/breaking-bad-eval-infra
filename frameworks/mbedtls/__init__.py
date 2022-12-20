@@ -13,7 +13,7 @@ arch_str_target = {
     'armv7': 'arm-unknown-linux-elf',
     'riscv64': 'riscv64-unknown-linux-elf',
     'mips32el': 'mipsel-unknown-linux-elf',
-    'x86-686': 'i686-unknown-linux-elf'
+    'x86-i686': 'i686-unknown-linux-elf'
 }
 
 
@@ -55,8 +55,8 @@ class Mbedtls():
         cflags = "-gdwarf-4"
         cflags += f" {self.settings.optflag}"
         if self.settings.compiler == 'gcc':
-            # if self.settings.arch == 'x86-686':
-            #     cflags += " -m32 -march=i386"
+            if self.settings.arch == 'x86-i686':
+                cflags += " -m32 -march=i386"
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv4':

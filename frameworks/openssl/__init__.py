@@ -18,7 +18,7 @@ arch_str_gcc = {
     'armv7': 'linux-armv7',
     'riscv64': 'linux64-riscv64',
     'mips32el': 'linux-mips32',
-    'x86-686': 'linux-x86'
+    'x86-i686': 'linux-x86'
 }
 
 arch_str_llvm = {
@@ -28,7 +28,7 @@ arch_str_llvm = {
     'armv7': 'linux-armv7',
     'riscv64': 'linux64-riscv64',
     'mips32el': 'linux-mips32',
-    'x86-686': 'linux-x86-clang'
+    'x86-i686': 'linux-x86-clang'
 }
 
 arch_str_target = {
@@ -38,7 +38,7 @@ arch_str_target = {
     'armv7': 'arm-unknown-linux-elf',
     'riscv64': 'riscv64-unknown-linux-elf',
     'mips32el': 'mipsel-unknown-linux-elf',
-    'x86-686': 'i686-unknown-linux-elf'
+    'x86-i686': 'i686-unknown-linux-elf'
 }
 
 # Example configure call using LLVM and aarch64
@@ -96,8 +96,8 @@ class Openssl():
         cflags = "-gdwarf-4"
         cflags += f" {self.settings.optflag}"
         if self.settings.compiler == 'gcc':
-            # if self.settings.arch == 'x86-686':
-            #     cflags += " -m32 -march=i386"
+            if self.settings.arch == 'x86-i686':
+                cflags += " -m32 -march=i386"
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv4':
