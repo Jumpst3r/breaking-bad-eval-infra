@@ -18,12 +18,12 @@ arch_str_target = {
     'armv7': 'arm-unknown-linux-elf',
     'riscv64': 'riscv64-unknown-linux-elf',
     'mips32el': 'mipsel-unknown-linux-elf',
-    'x86-686': 'i686-unknown-linux-elf'
+    'x86-i686': 'i386-unknown-linux-elf'
 }
 
 march = {
     'x86-64': '',
-    'x86-686': 'ia32',
+    'x86-i686': 'ia32',
     'aarch64': 'aarch64',
     'armv4': 'arm',  # not sure
     'armv7': 'arm',  # not sure
@@ -114,8 +114,8 @@ class Haclstar():
         cflags += f" {self.settings.optflag}"
         ldflags = ""
         if self.settings.compiler == 'gcc':
-            # if self.settings.arch == 'x86-686':
-            #     cflags += " -m32 -march=i386"
+            if self.settings.arch == 'x86-i686':
+                cflags += " -m32 -march=i386"
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv4':
@@ -203,15 +203,15 @@ class Haclstar():
         run_subprocess_env(
             f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../frameworks/haclstar/driver.c -lm -o {self.rootfs}/driver.bin')
 
-    def run(self, algo='hmac-sha1'):
+    def run(self, algo='ecdh-curve25519'):
         rootfs = os.getcwd() + '/rootfs'
         binpath = rootfs + '/driver.bin'
 
         sharedObjects = ['libevercrypt']
 
-        fct = hex_key_generator(128)
+        fct = hex_key_generator(256)
 
-        args = f'{algo} @'.split()
+        args = f'@ {algo}'.split()
 
         print("Creating BinaryLoader")
         binLoader = BinaryLoader(

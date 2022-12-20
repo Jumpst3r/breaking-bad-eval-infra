@@ -70,7 +70,10 @@ int main(int argc, char *argv[])
     uint32_t key_len = 32;
 
     uint8_t key[32];
-    hextobin(key, key_hex);
+    int len = hextobin(key, key_hex);
+    if(len < 32) {
+        return -1;
+    }
 
     /* The encryption primitive to use */
     char *mode = argv[2];
@@ -95,7 +98,7 @@ int main(int argc, char *argv[])
     /* Output buffer */
     uint8_t output[1024];
 
-    if (strcmp(mode, "chacha_poly1305"))
+    if (!strcmp(mode, "chacha_poly1305"))
     {
         Hacl_Chacha20Poly1305_32_aead_encrypt(key, iv, aad_len, aad, m_len, plaintext, cipher, mac);
 
@@ -106,51 +109,51 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    if (strcmp(mode, "MD5"))
+    else if (!strcmp(mode, "MD5"))
     {
         Hacl_Hash_MD5_legacy_hash(key, key_len, output);
     }
-    if (strcmp(mode, "SHA1"))
+    else if (!strcmp(mode, "SHA1"))
     {
         Hacl_Hash_SHA1_legacy_hash(key, key_len, output);
     }
-    if (strcmp(mode, "SHA2"))
+    else if (!strcmp(mode, "SHA2"))
     {
         Hacl_Hash_SHA2_hash_256(key, key_len, output);
         Hacl_Hash_SHA2_hash_384(key, key_len, output);
         Hacl_Hash_SHA2_hash_512(key, key_len, output);
     }
-    if (strcmp(mode, "SHA3"))
+    else if (!strcmp(mode, "SHA3"))
     {
         Hacl_SHA3_sha3_224(key_len, key, output);
         Hacl_SHA3_sha3_256(key_len, key, output);
         Hacl_SHA3_sha3_384(key_len, key, output);
         Hacl_SHA3_sha3_512(key_len, key, output);
     }
-    if (strcmp(mode, "Blake2"))
+    else if (!strcmp(mode, "Blake2"))
     {
         Hacl_Blake2b_32_blake2b(64, output, m_len, plaintext, key_len, key);
         Hacl_Blake2s_32_blake2s(64, output, m_len, plaintext, key_len, key);
     }
-    if (strcmp(mode, "hmac-sha1"))
+    else if (!strcmp(mode, "hmac-sha1"))
     {
         Hacl_HMAC_legacy_compute_sha1(output, key, key_len, plaintext, m_len);
     }
-    if (strcmp(mode, "hmac-sha2"))
+    else if (!strcmp(mode, "hmac-sha2"))
     {
         Hacl_HMAC_compute_sha2_256(output, key, key_len, plaintext, m_len);
         Hacl_HMAC_compute_sha2_384(output, key, key_len, plaintext, m_len);
         Hacl_HMAC_compute_sha2_512(output, key, key_len, plaintext, m_len);
     }
-    if (strcmp(mode, "hmac-blake2"))
+    else if (!strcmp(mode, "hmac-blake2"))
     {
         Hacl_HMAC_compute_blake2s_32(output, key, key_len, plaintext, m_len);
         Hacl_HMAC_compute_blake2b_32(output, key, key_len, plaintext, m_len);
     }
-    if (strcmp(mode, "ecdh-curve25519"))
+    else if (!strcmp(mode, "ecdh-curve25519"))
     {
         // use a hardcoded public key
-        uint8_t *const_key = (uint8_t *)"0123456789012345678901234567890123456789";
+        uint8_t *const_key = (uint8_t *)"dde19308ba7a7ec42e483146a1cb479b5fd164c660bd6dfbf768520f06293b26";
         uint8_t pub[32];
         Hacl_Curve25519_51_secret_to_public(pub, const_key);
 
@@ -161,10 +164,10 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    if (strcmp(mode, "ecdh-p256"))
+    else if (!strcmp(mode, "ecdh-p256"))
     {
         // use a hardcoded public key
-        uint8_t *const_key = (uint8_t *)"0123456789012345678901234567890123456789";
+        uint8_t *const_key = (uint8_t *)"dde19308ba7a7ec42e483146a1cb479b5fd164c660bd6dfbf768520f06293b26";
         uint8_t pub[64];
         if (!Hacl_P256_validate_private_key(const_key))
         {
@@ -189,13 +192,12 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
+    else
+    {
+        return -1;
+    }
 
     // Do something with the output to prevent the compiler optimizing stuff away
-    printf("Plaintext: ");
-    for(int i = 0; i < 16; i++) {
-        printf("%02x", plaintext[i]);
-    }
-    printf(" -- ");
     printf("Output: ");
     for(int i = 0; i < 16; i++) {
         printf("%02x", output[i]);
