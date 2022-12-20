@@ -15,4 +15,5 @@ def git_clone(url: str, commit: str, name: str):
 def git_reset(commit: str, name: str):
     os.chdir(name)
     run_subprocess(f'git reset --hard {commit}')
+    run_subprocess(f'git clean -f -x .')
     os.chdir('../')
