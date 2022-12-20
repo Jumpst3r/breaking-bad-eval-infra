@@ -64,6 +64,27 @@ def check_llvm(version: str):
             f'Unexpected LLVM version.\nExpected: {version}\nFound: {result.stdout}')
         exit(-1)
 
+def fix_sysroot_symlink(config: Config, settings: Settings):
+    """ Fix symlink issues in most musl toolchains. 
+        ld-musl-aarch64.so.1 -> /lib/libc.so
+    """
+    cwd = os.getcwd()
+
+    os.chdir(f'toolchain/{config.get_toolchain_name(settings)}/sysroot/lib')
+
+    if settings.arch == 'x86-64':
+        filename = 'ld-musl-x86_64.so.1'
+    elif settings.arch == 'x86-i686':
+        filename = 'ld-musl-i386.so.1'
+    elif settings.arch == 'armv7':
+        filename = 'ld-musl-armhf.so.1'
+    elif settings.arch == 'mips32el':
+        filename = 'ld-musl-mipsel.so.1'
+    else:
+        filename = f'ld-musl-{settings.arch}.so.1'
+    run_subprocess(f'ln -f -s libc.so {filename}')
+
+    os.chdir(cwd)
 
 def toolchain(config: Config, settings: Settings, DOWNLOAD=True):
     """Download and setup the specified toolchain
@@ -79,6 +100,8 @@ def toolchain(config: Config, settings: Settings, DOWNLOAD=True):
 
     download_gcc(toolchain_data['gcc']['versions'][settings.gcc_ver]['url'],
                  toolchain_data['gcc']['versions'][settings.gcc_ver]['sha256'])
+
+    fix_sysroot_symlink(config, settings)
 
     check_llvm(settings.llvm_ver)
     set_toolchain_params(config, settings, toolchain_data)
