@@ -1,4 +1,4 @@
-from ..util import git_clone, git_reset
+from ..util import git_clone, git_reset, Algo, Framework
 import os
 from process import run_subprocess, run_subprocess_env
 from config import Settings, Config
@@ -32,7 +32,7 @@ march = {
 }
 
 
-class Haclstar():
+class Haclstar(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str):
         self.name = 'hacl-star'
         self.url = 'https://github.com/hacl-star/hacl-star.git'
@@ -202,6 +202,16 @@ class Haclstar():
             './toolchain') + self.llvm_ldflags('./toolchain')
         run_subprocess_env(
             f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../frameworks/haclstar/driver.c -lm -o {self.rootfs}/driver.bin')
+
+    def supported_ciphers(self) -> list[Algo]:
+        return [
+            Algo.CHACHA_POLY1305,
+            Algo.HMAC_SHA1,
+            Algo.HMAC_SHA2,
+            Algo.HMAC_BLAKE2,
+            Algo.ECDH_CURVE25519,
+            Algo.ECDH_P256
+        ]
 
     def run(self, algo='ecdh-curve25519'):
         rootfs = os.getcwd() + '/rootfs'
