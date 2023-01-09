@@ -142,13 +142,13 @@ int main(int argc, char *argv[])
     else if (!strcmp(mode, "hmac-sha2"))
     {
         Hacl_HMAC_compute_sha2_256(output, key, key_len, plaintext, m_len);
-        Hacl_HMAC_compute_sha2_384(output, key, key_len, plaintext, m_len);
-        Hacl_HMAC_compute_sha2_512(output, key, key_len, plaintext, m_len);
+        Hacl_HMAC_compute_sha2_384(cipher, key, key_len, output, m_len);
+        Hacl_HMAC_compute_sha2_512(output, key, key_len, cipher, m_len);
     }
     else if (!strcmp(mode, "hmac-blake2"))
     {
-        Hacl_HMAC_compute_blake2s_32(output, key, key_len, plaintext, m_len);
-        Hacl_HMAC_compute_blake2b_32(output, key, key_len, plaintext, m_len);
+        Hacl_HMAC_compute_blake2s_32(cipher, key, key_len, plaintext, m_len);
+        Hacl_HMAC_compute_blake2b_32(output, key, key_len, cipher, m_len);
     }
     else if (!strcmp(mode, "ecdh-curve25519"))
     {
