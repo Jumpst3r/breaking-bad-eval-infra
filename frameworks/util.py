@@ -5,6 +5,10 @@ from enum import Enum
 from process import run_subprocess
 from config import Settings, Config
 
+from microsurf.microsurf import SCDetector
+from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
+from microsurf.pipeline.Stages import BinaryLoader
+from microsurf.utils.generators import hex_key_generator, SecretGenerator
 
 class Algo(Enum):
     AES_CBC = 1
@@ -35,6 +39,49 @@ class Framework:
 
     def supported_ciphers(self) -> list[Algo]:
         pass
+
+    def gen_args(self, algo: Algo) -> list[str]:
+        pass
+
+    def shared_objects(self) -> list[str]:
+        pass
+
+    def clean_report(self, scd):
+        pass
+
+    def run(self, algo: Algo):
+        rootfs = os.getcwd() + '/rootfs'
+        binpath = rootfs + '/driver.bin'
+
+        sharedObjects = self.shared_objects()
+
+        # keylen hardcoded to 256
+        fct = hex_key_generator(256)
+
+        args = self.gen_args(algo)
+
+        logging.info("Creating BinaryLoader")
+        binLoader = BinaryLoader(
+            path=binpath,
+            args=args,
+            rootfs=rootfs,
+            rndGen=fct,
+            sharedObjects=sharedObjects
+        )
+        logging.info("Configuring BinaryLoader")
+        errno = binLoader.configure()
+        if errno:
+            logging.error("failed to configure BinaryLoader")
+            raise "failed to configure BinaryLoader"
+
+        lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(
+            binaryLoader=binLoader, flagVariableHitCount=True)]
+        scd = SCDetector(modules=lmodues, getAssembly=True)
+        scd.initTraceCount = 10
+        scd.exec()
+
+        scd = self.clean_report(scd)
+
 
 
 def git_clone(url: str, commit: str, name: str):

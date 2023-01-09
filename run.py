@@ -2,6 +2,7 @@ import logging
 import argparse
 from config import *
 from frameworks import *
+from frameworks.util import *
 from setup import *
 
 example_usage = """example usage:
@@ -54,6 +55,7 @@ def build_framework(config: Config, settings: Settings, rootfs='rootfs'):
 
     f.download()
     f.build()
+    scd = f.run(Algo.AES_GCM)
 
 
 logging.basicConfig(level=logging.DEBUG)

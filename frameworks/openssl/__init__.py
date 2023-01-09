@@ -1,4 +1,4 @@
-from ..util import git_clone
+from ..util import *
 import os
 from process import run_subprocess, run_subprocess_env
 from config import Settings, Config
@@ -54,7 +54,7 @@ arch_str_target = {
 # -fuse-ld=lld -Wno-error
 
 
-class Openssl():
+class Openssl(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str):
         self.name = 'openssl'
         self.url = 'git://git.openssl.org/openssl.git'
@@ -72,6 +72,8 @@ class Openssl():
     def download(self):
         if not os.path.isdir(self.name):
             git_clone(self.url, self.settings.commit, self.name)
+        else:
+            git_reset(self.settings.commit, self.name)
 
     def llvm_cflags(self, toolchain_dir):
         cflags = f' --target={arch_str_target[self.settings.arch]}'
@@ -142,15 +144,15 @@ class Openssl():
         os.chdir('../')
 
     def copy_lib_rootfs(self):
-        print(f'- Copying files to {self.rootfs}{self.libdir}')
+        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
         run_subprocess(
             f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
-        print(f"pwd = {os.getcwd()}")
-        print(f"find ./ -name '{self.name}*.so'")
+        logging.info(f"pwd = {os.getcwd()}")
+        logging.info(f"find ./ -name '{self.name}*.so'")
         run_subprocess(
             f'cp $(find ./{self.name} -name "*.so") {os.getcwd()}/{self.rootfs}/{self.libdir}')
         run_subprocess(
@@ -167,7 +169,7 @@ class Openssl():
         self.build_lib()
         self.copy_lib_rootfs()
 
-        print(f'- Building driver.c')
+        logging.info(f'- Building driver.c')
 
         cwd = os.getcwd()
 
@@ -182,5 +184,41 @@ class Openssl():
         run_subprocess_env(
             f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../frameworks/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
 
-    def run(self, algo: str):
-        pass
+    def supported_ciphers(self) -> list[Algo]:
+        return [
+            Algo.AES_CBC,
+            Algo.AES_CTR,
+            Algo.AES_GCM,
+            Algo.CAMELLIA_CBC,
+            Algo.ARIA_CBC,
+            Algo.DES_CBC,
+            Algo.CHACHA_POLY1305,
+            Algo.HMAC_SHA2,
+        ]
+
+    def gen_args(self, algo: Algo) -> list[str]:
+        if algo not in self.supported_ciphers():
+            raise "Unsupported algorithm"
+
+        algo_str = {
+            Algo.AES_CBC: 'aes-cbc',
+            Algo.AES_CTR: 'aes-ctr',
+            Algo.AES_GCM: 'aes-gcm',
+            Algo.CAMELLIA_CBC: 'camellia-cbc',
+            Algo.ARIA_CBC: 'aria-cbc',
+            Algo.DES_CBC: 'des-cbc',
+            Algo.CHACHA_POLY1305: 'chacha_poly1305',
+            Algo.HMAC_SHA2: 'hmac-sha256'
+        }
+
+        return f'@ {algo_str[algo]}'.split()
+
+    def shared_objects(self) -> list[str]:
+        return ['libcrypto']
+
+    def clean_report(self, scd):
+        # mask = scd.DF['Symbol Name'].str.contains('hextobin')
+        # scd.DF = scd.DF[~mask]
+        # # recreate reports:
+        # scd._generateReport()
+        return scd

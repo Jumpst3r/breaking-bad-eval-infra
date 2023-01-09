@@ -4,10 +4,6 @@ from process import run_subprocess, run_subprocess_env
 from config import Settings, Config
 import logging
 
-from microsurf.microsurf import SCDetector
-from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
-from microsurf.pipeline.Stages import BinaryLoader
-from microsurf.utils.generators import hex_key_generator, SecretGenerator
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -163,15 +159,15 @@ class Haclstar(Framework):
         os.chdir(cwd)
 
     def copy_lib_rootfs(self):
-        print(f'- Copying files to {self.rootfs}{self.libdir}')
+        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
         run_subprocess(
             f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
-        print(f"pwd = {os.getcwd()}")
-        print(f"find ./ -name '{self.name}*.so'")
+        logging.info(f"pwd = {os.getcwd()}")
+        logging.info(f"find ./ -name '{self.name}*.so'")
         run_subprocess(
             f'cp $(find ./{self.name} -name "*.so") {os.getcwd()}/{self.rootfs}/{self.libdir}')
 
@@ -186,7 +182,7 @@ class Haclstar(Framework):
         self.build_lib()
         self.copy_lib_rootfs()
 
-        print(f'- Building driver.c')
+        logging.info(f'- Building driver.c')
 
         cwd = os.getcwd()
 
@@ -213,34 +209,27 @@ class Haclstar(Framework):
             Algo.ECDH_P256
         ]
 
-    def run(self, algo='ecdh-curve25519'):
-        rootfs = os.getcwd() + '/rootfs'
-        binpath = rootfs + '/driver.bin'
+    def gen_args(self, algo: Algo) -> list[str]:
+        if algo not in self.supported_ciphers():
+            raise "Unsupported algorithm"
 
-        sharedObjects = ['libevercrypt']
+        algo_str = {
+            Algo.CHACHA_POLY1305: 'chacha_poly1305',
+            Algo.HMAC_SHA1: 'hmac-sha1',
+            Algo.HMAC_SHA2: 'hmac-sha2',
+            Algo.HMAC_BLAKE2: 'hmac-blake2',
+            Algo.ECDH_CURVE25519: 'ecdh-curve25519',
+            Algo.ECDH_P256: 'ecdh-p256',
+        }
+        
+        return f'@ {algo_str[algo]}'.split()
 
-        fct = hex_key_generator(256)
+    def shared_objects(self) -> list[str]:
+        return ['libevercrypt']
 
-        args = f'@ {algo}'.split()
-
-        print("Creating BinaryLoader")
-        binLoader = BinaryLoader(
-            path=binpath,
-            args=args,
-            rootfs=rootfs,
-            rndGen=fct,
-            sharedObjects=sharedObjects
-        )
-        print("Configuring BinaryLoader")
-        errno = binLoader.configure()
-        if errno:
-            print("failed to configure BinaryLoader")
-            return -1
-
-        lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(
-            binaryLoader=binLoader, flagVariableHitCount=True)]
-        scd = SCDetector(modules=lmodues, getAssembly=True)
-        scd.initTraceCount = 10
-        scd.exec()
-
-        pass
+    def clean_report(self, scd):
+        # mask = scd.DF['Symbol Name'].str.contains('hextobin')
+        # scd.DF = scd.DF[~mask]
+        # # recreate reports:
+        # scd._generateReport()
+        return scd
