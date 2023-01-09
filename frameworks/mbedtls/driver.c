@@ -99,7 +99,6 @@ int main( int argc, char *argv[] )
 
     mbedtls_cipher_init( &cipher_ctx );
     mbedtls_md_init( &md_ctx );
-
     /*
      * Parse the command-line arguments.
      */
@@ -130,9 +129,9 @@ int main( int argc, char *argv[] )
         goto exit;
     }
 
-    if( memcmp( argv[6], "hex:", 4 ) == 0 )
-    {
-        p = &argv[6][4];
+    // if( memcmp( argv[6], "hex:", 4 ) == 0 )
+    // {
+        p = &argv[6][0];
         keylen = 0;
 
         while( sscanf( p, "%02X", (unsigned int*) &n ) > 0 &&
@@ -141,16 +140,14 @@ int main( int argc, char *argv[] )
             key[keylen++] = (unsigned char) n;
             p += 2;
         }
-    }
+    // }
 
     mode = MODE_ENCRYPT;
-
 
     if( ( fin = fopen( argv[2], "rb" ) ) == NULL )
     {
         goto exit;
     }
-
     if( ( fout = fopen( argv[3], "wb+" ) ) == NULL )
     {
         goto exit;
@@ -159,7 +156,6 @@ int main( int argc, char *argv[] )
     /*
      * Read the Cipher and MD from the command line
      */
-
     char *mmode = argv[4];
     char *alg;
     if (!strcmp(mmode, "aes-cbc")) alg = "AES-128-CBC";
@@ -168,6 +164,7 @@ int main( int argc, char *argv[] )
     else if (!strcmp(mmode, "camellia-cbc")) alg = "CAMELLIA-128-CBC";
     else if (!strcmp(mmode, "aria-cbc")) alg = "ARIA-128-CBC";
     else if (!strcmp(mmode, "des-cbc")) alg = "DES-EDE3-CBC";
+    else if (!strcmp(mmode, "chacha-poly1305")) alg = "CHACHA20-POLY1305";
     else if (!strcmp(mmode, "hmac-sha256") || !strcmp(mmode, "hmac-sha512")){
         unsigned char hmacResult[32];
         mbedtls_md_context_t ctx;
@@ -202,7 +199,6 @@ int main( int argc, char *argv[] )
    
         exit(0);
     }
-
     cipher_info = mbedtls_cipher_info_from_string( alg );
     if( cipher_info == NULL )
     {
