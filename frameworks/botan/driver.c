@@ -55,6 +55,12 @@ int main(int argc, char **argv)
         botan_cipher_id = "AES-128";
         opmode = 1;
     }
+    else if (!strcmp(umode, "chacha-poly1305"))
+    {
+        botan_cipher_id = "ChaCha20Poly1305";
+        mode.insert(0, botan_cipher_id);
+        opmode = 1;
+    }
     else if (!strcmp(umode, "aria-cbc"))
     {
         mode = "PKCS7";
