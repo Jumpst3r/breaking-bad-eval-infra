@@ -23,7 +23,7 @@ def download_gcc(url: str, sha256: str):
         url (str): URL to be downloaded
         sha256 (str): Checksum url
     """
-    print('- Downloading GCC')
+    logging.info('- Downloading GCC')
     run_subprocess(['wget', '-O', 'toolchain.tar.bz2', url])
     # checkretcode(result)
 
@@ -37,10 +37,10 @@ def download_gcc(url: str, sha256: str):
         f.writelines([f'{hash} toolchain.tar.bz2'])
         f.truncate()
 
-    print('- Checking checksum')
+    logging.info('- Checking checksum')
     run_subprocess(['sha256sum', '-c', 'toolchain.tar.bz2.sha256'])
 
-    print('- Extracting')
+    logging.info('- Extracting')
     run_subprocess(['mkdir', '-p', 'toolchain'])
 
     run_subprocess(['tar', '-xf', 'toolchain.tar.bz2', '-C',
@@ -54,7 +54,7 @@ def check_llvm(version: str):
         version (str): Major version of LLVM that is expected to be installed, 
                        e.g., '15' 
     """
-    print('- Checking LLVM')
+    logging.info('- Checking LLVM')
     result = run_subprocess(
         ['clang', '--version'])
     # print(result.stdout)
@@ -110,11 +110,4 @@ def toolchain(config: Config, settings: Settings, DOWNLOAD=True):
 def set_toolchain_params(config: Config, settings: Settings, toolchain_data: Dict = None):
     if toolchain_data == None:
         toolchain_data = config.get_toolchain_data(settings)
-
-    os.environ["TOOLCHAIN_ROOT"] = os.getcwd() + '/toolchain'
-    print(f'- Set TOOLCHAIN_ROOT to {os.environ.get("TOOLCHAIN_ROOT")}')
-
-    os.environ["ROOTFS"] = os.getcwd() + '/toolchain/' + \
-        toolchain_data['gcc']['rootfs']
-    print(f'- Set ROOTFS to {os.environ.get("ROOTFS")}')
 
