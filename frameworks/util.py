@@ -10,6 +10,7 @@ from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
 from microsurf.utils.generators import hex_key_generator, SecretGenerator
 
+
 class Algo(Enum):
     AES_CBC = 1
     AES_CTR = 2
@@ -25,6 +26,39 @@ class Algo(Enum):
     ECDH_CURVE25519 = 20
     ECDH_P256 = 21
     ECDSA = 22
+
+
+def algo_from_str(s: str) -> Algo:
+    mapping = {
+        'aes-cbc': Algo.AES_CBC,
+        'aes-ctr': Algo.AES_CTR,
+        'aes-gcm': Algo.AES_GCM,
+        'camellia-cbc': Algo.CAMELLIA_CBC,
+        'aria-cbc': Algo.ARIA_CBC,
+        'des-cbc': Algo.DES_CBC,
+        'chacha-poly1305': Algo.CHACHA_POLY1305,
+        'hmac-sha1': Algo.HMAC_SHA1,
+        'hmac-sha2': Algo.HMAC_SHA2,
+        'hmac-sha3': Algo.HMAC_SHA3,
+        'hmac-blake2': Algo.HMAC_BLAKE2,
+        'ecdh-curve25519': Algo.ECDH_CURVE25519,
+        'ecdh-p256': Algo.ECDH_P256,
+        'ecdsa': Algo.ECDSA
+    }
+    if s not in mapping:
+        raise "Algorithm not supported"
+    return mapping[s]
+
+
+arch_str_target = {
+    'x86-64': 'x86_64-unknown-linux-musl',
+    'aarch64': 'aarch64-unknown-linux-musl',
+    'armv4': 'arm-unknown-linux-musl',
+    'armv7': 'arm-unknown-linux-musl',
+    'riscv64': 'riscv64-unknown-linux-musl',
+    'mips32el': 'mipsel-unknown-linux-musl',
+    'x86-i686': 'i386-unknown-linux-musl'
+}
 
 
 class Framework:
@@ -81,7 +115,6 @@ class Framework:
         scd.exec()
 
         scd = self.clean_report(scd)
-
 
 
 def git_clone(url: str, commit: str, name: str):

@@ -31,16 +31,6 @@ arch_str_llvm = {
     'x86-i686': 'linux-x86-clang'
 }
 
-arch_str_target = {
-    'x86-64': 'x86_64-unknown-linux-elf',
-    'aarch64': 'aarch64-unknown-linux-elf',
-    'armv4': 'arm-unknown-linux-elf',
-    'armv7': 'arm-unknown-linux-elf',
-    'riscv64': 'riscv64-unknown-linux-elf',
-    'mips32el': 'mipsel-unknown-linux-elf',
-    'x86-i686': 'i686-unknown-linux-elf'
-}
-
 # Example configure call using LLVM and aarch64
 # ./Configure linux-aarch64 \
 # --target=aarch64-elf-linux -gdwarf-4 -march=armv8-a \

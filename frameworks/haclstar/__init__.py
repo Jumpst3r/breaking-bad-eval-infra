@@ -1,4 +1,4 @@
-from ..util import git_clone, git_reset, Algo, Framework
+from ..util import *
 import os
 from process import run_subprocess, run_subprocess_env
 from config import Settings, Config
@@ -6,16 +6,6 @@ import logging
 
 
 logging.getLogger().setLevel(logging.DEBUG)
-
-arch_str_target = {
-    'x86-64': 'x86_64-unknown-linux-elf',
-    'aarch64': 'aarch64-unknown-linux-elf',
-    'armv4': 'arm-unknown-linux-elf',
-    'armv7': 'arm-unknown-linux-elf',
-    'riscv64': 'riscv64-unknown-linux-elf',
-    'mips32el': 'mipsel-unknown-linux-elf',
-    'x86-i686': 'i386-unknown-linux-elf'
-}
 
 march = {
     'x86-64': '',
