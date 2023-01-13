@@ -64,7 +64,7 @@ def replace_placholders(toolchain_name: str, gcc_ver: str, llvm_ver: str, obj: D
 
 
 class Config:
-    def __init__(self, settings: Settings, path='../config_new.json'):
+    def __init__(self, settings: Settings, path='../config.json'):
         with open(path, 'r') as f:
             self.config = json.load(f)
         if not self.validate_settings(settings):
