@@ -1,9 +1,9 @@
 import logging
 import argparse
-from config import *
-from frameworks import *
-from frameworks.util import *
-from setup import *
+from src.config import *
+from src.frameworks import *
+from src.frameworks.util import *
+from src.toolchain import *
 
 example_usage = """example usage:
 
