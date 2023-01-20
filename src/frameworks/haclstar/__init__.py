@@ -1,7 +1,7 @@
 from ..util import *
 import os
-from process import run_subprocess, run_subprocess_env
-from config import Settings, Config
+from src.process import run_subprocess, run_subprocess_env
+from src.config import Settings, Config
 import logging
 
 
@@ -25,7 +25,7 @@ class Haclstar(Framework):
         self.settings = settings
         self.prefix = config.get_prefix(settings)
         self.rootfs = rootfs
-        self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
+        self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch or 'x86-i686' in settings.arch else '/lib64'
         self.config = config
 
         if not os.path.isdir(self.rootfs):
@@ -114,6 +114,9 @@ class Haclstar(Framework):
             if self.settings.arch == 'armv4':
                 cflags += " -march=armv4"
                 cflags += ' -mfloat-abi=softfp'
+            if self.settings.arch == 'armv7':
+                cflags += " -march=armv7"
+                cflags += ' -mfloat-abi=softfp'
             if self.settings.arch == 'mips32el':
                 ldflags += ' -Wl,-z,notext'
 
@@ -187,7 +190,7 @@ class Haclstar(Framework):
         cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
             './toolchain') + self.llvm_ldflags('./toolchain')
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../frameworks/haclstar/driver.c -lm -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../src/frameworks/haclstar/driver.c -lm -o {self.rootfs}/driver.bin')
 
     def supported_ciphers(self) -> list[Algo]:
         return [

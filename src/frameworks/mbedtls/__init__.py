@@ -1,7 +1,7 @@
 from ..util import *
 import os
-from process import run_subprocess, run_subprocess_env
-from config import Settings, Config
+from src.process import run_subprocess, run_subprocess_env
+from src.config import Settings, Config
 import logging
 
 logging.getLogger().setLevel(logging.DEBUG)
@@ -121,7 +121,7 @@ class Mbedtls(Framework):
         cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
             './toolchain')
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../frameworks/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../src/frameworks/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
 
     def supported_ciphers(self) -> list[Algo]:
         return [

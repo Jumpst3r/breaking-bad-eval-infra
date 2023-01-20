@@ -2,8 +2,8 @@ import logging
 import os
 from enum import Enum
 
-from process import run_subprocess
-from config import Settings, Config
+from src.process import run_subprocess
+from src.config import Settings, Config
 
 from microsurf.microsurf import SCDetector
 from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
@@ -115,6 +115,7 @@ class Framework:
         scd.exec()
 
         scd = self.clean_report(scd)
+        return scd
 
 
 def git_clone(url: str, commit: str, name: str):

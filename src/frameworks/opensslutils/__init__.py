@@ -1,4 +1,4 @@
-from config import Settings
+from src.config import Settings
 
 class Opensslutils():
     def __init__(self, settings: Settings):

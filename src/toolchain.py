@@ -8,8 +8,8 @@ import uuid
 import logging
 from typing import Dict
 
-from config import *
-from process import run_subprocess
+from src.config import *
+from src.process import run_subprocess
 
 
 resultjson = []
@@ -76,13 +76,17 @@ def fix_sysroot_symlink(config: Config, settings: Settings):
         filename = 'ld-musl-x86_64.so.1'
     elif settings.arch == 'x86-i686':
         filename = 'ld-musl-i386.so.1'
-    elif settings.arch == 'armv7':
+    elif settings.arch == 'armv7' or settings.arch == 'armv4':
         filename = 'ld-musl-armhf.so.1'
     elif settings.arch == 'mips32el':
         filename = 'ld-musl-mipsel.so.1'
     else:
         filename = f'ld-musl-{settings.arch}.so.1'
     run_subprocess(f'ln -f -s libc.so {filename}')
+
+    if settings.arch == 'armv7' or settings.arch == 'armv4':
+        filename = 'ld-musl-arm.so.1'
+        run_subprocess(f'ln -f -s libc.so {filename}')
 
     os.chdir(cwd)
 
