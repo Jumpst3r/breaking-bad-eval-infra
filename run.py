@@ -1,5 +1,7 @@
 import logging
 import argparse
+import sqlite3
+import contextlib
 from src.config import *
 from src.frameworks import *
 from src.frameworks.util import *
@@ -34,8 +36,7 @@ parser.add_argument('target', type=str, help='Target algorithm to be analyzed',
 parser.add_argument('-o', '--opt', '--optimization', type=str,
                     help='Optimization (default: -O2)', default='-O2')
 parser.add_argument('-p', '--path', type=str,
-                    help='config file', default='../config_new.json')
-
+                    help='path to config', default='../config.json')
 
 args = parser.parse_args()
 
@@ -75,3 +76,58 @@ config = Config(settings, args.path)
 toolchain(config, settings)
 f = build_framework(config, settings)
 scd = f.run(algo_from_str(args.target))
+
+results = {
+    'arch': settings.arch,
+    'toolchain': settings.compiler,
+    'toolchain-version': args.toolchain_version,
+    'framework': args.framework,
+    'commit': args.commit,
+    'optflag': args.opt,
+    'foldername': scd.loader.resultDir.split('/')[1],
+    'tracecount': scd.initTraceCount
+}
+
+if 'DF' in dir(scd):
+    # Leaks were found
+    results['leaks'] = len(scd.DF)
+    results['details'] = scd.DF.to_dict('records')
+
+else:
+    results['leaks'] = 0
+    results['details'] = []
+
+# dump the content into a json file
+with open(f'results/{results["foldername"]}/data.json', 'w') as f:
+    f.write(json.dumps(results))
+
+
+with contextlib.closing(sqlite3.connect('results/database.db')) as con:
+    cur = con.cursor()
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS data (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT, 
+        arch VARCHAR(20), 
+        toolchain VARCHAR(20), 
+        toolchain_version VARCHAR(20), 
+        framework VARCHAR(256), 
+        fw_commit VARCHAR(256), 
+        optflag VARCHAR(256), 
+        foldername VARCHAR(256), 
+        tracecount INTEGER, 
+        leaks INTEGER
+    );""")
+
+    cur.execute("INSERT INTO data (arch, toolchain, toolchain_version, framework, fw_commit, optflag, foldername, tracecount, leaks) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+        results['arch'],
+        results['toolchain'],
+        results['toolchain-version'],
+        results['framework'],
+        results['commit'],
+        results['optflag'],
+        results['foldername'],
+        results['tracecount'],
+        results['leaks']
+    ))
+
+    con.commit()
