@@ -15,7 +15,8 @@ RUN apt update && apt install --no-install-recommends -y \
     automake \
     lsb-release \
     software-properties-common \
-    gnupg
+    gnupg \
+    libncurses5
 RUN pip3 install Jinja2 jsonschema
 # RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 15
 # RUN ln -s /usr/bin/clang-15 /usr/bin/clang
