@@ -121,22 +121,18 @@ class Config:
     def validate_settings(self, settings: Settings) -> Boolean:
         # Validate compiler
         if settings.compiler not in ['gcc', 'llvm']:
-            logging.error('Invalid compiler.')
-            return False
+            raise Exception('Invalid compiler.')
 
         # validate that we have a gcc toolchain with the correct architecture
         if settings.arch not in self.config['gcc']:
-            logging.error('Invalid architecture.')
-            return False
+            raise Exception('Invalid architecture.')
 
         # validate that the compiler version exists
         if settings.gcc_ver not in self.config['gcc'][settings.arch]['versions']:
-            logging.error('Invalid version.')
-            return False
+            raise Exception('Invalid version.')
 
         if settings.llvm_ver not in self.config['llvm']['versions']:
-            logging.error('Invalid version.')
-            return False
+            raise Exception('Invalid version.')
 
         # validate that the framework compiler settings exist
         # if settings.arch not in config['architectures']:
@@ -148,7 +144,6 @@ class Config:
 
         # validate the framework entries exist
         if settings.framework not in self.config['frameworks']:
-            logging.error('Framework missing')
-            return False
+            raise Exception('Framework missing')
 
         return True
