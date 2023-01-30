@@ -3,10 +3,10 @@ metadata:
   generateName: builder
 spec:
   # must complete in 8h (28,800 seconds)
-  activeDeadlineSeconds: 86400
+  # activeDeadlineSeconds: 86400
   # keep workflows for 1d (86,400 seconds)
-  ttlStrategy:
-    secondsAfterCompletion: 86400
+  # ttlStrategy:
+    # secondsAfterCompletion: 86400
   # delete all pods as soon as they complete
   # podGC:
   #   strategy: OnPodCompletion
@@ -14,22 +14,22 @@ spec:
   volumes:
   - name: volv
     persistentVolumeClaim:
-      claimName: res-volume
+      claimName: vol-results
   imagePullSecrets:
   - name: regcred
   arguments:
     parameters:
     - name: architectures
       value: |
-        ["riscv64", "x86-64", "x86-i686", "aarch64", "armv7", "mips32el"]
+        ["riscv64", "x86-64", "x86-i686", "aarch64", "mips32el", "armv7"]
     - name: compilers
       value: |
         {
           "gcc": [
-            "10.3.0", "11.3.0"
+            "5.4.0", "6.4.0", "7.3.0", "8.4.0", "9.3.0", "10.3.0", "11.3.0"
           ],
           "llvm": [
-            "15", "14"
+            "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5"
           ]
         }
       # value: |
@@ -45,15 +45,13 @@ spec:
       value: |
         ["haclstar"]
     - name: target-algorithms
-      value: |
-        ["chacha-poly1305"]
       # value: |
-      #   ["chacha-poly1305", "hmac-sha1", "hmac-sha2", "hmac-blake2", "ecdh-curve25519", "ecdh-p256"]
+      #   ["chacha-poly1305"]
+      value: |
+        "chacha-poly1305 hmac-sha1 hmac-sha2 hmac-blake2 ecdh-curve25519 ecdh-p256"
     - name: optimizations
       value: |
-        ["-O0"]
-      # value: |
-      #   ["-O0", "-O2", "-O3", "-Ofast", "-Os", "-Oz"]
+        ["-O2", "-O3", "-Os", "-Ofast", "-Oz"]
   templates:
   - name: schedule-framework-builds
     inputs:
@@ -140,13 +138,13 @@ spec:
             value: "{{inputs.parameters.image}}"
 
   - name: build
-    retryStrategy:
-        limit: "3"
-        retryPolicy: "Always"
-        backoff:
-            duration: "10s"      
-            factor: "2"
-            # maxDuration: "10m" 
+    # retryStrategy:
+    #     limit: "2"
+    #     retryPolicy: "Always"
+    #     backoff:
+    #         duration: "10s"      
+    #         factor: "2"
+    #         # maxDuration: "10m" 
     inputs:
       parameters:
       - name: arch
@@ -166,12 +164,37 @@ spec:
       resources:
         requests:
           cpu: "10"
+          memory: "1Gi"
         limits:
           cpu: "16"
-      command: [bash, -c]
-      args: 
-        - >- 
-          mkdir test && cd test && ln -s /data ./results && python3 ../run.py -a {{inputs.parameters.arch}} -t {{inputs.parameters.toolchain}} --toolchain-version {{inputs.parameters.version}} -f {{inputs.parameters.framework}} -c {{inputs.parameters.commit}} -o="{{inputs.parameters.opt}}" {{inputs.parameters.target}}
+          memory: "16Gi"
+      # command: ["sleep", "infinity"]
+      env:
+        - name: RAY_memory_usage_threshold
+          value: "1.8"
+      command: ["python3", "run.py"]
+      args:
+        - -a
+        - "{{inputs.parameters.arch}}"
+        - -t
+        - "{{inputs.parameters.toolchain}}"
+        - --toolchain-version
+        - "{{inputs.parameters.version}}"
+        - -f
+        - "{{inputs.parameters.framework}}"
+        - -c
+        - "{{inputs.parameters.commit}}"
+        - -o="{{inputs.parameters.opt}}"
+        - --fw-dir
+        - src/frameworks
+        - --result-dir
+        - /data
+        - -p
+        - config.json
+        - "{{inputs.parameters.target}}"
+      # "{{inputs.parameters.arch}} {{inputs.parameters.toolchain}} {{inputs.parameters.version}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.opt}} {{inputs.parameters.target}}"]
+      # - env && mkdir test && cd test && echo python3 ../run.py -a {{inputs.parameters.arch}} -t {{inputs.parameters.toolchain}} --toolchain-version {{inputs.parameters.version}} -f {{inputs.parameters.framework}} -c {{inputs.parameters.commit}} -o="{{inputs.parameters.opt}}" {{inputs.parameters.target}} && python3 ../run.py -a {{inputs.parameters.arch}} -t {{inputs.parameters.toolchain}} --toolchain-version {{inputs.parameters.version}} -f {{inputs.parameters.framework}} -c {{inputs.parameters.commit}} -o=\"{{inputs.parameters.opt}}\" {{inputs.parameters.target}} && sleep infinity
+      # - env && mkdir test && cd test && ln -s /data ./results && python3 ../run.py -a {{inputs.parameters.arch}} -t {{inputs.parameters.toolchain}} --toolchain-version {{inputs.parameters.version}} -f {{inputs.parameters.framework}} -c {{inputs.parameters.commit}} -o=\"{{inputs.parameters.opt}}\" {{inputs.parameters.target}} && sleep infinity
   # - name: reduce-global
   #   retryStrategy:
   #       limit: "3"
@@ -267,29 +290,37 @@ spec:
         print(archs)
         print(comps)
         out_map = []
-        for a, f, t, o in itertools.product(archs, fw, target, opt):
+        for a, f, o in itertools.product(archs, fw, opt):
           for c, ver in comps.items():
             for v in ver:
               if c == 'gcc':
-                out_map.append({
-                  'arch': a,
-                  'toolchain': c,
-                  'version': v,
-                  'framework': f,
-                  'target': t,
-                  'opt': o,
-                  'image': 'llvm15'
-                })
+                if a == 'riscv64' and v not in ['11.3.0', '10.3.0']:
+                  continue
+                elif 'Oz' in o:
+                  continue
+                else:
+                  out_map.append({
+                      'arch': a,
+                      'toolchain': c,
+                      'version': v,
+                      'framework': f,
+                      'target': target,
+                      'opt': o,
+                      'image': 'llvm15'
+                    })
               else:
-                out_map.append({
-                  'arch': a,
-                  'toolchain': c,
-                  'version': v,
-                  'framework': f,
-                  'target': t,
-                  'opt': o,
-                  'image': f'llvm{v}'
-                })
+                if a == 'riscv64' and v in ['5', '6', '7', '8', '9']:
+                  continue
+                else:
+                  out_map.append({
+                    'arch': a,
+                    'toolchain': c,
+                    'version': v,
+                    'framework': f,
+                    'target': target,
+                    'opt': o,
+                    'image': f'llvm{v}'
+                  })
         print(out_map)
         with open('/tmp/outmap.json', 'w') as f:
           f.write(str(json.dumps(out_map)))
