@@ -7,7 +7,7 @@ import logging
 logging.getLogger().setLevel(logging.DEBUG)
 
 class Mbedtls(Framework):
-    def __init__(self, settings: Settings, config: Config, rootfs: str):
+    def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir):
         self.name = 'mbedtls'
         self.url = 'https://github.com/Mbed-TLS/mbedtls.git'
         self.settings = settings
@@ -15,6 +15,7 @@ class Mbedtls(Framework):
         self.rootfs = rootfs
         self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
         self.config = config
+        self.fwDir = fwDir
 
         if not os.path.isdir(self.rootfs):
             os.mkdir(self.rootfs)
@@ -121,7 +122,7 @@ class Mbedtls(Framework):
         cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
             './toolchain')
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../src/frameworks/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {librarystr} {cflags} {self.fwDir}/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
 
     def supported_ciphers(self) -> list[Algo]:
         return [

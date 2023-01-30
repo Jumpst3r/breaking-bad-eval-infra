@@ -27,6 +27,25 @@ class Algo(Enum):
     ECDH_P256 = 21
     ECDSA = 22
 
+    def __str__(self):
+        mapping = {
+            Algo.AES_CBC: 'aes-cbc',
+            Algo.AES_CTR: 'aes-ctr',
+            Algo.AES_GCM: 'aes-gcm',
+            Algo.CAMELLIA_CBC: 'camellia-cbc',
+            Algo.ARIA_CBC: 'aria-cbc',
+            Algo.DES_CBC: 'des-cbc',
+            Algo.CHACHA_POLY1305: 'chacha-poly1305',
+            Algo.HMAC_SHA1: 'hmac-sha1',
+            Algo.HMAC_SHA2: 'hmac-sha2',
+            Algo.HMAC_SHA3: 'hmac-sha3',
+            Algo.HMAC_BLAKE2: 'hmac-blake2',
+            Algo.ECDH_CURVE25519: 'ecdh-curve25519',
+            Algo.ECDH_P256: 'ecdh-p256',
+            Algo.ECDSA: 'ecdsa',
+        }
+        return mapping[self]
+
 
 def algo_from_str(s: str) -> Algo:
     mapping = {
@@ -62,7 +81,7 @@ arch_str_target = {
 
 
 class Framework:
-    def __init__(self, settings: Settings, config: Config, rootfs: str):
+    def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
         pass
 
     def download(self):
@@ -83,7 +102,7 @@ class Framework:
     def clean_report(self, scd):
         pass
 
-    def run(self, algo: Algo):
+    def run(self, algo: Algo, resultDir='results'):
         rootfs = os.getcwd() + '/rootfs'
         binpath = rootfs + '/driver.bin'
 
@@ -100,7 +119,9 @@ class Framework:
             args=args,
             rootfs=rootfs,
             rndGen=fct,
-            sharedObjects=sharedObjects
+            sharedObjects=sharedObjects,
+            name=str(algo),
+            resultDir=resultDir
         )
         logging.info("Configuring BinaryLoader")
         errno = binLoader.configure()
@@ -111,7 +132,7 @@ class Framework:
         lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(
             binaryLoader=binLoader, flagVariableHitCount=True)]
         scd = SCDetector(modules=lmodues, getAssembly=True)
-        scd.initTraceCount = 10
+        scd.initTraceCount = 5
         scd.exec()
 
         scd = self.clean_report(scd)

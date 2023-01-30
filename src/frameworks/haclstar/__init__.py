@@ -19,7 +19,7 @@ march = {
 
 
 class Haclstar(Framework):
-    def __init__(self, settings: Settings, config: Config, rootfs: str):
+    def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
         self.name = 'hacl-star'
         self.url = 'https://github.com/hacl-star/hacl-star.git'
         self.settings = settings
@@ -27,6 +27,7 @@ class Haclstar(Framework):
         self.rootfs = rootfs
         self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch or 'x86-i686' in settings.arch else '/lib64'
         self.config = config
+        self.fwDir = fwDir
 
         if not os.path.isdir(self.rootfs):
             os.mkdir(self.rootfs)
@@ -48,6 +49,11 @@ class Haclstar(Framework):
         cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
         cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
         cflags += f' -Wno-error'
+        
+        # For older llvm versions use -mno-relax in riscv64
+        if self.settings.arch == 'riscv64':
+            if self.settings.llvm_ver not in ['14', '15']:
+                cflags += f' -mno-relax'
         return cflags
 
     def llvm_ldflags(self, toolchain_dir):
@@ -104,6 +110,9 @@ class Haclstar(Framework):
                 cflags += " -m32 -march=i386"
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
+            if self.settings.arch == 'armv7':
+                cflags += " -march=armv7"
+                cflags += ' -mfloat-abi=softfp'
             if self.settings.arch == 'armv4':
                 cflags += " -march=armv4"
         if self.settings.compiler == 'llvm':
@@ -190,7 +199,7 @@ class Haclstar(Framework):
         cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
             './toolchain') + self.llvm_ldflags('./toolchain')
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../src/frameworks/haclstar/driver.c -lm -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {librarystr} {cflags} {self.fwDir}/haclstar/driver.c -lm -o {self.rootfs}/driver.bin')
 
     def supported_ciphers(self) -> list[Algo]:
         return [

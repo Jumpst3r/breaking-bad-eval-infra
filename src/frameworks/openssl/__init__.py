@@ -45,7 +45,7 @@ arch_str_llvm = {
 
 
 class Openssl(Framework):
-    def __init__(self, settings: Settings, config: Config, rootfs: str):
+    def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
         self.name = 'openssl'
         self.url = 'git://git.openssl.org/openssl.git'
         self.settings = settings
@@ -53,6 +53,7 @@ class Openssl(Framework):
         self.rootfs = rootfs
         self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
         self.config = config
+        self.fwDir = fwDir
 
         if not os.path.isdir(self.rootfs):
             os.mkdir(self.rootfs)
@@ -172,7 +173,7 @@ class Openssl(Framework):
         cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
             './toolchain')
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {librarystr} {cflags} {cwd}/../src/frameworks/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {librarystr} {cflags} {self.fwDir}/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
 
     def supported_ciphers(self) -> list[Algo]:
         return [

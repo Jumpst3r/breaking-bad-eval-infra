@@ -26,40 +26,38 @@ parser.add_argument('-f', '--framework', type=str, help='Framework', required=Tr
                     choices=['haclstar', 'openssl', 'mbedtls', 'wolfssl', 'botan'])
 parser.add_argument('-c', '--commit', type=str,
                     help='Commit of the framework', default='main', required=True)
-parser.add_argument('target', type=str, help='Target algorithm to be analyzed',
-                    default='aes-cbc', choices=[
-                        'aes-cbc', 'aes-ctr', 'aes-gcm', 'camellia-cbc', 'aria-cbc',
-                        'des-cbc', 'chacha-poly1305', 'hmac-sha1', 'hmac-sha2', 'hmac-sha3',
-                        'hmac-blake2', 'ecdh-curve25519', 'ecdh-p256', 'ecdsa'
-                    ])
+parser.add_argument('target', nargs='+', type=str, help='Target algorithm(s) to be analyzed',
+                    default='aes-cbc')
 
 parser.add_argument('-o', '--opt', '--optimization', type=str,
                     help='Optimization (default: -O2)', default='-O2')
 parser.add_argument('-p', '--path', type=str,
                     help='path to config', default='../config.json')
+parser.add_argument('--result-dir', type=str, help='Result directory', default='./results')
+parser.add_argument('--fw-dir', type=str, help="Directory to frameworks directory", default='src/frameworks')
 
 args = parser.parse_args()
 
 
-def build_framework(config: Config, settings: Settings, rootfs='rootfs'):
+def build_framework(config: Config, settings: Settings, rootfs='rootfs', fwDir='src/frameworks'):
     # logger = logging.getLogger()
     # logger.setLevel(logging.INFO)
     logging.root.setLevel(logging.INFO)
 
     if settings.framework == "openssl":
-        f = Openssl(settings, config, rootfs)
+        f = Openssl(settings, config, rootfs, fwDir)
 
     if settings.framework == 'mbedtls':
-        f = Mbedtls(settings, config, rootfs)
+        f = Mbedtls(settings, config, rootfs, fwDir)
 
     if settings.framework == 'wolfssl':
-        f = Wolfssl(settings, config, rootfs)
+        f = Wolfssl(settings, config, rootfs, fwDir)
 
     if settings.framework == 'botan':
-        f = Botan(settings, config, rootfs)
+        f = Botan(settings, config, rootfs, fwDir)
 
     if settings.framework == 'haclstar':
-        f = Haclstar(settings, config, rootfs)
+        f = Haclstar(settings, config, rootfs, fwDir)
 
     f.download()
     f.build()
@@ -74,35 +72,56 @@ settings = Settings(
 print(settings)
 config = Config(settings, args.path)
 toolchain(config, settings)
-f = build_framework(config, settings)
-scd = f.run(algo_from_str(args.target))
+f = build_framework(config, settings, fwDir=args.fw_dir)
 
-results = {
-    'arch': settings.arch,
-    'toolchain': settings.compiler,
-    'toolchain-version': args.toolchain_version,
-    'framework': args.framework,
-    'commit': args.commit,
-    'optflag': args.opt,
-    'foldername': scd.loader.resultDir.split('/')[1],
-    'tracecount': scd.initTraceCount
-}
+target = args.target if len(args.target) > 1 else args.target[0].split(' ')
 
-if 'DF' in dir(scd):
-    # Leaks were found
-    results['leaks'] = len(scd.DF)
-    results['details'] = scd.DF.to_dict('records')
+if len(target) == 0:
+    exit()
+results = []
 
+resultDir = args.result_dir
+resultDir += f'/{settings.framework}-{settings.arch}-{settings.compiler}'
+if settings.compiler == 'gcc':
+    resultDir += f'-{settings.gcc_ver}'
 else:
-    results['leaks'] = 0
-    results['details'] = []
+    resultDir += f'-{settings.llvm_ver}'
+
+quote = '"'
+resultDir += f'-{settings.optflag.replace(" ", "_").replace(quote, "")}'
+
+for t in target:
+    scd = f.run(algo_from_str(t), resultDir=resultDir)
+
+    res = {
+        'arch': settings.arch,
+        'toolchain': settings.compiler,
+        'toolchain-version': args.toolchain_version,
+        'framework': args.framework,
+        'commit': args.commit,
+        'optflag': args.opt,
+        'foldername': resultDir,
+        'tracecount': scd.initTraceCount,
+        'algo': t
+    }
+
+    if 'DF' in dir(scd):
+        # Leaks were found
+        res['leaks'] = len(scd.DF)
+        res['details'] = scd.DF.to_dict('records')
+
+    else:
+        res['leaks'] = 0
+        res['details'] = []
+    
+    results.append(res)
 
 # dump the content into a json file
-with open(f'results/{results["foldername"]}/data.json', 'w') as f:
+with open(f'{resultDir}/data.json', 'w') as f:
     f.write(json.dumps(results))
 
 
-with contextlib.closing(sqlite3.connect('results/database.db')) as con:
+with contextlib.closing(sqlite3.connect(f'{args.result_dir}/database.db')) as con:
     cur = con.cursor()
 
     cur.execute("""CREATE TABLE IF NOT EXISTS data (
@@ -111,23 +130,25 @@ with contextlib.closing(sqlite3.connect('results/database.db')) as con:
         toolchain VARCHAR(20), 
         toolchain_version VARCHAR(20), 
         framework VARCHAR(256), 
+        algo VARCHAR(256),
         fw_commit VARCHAR(256), 
         optflag VARCHAR(256), 
         foldername VARCHAR(256), 
         tracecount INTEGER, 
         leaks INTEGER
     );""")
+    for r in results:
+        cur.execute("INSERT INTO data (arch, toolchain, toolchain_version, framework, algo, fw_commit, optflag, foldername, tracecount, leaks) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            r['arch'],
+            r['toolchain'],
+            r['toolchain-version'],
+            r['framework'],
+            r['algo'],
+            r['commit'],
+            r['optflag'],
+            r['foldername'],
+            r['tracecount'],
+            r['leaks']
+        ))
 
-    cur.execute("INSERT INTO data (arch, toolchain, toolchain_version, framework, fw_commit, optflag, foldername, tracecount, leaks) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", (
-        results['arch'],
-        results['toolchain'],
-        results['toolchain-version'],
-        results['framework'],
-        results['commit'],
-        results['optflag'],
-        results['foldername'],
-        results['tracecount'],
-        results['leaks']
-    ))
-
-    con.commit()
+        con.commit()
