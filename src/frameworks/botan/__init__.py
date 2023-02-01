@@ -158,7 +158,10 @@ class Botan(Framework):
             Algo.DES_CBC,
             Algo.CHACHA_POLY1305,
             Algo.HMAC_SHA2,
-            Algo.ECDSA
+            Algo.ECDSA,
+            Algo.ECDH_CURVE25519,
+            Algo.ECDH_P256,
+            Algo.RSA
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -174,7 +177,10 @@ class Botan(Framework):
             Algo.DES_CBC: 'des-cbc',
             Algo.CHACHA_POLY1305: 'chacha-poly1305',
             Algo.HMAC_SHA2: 'hmac-sha256',
-            Algo.ECDSA: 'ecdsa'
+            Algo.ECDSA: 'ecdsa-p521',
+            Algo.ECDH_CURVE25519: 'ecdh-25519',
+            Algo.ECDH_P256: 'ecdh-p256',
+            Algo.RSA: 'rsa'
         }
 
         return f'@ {algo_str[algo]}'.split()

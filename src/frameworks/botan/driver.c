@@ -9,6 +9,7 @@
 #include <botan/pkcs8.h>
 #include <botan/auto_rng.h>
 #include <botan/ecdsa.h>
+#include <botan/ecdh.h>
 #include <botan/ec_group.h>
 #include <botan/pubkey.h>
 #include <botan/hex.h>
@@ -28,6 +29,7 @@ int main(int argc, char **argv)
     std::string hmacmode = "HMAC";
 
     char *umode = argv[2];
+    std::string umode_str(umode);
     std::string botan_cipher_id;
     int opmode = 0;
     Botan::AutoSeeded_RNG rng;
@@ -113,23 +115,108 @@ int main(int argc, char **argv)
         hmacmode.insert(4, id);
         opmode = 2;
     }
-    else if (!strcmp(umode, "ecdsa") or !strcmp(umode, "rsa"))
+    else if (umode_str.find("ecdsa") != std::string::npos)
     {
-        const std::string path = argv[1];
-        printf("loading key\n");
-        Botan::DataSource_Stream in(path, true);
-        printf("loaded key\n");
-        std::unique_ptr<Botan::Private_Key> key(Botan::PKCS8::load_key(in));
-        printf("decoded key\n");
+        // from https://github.com/randombit/botan/blob/master/src/examples/ecdsa.cpp
+        const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
+        Botan::AutoSeeded_RNG rng;
+        rng.add_entropy(rnd_seed.data(), rnd_seed.size());
+
+        // ec domain
+        Botan::EC_Group domain;
+        if (umode_str.find("p256") != std::string::npos)
+            domain = Botan::EC_Group("secp256r1");
+        else if (umode_str.find("p384") != std::string::npos)
+            domain = Botan::EC_Group("secp384r1");
+        else if (umode_str.find("p521") != std::string::npos)
+            domain = Botan::EC_Group("secp521r1");
+        else if (umode_str.find("25519") != std::string::npos)
+            domain = Botan::EC_Group("x25519");
+
+        Botan::ECDSA_PrivateKey key(rng, domain);
         std::string text("This is a tasty burger!");
-        std::vector<uint8_t> data(text.data(),text.data()+text.length());
+        std::vector<uint8_t> data(text.data(), text.data() + text.length());
         // sign data
-        Botan::PK_Signer signer(*key, rng, "EMSA1(SHA-256)");
+        Botan::PK_Signer signer(key, rng, "EMSA1(SHA-256)");
         signer.update(data);
         std::vector<uint8_t> signature = signer.signature(rng);
-        std::cout << "Signature:" << std::endl << Botan::hex_encode(signature) << std::flush;
-
+        std::cout << "Signature:" << std::endl << Botan::hex_encode(signature);
+        // verify signature
+        Botan::PK_Verifier verifier(key, "EMSA1(SHA-256)");
+        verifier.update(data);
+        std::cout << std::endl << "is " << (verifier.check_signature(signature) ? "valid" : "invalid");
+        return 0;
     }
+    else if (!strcmp(umode, "rsa")) 
+    {
+        const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
+        Botan::AutoSeeded_RNG rng;
+        rng.add_entropy(rnd_seed.data(), rnd_seed.size());
+
+        Botan::RSA_PrivateKey key(rng, 1024);
+
+        std::string text("This is a tasty burger!");
+        std::vector<uint8_t> data(text.data(), text.data() + text.length());
+        // sign data
+        Botan::PK_Signer signer(key, rng, "EMSA1(SHA-256)");
+        signer.update(data);
+        std::vector<uint8_t> signature = signer.signature(rng);
+        std::cout << "Signature:" << std::endl << Botan::hex_encode(signature);
+        // verify signature
+        Botan::PK_Verifier verifier(key, "EMSA1(SHA-256)");
+        verifier.update(data);
+        std::cout << std::endl << "is " << (verifier.check_signature(signature) ? "valid" : "invalid");
+        return 0;
+    }
+    else if (umode_str.find("ecdh") != std::string::npos)
+    {
+        // from https://github.com/randombit/botan/blob/master/src/examples/ecdh.cpp
+        const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
+        Botan::AutoSeeded_RNG rng;
+        rng.add_entropy(rnd_seed.data(), rnd_seed.size());
+
+        // ec domain
+        Botan::EC_Group domain;
+        if (umode_str.find("p256") != std::string::npos)
+            domain = Botan::EC_Group("secp256r1");
+        else if (umode_str.find("p384") != std::string::npos)
+            domain = Botan::EC_Group("secp384r1");
+        else if (umode_str.find("p521") != std::string::npos)
+            domain = Botan::EC_Group("secp521r1");
+        else if (umode_str.find("25519") != std::string::npos)
+            domain = Botan::EC_Group("x25519");
+
+        std::string kdf = "KDF2(SHA-256)";
+        // generate ECDH keys
+        Botan::ECDH_PrivateKey keyA(rng, domain);
+        Botan::ECDH_PrivateKey keyB(rng, domain);
+        // Construct key agreements
+        Botan::PK_Key_Agreement ecdhA(keyA, rng, kdf);
+        Botan::PK_Key_Agreement ecdhB(keyB, rng, kdf);
+        // Agree on shared secret and derive symmetric key of 256 bit length
+        Botan::secure_vector<uint8_t> sA = ecdhA.derive_key(32, keyB.public_value()).bits_of();
+        Botan::secure_vector<uint8_t> sB = ecdhB.derive_key(32, keyA.public_value()).bits_of();
+
+        if (sA != sB)
+            return 1;
+
+        std::cout << "agreed key: " << std::endl << Botan::hex_encode(sA);
+        return 0;
+    }
+        // const std::string path = argv[1];
+        // printf("loading key\n");
+        // Botan::DataSource_Stream in(path, true);
+        // printf("loaded key\n");
+        // std::unique_ptr<Botan::Private_Key> key(Botan::PKCS8::load_key(in));
+        // printf("decoded key\n");
+        // std::string text("This is a tasty burger!");
+        // std::vector<uint8_t> data(text.data(),text.data()+text.length());
+        // // sign data
+        // Botan::PK_Signer signer(*key, rng, "EMSA1(SHA-256)");
+        // signer.update(data);
+        // std::vector<uint8_t> signature = signer.signature(rng);
+        // std::cout << "Signature:" << std::endl << Botan::hex_encode(signature) << std::flush;
+
     if (opmode == 1){
         const std::string plaintext("Your great-grandfather gave this watch to your granddad for good luck. Unfortunately, Dane's luck wasn't as good as his old man's.");
         const std::vector<uint8_t> key = Botan::hex_decode(ukey);
