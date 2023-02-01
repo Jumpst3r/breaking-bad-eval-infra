@@ -219,8 +219,11 @@ int main(int argc, char **argv)
 
     if (opmode == 1){
         const std::string plaintext("Your great-grandfather gave this watch to your granddad for good luck. Unfortunately, Dane's luck wasn't as good as his old man's.");
-        const std::vector<uint8_t> key = Botan::hex_decode(ukey);
+        std::vector<uint8_t> key = Botan::hex_decode(ukey);
         std::unique_ptr<Botan::Cipher_Mode> enc = Botan::Cipher_Mode::create(mode, Botan::ENCRYPTION);
+        if (!enc->valid_keylength(key.size())) {
+            key.resize(enc->minimum_keylength(), 0);
+        }
         enc->set_key(key);
 
         // generate fresh nonce (IV)
