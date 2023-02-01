@@ -26,6 +26,7 @@ class Algo(Enum):
     ECDH_CURVE25519 = 20
     ECDH_P256 = 21
     ECDSA = 22
+    RSA = 23
 
     def __str__(self):
         mapping = {
@@ -43,6 +44,7 @@ class Algo(Enum):
             Algo.ECDH_CURVE25519: 'ecdh-curve25519',
             Algo.ECDH_P256: 'ecdh-p256',
             Algo.ECDSA: 'ecdsa',
+            Algo.RSA: 'rsa'
         }
         return mapping[self]
 
@@ -62,7 +64,8 @@ def algo_from_str(s: str) -> Algo:
         'hmac-blake2': Algo.HMAC_BLAKE2,
         'ecdh-curve25519': Algo.ECDH_CURVE25519,
         'ecdh-p256': Algo.ECDH_P256,
-        'ecdsa': Algo.ECDSA
+        'ecdsa': Algo.ECDSA,
+        'rsa': Algo.RSA
     }
     if s not in mapping:
         raise "Algorithm not supported"
