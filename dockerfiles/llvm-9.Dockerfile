@@ -1,13 +1,47 @@
-FROM moschn/microsurf-eval:base
+FROM ubuntu:20.04
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt update && apt install --no-install-recommends -y \
+    build-essential \
+    libtool \
+    zlib1g \
+    zlib1g-dev \
+    libxml2 \
+    git \
+    wget \
+    python3.9 \
+    python3.9-distutils \
+    zip \
+    autoconf \
+    automake \
+    lsb-release \
+    software-properties-common \
+    gnupg \
+    clang-9 \
+    lld-9 \
+    libncurses5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# We need to download llvm release 9.0.0 instead of 9.0.1 because the latter 
-# was compiled without zlib support. Using 9.0.1 breaks compiles for x86-i686
-RUN wget https://releases.llvm.org/9.0.0/clang%2bllvm-9.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz \
-        && tar xf clang+llvm-9.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz \
-        && cd clang+llvm-9.0.1-x86_64-linux-gnu-ubuntu-16.04 \
-        && cp -R * /usr/local/ \
-        && cd .. \
-        && rm -rf clang+llvm-9.0.1-x86_64-linux-gnu-ubuntu-16.04*
+RUN ln -s /usr/bin/clang-9 /usr/bin/clang \
+        && ln -s /usr/bin/clang++-9 /usr/bin/clang++ \
+        && ln -s /usr/bin/llvm-ar-9 /usr/bin/llvm-ar \
+        && ln -s /usr/bin/llvm-as-9 /usr/bin/llvm-as \
+        && ln -s /usr/bin/llvm-ranlib-9 /usr/bin/llvm-ranlib \
+        && ln -s /usr/bin/lld-9 /usr/bin/lld \
+        && ln -s /usr/bin/ld.lld-9 /usr/bin/ld.lld
+
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+        python3.9 get-pip.py
+
+RUN ln -s /usr/bin/python3.9 /usr/local/sbin/python3 \
+        && ln -s /usr/bin/python3.9 /usr/local/sbin/python
+
+RUN pip install Jinja2 jsonschema setuptools
+
+
+# WORKDIR /install
+ADD ./microsurf /install
+RUN pip install /install/
 
 WORKDIR /build
 ADD ./ /build
