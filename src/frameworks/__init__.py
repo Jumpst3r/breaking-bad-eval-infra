@@ -6,3 +6,4 @@ from .mbedtls import Mbedtls
 from .openssl import Openssl
 from .opensslutils import Opensslutils
 from .haclstar import Haclstar
+from .bearssl import Bearssl

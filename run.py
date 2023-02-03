@@ -23,7 +23,7 @@ parser.add_argument('-t', '--toolchain', type=str, default='gcc',
 parser.add_argument('--toolchain-version', type=str,
                     help='Toolchain Version', required=True)
 parser.add_argument('-f', '--framework', type=str, help='Framework', required=True,
-                    choices=['haclstar', 'openssl', 'mbedtls', 'wolfssl', 'botan'])
+                    choices=['haclstar', 'openssl', 'mbedtls', 'wolfssl', 'botan', 'bearssl'])
 parser.add_argument('-c', '--commit', type=str,
                     help='Commit of the framework', default='main', required=True)
 parser.add_argument('target', nargs='+', type=str, help='Target algorithm(s) to be analyzed',
@@ -58,6 +58,9 @@ def build_framework(config: Config, settings: Settings, rootfs='rootfs', fwDir='
 
     if settings.framework == 'haclstar':
         f = Haclstar(settings, config, rootfs, fwDir)
+
+    if settings.framework == 'bearssl':
+        f = Bearssl(settings, config, rootfs, fwDir)
 
     f.download()
     f.build()
