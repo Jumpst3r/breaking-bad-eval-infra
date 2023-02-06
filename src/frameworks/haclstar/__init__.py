@@ -207,7 +207,7 @@ class Haclstar(Framework):
             Algo.HMAC_SHA1,
             Algo.HMAC_SHA2,
             Algo.HMAC_BLAKE2,
-            Algo.ECDH_CURVE25519,
+            Algo.CURVE25519,
             Algo.ECDH_P256
         ]
 
@@ -220,7 +220,7 @@ class Haclstar(Framework):
             Algo.HMAC_SHA1: 'hmac-sha1',
             Algo.HMAC_SHA2: 'hmac-sha2',
             Algo.HMAC_BLAKE2: 'hmac-blake2',
-            Algo.ECDH_CURVE25519: 'ecdh-curve25519',
+            Algo.CURVE25519: 'ecdh-curve25519',
             Algo.ECDH_P256: 'ecdh-p256',
         }
         

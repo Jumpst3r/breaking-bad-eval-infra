@@ -159,7 +159,7 @@ class Botan(Framework):
             Algo.CHACHA_POLY1305,
             Algo.HMAC_SHA2,
             Algo.ECDSA,
-            Algo.ECDH_CURVE25519,
+            Algo.CURVE25519,
             Algo.ECDH_P256,
             Algo.RSA
         ]
@@ -178,7 +178,7 @@ class Botan(Framework):
             Algo.CHACHA_POLY1305: 'chacha-poly1305',
             Algo.HMAC_SHA2: 'hmac-sha256',
             Algo.ECDSA: 'ecdsa-p521',
-            Algo.ECDH_CURVE25519: 'ecdh-25519',
+            Algo.CURVE25519: 'curve25519',
             Algo.ECDH_P256: 'ecdh-p256',
             Algo.RSA: 'rsa'
         }
