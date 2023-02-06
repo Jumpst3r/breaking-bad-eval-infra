@@ -127,7 +127,7 @@ class Botan(Framework):
         self.build_lib()
         self.copy_lib_rootfs()
 
-        logging.info(f'- Building driver.c')
+        logging.info(f'- Building driver.cpp')
 
         cwd = os.getcwd()
 
@@ -146,7 +146,7 @@ class Botan(Framework):
         cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
             './toolchain')
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {cflags} -lm -lpthread {self.fwDir}/{self.name}/driver.c {librarystr} -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {cflags} -lm -lpthread {self.fwDir}/{self.name}/driver.cpp {librarystr} -o {self.rootfs}/driver.bin')
 
     def supported_ciphers(self) -> list[Algo]:
         return [

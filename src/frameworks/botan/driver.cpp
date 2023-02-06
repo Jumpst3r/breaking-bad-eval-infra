@@ -4,6 +4,7 @@
 #include <botan/pk_keys.h>
 #include <botan/auto_rng.h>
 #include <botan/cipher_mode.h>
+#include <botan/curve25519.h>
 #include <botan/hex.h>
 #include <iostream>
 #include <botan/pkcs8.h>
@@ -130,8 +131,6 @@ int main(int argc, char **argv)
             domain = Botan::EC_Group("secp384r1");
         else if (umode_str.find("p521") != std::string::npos)
             domain = Botan::EC_Group("secp521r1");
-        else if (umode_str.find("25519") != std::string::npos)
-            domain = Botan::EC_Group("x25519");
 
         Botan::ECDSA_PrivateKey key(rng, domain);
         std::string text("This is a tasty burger!");
@@ -168,6 +167,29 @@ int main(int argc, char **argv)
         std::cout << std::endl << "is " << (verifier.check_signature(signature) ? "valid" : "invalid");
         return 0;
     }
+    else if (umode_str.find("curve25519") != std::string::npos)
+    {
+        const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
+        Botan::AutoSeeded_RNG rng;
+        rng.add_entropy(rnd_seed.data(), rnd_seed.size());
+
+        std::string kdf = "KDF2(SHA-256)";
+
+        Botan::Curve25519_PrivateKey keyA(rng);
+        Botan::Curve25519_PrivateKey keyB(rng);
+
+        Botan::PK_Key_Agreement ecdhA(keyA, rng, kdf);
+        Botan::PK_Key_Agreement ecdhB(keyB, rng, kdf);
+        // Agree on shared secret and derive symmetric key of 256 bit length
+        Botan::secure_vector<uint8_t> sA = ecdhA.derive_key(32, keyB.public_value()).bits_of();
+        Botan::secure_vector<uint8_t> sB = ecdhB.derive_key(32, keyA.public_value()).bits_of();
+
+        if (sA != sB)
+            return 1;
+
+        std::cout << "agreed key: " << std::endl << Botan::hex_encode(sA);
+        return 0;
+    }
     else if (umode_str.find("ecdh") != std::string::npos)
     {
         // from https://github.com/randombit/botan/blob/master/src/examples/ecdh.cpp
@@ -183,8 +205,6 @@ int main(int argc, char **argv)
             domain = Botan::EC_Group("secp384r1");
         else if (umode_str.find("p521") != std::string::npos)
             domain = Botan::EC_Group("secp521r1");
-        else if (umode_str.find("25519") != std::string::npos)
-            domain = Botan::EC_Group("x25519");
 
         std::string kdf = "KDF2(SHA-256)";
         // generate ECDH keys
