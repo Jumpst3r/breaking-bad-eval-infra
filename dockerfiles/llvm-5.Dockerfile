@@ -19,9 +19,11 @@ RUN apt update && apt install --no-install-recommends -y software-properties-com
     software-properties-common \
     gnupg \
     clang-5.0 \
+    llvm-5.0 \
     lld-5.0 \
     libncurses5 \
     curl \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/clang-5.0 /usr/bin/clang \

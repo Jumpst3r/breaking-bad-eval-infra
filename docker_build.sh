@@ -1,4 +1,4 @@
-docker build -t moschn/microsurf-eval:base -f Dockerfile .
+docker build -t moschn/microsurf-eval:base -f dockerfiles/base.Dockerfile .
 
 docker build -t moschn/microsurf-eval:llvm5 -f dockerfiles/llvm-5.Dockerfile .
 docker build -t moschn/microsurf-eval:llvm6 -f dockerfiles/llvm-6.Dockerfile .

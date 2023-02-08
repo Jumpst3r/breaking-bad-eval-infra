@@ -17,9 +17,11 @@ RUN apt update && apt install --no-install-recommends -y \
     software-properties-common \
     gnupg \
     clang-6.0 \
+    llvm-6.0 \
     lld-6.0 \
     libncurses5 \
     curl \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/clang-6.0 /usr/bin/clang \

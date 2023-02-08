@@ -17,9 +17,11 @@ RUN apt update && apt install --no-install-recommends -y \
     software-properties-common \
     gnupg \
     clang-9 \
+    llvm-9 \
     lld-9 \
     libncurses5 \
     curl \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/clang-9 /usr/bin/clang \
