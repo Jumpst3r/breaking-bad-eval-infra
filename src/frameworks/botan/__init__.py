@@ -4,6 +4,10 @@ from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
 import logging
 
+### Blinded Algos:
+# ECDH
+# ECDSA
+
 logging.getLogger().setLevel(logging.DEBUG)
 
 host_str = {
@@ -75,6 +79,10 @@ class Botan(Framework):
             comp_configure += f' --ar-command=llvm-ar --no-optimizations'
             comp_configure += f' --with-sysroot-dir={cwd}/../toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot'
 
+        if self.settings.arch == 'x86-i686' and self.settings.compiler == 'gcc':
+            # somehow these toolchains break if stack smash protection (SSP) is enabled
+            comp_configure += f' --without-stack-protector'
+
         run_subprocess_env(f'./configure.py {common} {comp_configure}')
 
         logging.info(f'Building {self.name} (make)')
@@ -121,6 +129,10 @@ class Botan(Framework):
         else:
             librarystr = f'-L{cwd}/{self.rootfs}/{self.libdir} -lbotan-3'
 
+        if self.settings.arch == 'x86-i686' and self.settings.compiler == 'gcc':
+            # older x86 archs need the atomic library to emulate atomic instructions
+            librarystr += f' -latomic'
+
         gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-g++'
         compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang++'
 
@@ -142,6 +154,7 @@ class Botan(Framework):
             Algo.ECDSA,
             Algo.CURVE25519,
             Algo.ECDH_P256,
+            Algo.ECDSA,
             Algo.RSA
         ]
 
@@ -161,7 +174,8 @@ class Botan(Framework):
             Algo.ECDSA: 'ecdsa-p521',
             Algo.CURVE25519: 'curve25519',
             Algo.ECDH_P256: 'ecdh-p256',
-            Algo.RSA: 'rsa'
+            Algo.RSA: 'rsa',
+            Algo.ECDSA: 'ecdsa-p256'
         }
 
         return f'@ {algo_str[algo]}'.split()
