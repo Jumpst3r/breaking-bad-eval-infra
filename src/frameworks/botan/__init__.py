@@ -21,34 +21,13 @@ class Botan(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
         self.name = 'botan'
         self.url = 'https://github.com/randombit/botan.git'
-        self.settings = settings
-        self.prefix = config.get_prefix(settings)
-        self.rootfs = rootfs
-        self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
-        self.config = config
-        self.fwDir = fwDir
-
-        if not os.path.isdir(self.rootfs):
-            os.mkdir(self.rootfs)
-        # if not os.path.isdir(f'{self.rootfs}{self.libdir}'):
-        #     os.mkdir(f'{self.rootfs}{self.libdir}')
+        super().__init__(settings, config, rootfs, fwDir)
 
     def download(self):
         if not os.path.isdir(self.name):
             git_clone(self.url, self.settings.commit, self.name)
         else:
             git_reset(self.settings.commit, self.name)
-
-    def llvm_cflags(self, toolchain_dir):
-        cflags = f' --target={arch_str_target[self.settings.arch]}'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{self.config.get_toolchain_name(self.settings)}/'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/'
-        cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
-        cflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += ' -fuse-ld=lld -Wno-error'
-        return cflags
 
     def build_lib(self):
         os.chdir(self.name)
@@ -69,6 +48,7 @@ class Botan(Framework):
                 cflags += " -march=armv4"
             if self.settings.arch == 'armv7':
                 cflags += ' -march=armv7 -mthumb'
+            ldflags = cflags
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_cflags(f'{cwd}/../toolchain')
             if self.settings.arch == 'aarch64':
@@ -78,6 +58,7 @@ class Botan(Framework):
                 cflags += ' -mfloat-abi=softfp'
             if self.settings.arch == 'mips32el':
                 cflags += ' -Wl,-z,notext'
+            ldflags = self.llvm_ldflags(f'{cwd}/../toolchain')
 
         logging.info(f'Setting CFLAGS to {cflags}')
 
@@ -90,7 +71,7 @@ class Botan(Framework):
             comp_configure += f' --extra-cxxflags="{cflags}" --no-optimizations'
         else:
             comp_configure = f'--cc-bin=clang++ --disable-cc-tests'
-            comp_configure += f' --ldflags="{cflags}" --extra-cxxflags="{cflags}"'
+            comp_configure += f' --ldflags="{ldflags} -fuse-ld=lld" --extra-cxxflags="{cflags}"'
             comp_configure += f' --ar-command=llvm-ar --no-optimizations'
             comp_configure += f' --with-sysroot-dir={cwd}/../toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot'
 
@@ -143,7 +124,7 @@ class Botan(Framework):
         gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-g++'
         compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang++'
 
-        cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
+        cflags = '' if self.settings.compiler == 'gcc' else self.llvm_ldflags(
             './toolchain')
         run_subprocess_env(
             f'{compiler_cmd} {includestr} {cflags} -lm -lpthread {self.fwDir}/{self.name}/driver.cpp {librarystr} -o {self.rootfs}/driver.bin')

@@ -31,48 +31,13 @@ class Bearssl(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
         self.name = 'BearSSL'
         self.url = 'https://www.bearssl.org/git/BearSSL'
-        self.settings = settings
-        self.prefix = config.get_prefix(settings)
-        self.rootfs = rootfs
-        self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
-        self.config = config
-        self.fwDir = fwDir
-        self.confFile = 'cross.mk'
-
-        if not os.path.isdir(self.rootfs):
-            os.mkdir(self.rootfs)
-        # if not os.path.isdir(f'{self.rootfs}{self.libdir}'):
-        #     os.mkdir(f'{self.rootfs}{self.libdir}')
+        super().__init__(settings, config, rootfs, fwDir)
 
     def download(self):
         if not os.path.isdir(self.name):
             git_clone(self.url, self.settings.commit, self.name)
         else:
             git_reset(self.settings.commit, self.name)
-
-    def llvm_cflags(self, toolchain_dir):
-        cflags = f' --target={arch_str_target[self.settings.arch]}'
-        cflags += f' --gcc-toolchain={toolchain_dir}/'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{self.config.get_toolchain_name(self.settings)}/'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/'
-        cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
-        # cflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += ' -Wno-error'
-        return cflags
-
-    def llvm_ldflags(self, toolchain_dir):
-        ldflags = f' --target={arch_str_target[self.settings.arch]}'
-        ldflags += f' --gcc-toolchain={toolchain_dir}/'
-        ldflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
-        ldflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{self.config.get_toolchain_name(self.settings)}/'
-        ldflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/'
-        ldflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
-        ldflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        ldflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        ldflags += ' -fuse-ld=lld -Wno-error'
-        return ldflags
 
     def build_lib(self):
         os.chdir(self.name)

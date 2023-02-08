@@ -85,7 +85,18 @@ arch_str_target = {
 
 class Framework:
     def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
-        pass
+        self.settings = settings
+        self.prefix = config.get_prefix(settings)
+        self.rootfs = rootfs
+        self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch or 'x86-i686' in settings.arch else '/lib64'
+        self.config = config
+        self.fwDir = fwDir
+        self.confFile = 'cross.mk'
+
+        if not os.path.isdir(self.rootfs):
+            os.mkdir(self.rootfs)
+        # if not os.path.isdir(f'{self.rootfs}{self.libdir}'):
+        #     os.mkdir(f'{self.rootfs}{self.libdir}')
 
     def download(self):
         pass
@@ -104,6 +115,33 @@ class Framework:
 
     def clean_report(self, scd):
         pass
+
+    def llvm_cflags(self, toolchain_dir):
+        cflags = f' --target={arch_str_target[self.settings.arch]}'
+        cflags += f' --gcc-toolchain={toolchain_dir}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{self.config.get_toolchain_name(self.settings)}/'
+        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/'
+        cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
+        cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+        cflags += f' -Wno-error'
+        
+        # For older llvm versions use -mno-relax in riscv64
+        if self.settings.arch == 'riscv64':
+            if self.settings.llvm_ver not in ['14', '15']:
+                cflags += f' -mno-relax'
+        return cflags
+
+    def llvm_ldflags(self, toolchain_dir):
+        ldflags = self.llvm_cflags(toolchain_dir)
+        ldflags += f' -fuse-ld=lld'
+        ldflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+        
+        # For older llvm versions use -mno-relax in riscv64
+        if self.settings.arch == 'riscv64':
+            if self.settings.llvm_ver not in ['14', '15']:
+                ldflags += f' -mno-relax'
+        return ldflags
 
     def run(self, algo: Algo, resultDir='results'):
         rootfs = os.getcwd() + '/rootfs'

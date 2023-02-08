@@ -10,31 +10,13 @@ class Mbedtls(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir):
         self.name = 'mbedtls'
         self.url = 'https://github.com/Mbed-TLS/mbedtls.git'
-        self.settings = settings
-        self.prefix = config.get_prefix(settings)
-        self.rootfs = rootfs
-        self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
-        self.config = config
-        self.fwDir = fwDir
-
-        if not os.path.isdir(self.rootfs):
-            os.mkdir(self.rootfs)
-        # if not os.path.isdir(f'{self.rootfs}{self.libdir}'):
-        #     os.mkdir(f'{self.rootfs}{self.libdir}')
+        super().__init__(settings, config, rootfs, fwDir)
 
     def download(self):
         if not os.path.isdir(self.name):
             git_clone(self.url, self.settings.commit, self.name)
         else:
             git_reset(self.settings.commit, self.name)
-
-    def llvm_cflags(self, toolchain_dir):
-        cflags = f' --target={arch_str_target[self.settings.arch]}'
-        cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
-        cflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += ' -fuse-ld=lld -Wno-error'
-        return cflags
 
     def build_lib(self):
         os.chdir(self.name)
@@ -46,6 +28,7 @@ class Mbedtls(Framework):
 
         cflags = "-gdwarf-4"
         cflags += f" {self.settings.optflag}"
+        ldflags = ""
         if self.settings.compiler == 'gcc':
             if self.settings.arch == 'x86-i686':
                 cflags += " -m32 -march=i386"
@@ -57,6 +40,7 @@ class Mbedtls(Framework):
                 cflags += ' -march=armv7 -mthumb'
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_cflags(f'{cwd}/../toolchain')
+            ldflags = self.llvm_ldflags(f'{cwd}/../toolchain')
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv4':
@@ -77,7 +61,7 @@ class Mbedtls(Framework):
                                ld=ld, ar=ar, cflags=cflags)
         if self.settings.compiler == 'llvm':
             run_subprocess_env(['SHARED=1 make lib'], cc='clang', ar='llvm-ar',
-                               cxx='clang++', ld='clang', cflags=cflags, ldflags=cflags)
+                               cxx='clang++', ld='clang', cflags=cflags, ldflags=ldflags)
 
         os.chdir('../')
 

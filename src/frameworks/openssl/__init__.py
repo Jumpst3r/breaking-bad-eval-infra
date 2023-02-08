@@ -48,35 +48,13 @@ class Openssl(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
         self.name = 'openssl'
         self.url = 'git://git.openssl.org/openssl.git'
-        self.settings = settings
-        self.prefix = config.get_prefix(settings)
-        self.rootfs = rootfs
-        self.libdir = '/lib' if 'armv7' in settings.arch or 'mips32el' in settings.arch else '/lib64'
-        self.config = config
-        self.fwDir = fwDir
-
-        if not os.path.isdir(self.rootfs):
-            os.mkdir(self.rootfs)
-        # if not os.path.isdir(f'{self.rootfs}{self.libdir}'):
-        #     os.mkdir(f'{self.rootfs}{self.libdir}')
+        super().__init__(settings, config, rootfs, fwDir)
 
     def download(self):
         if not os.path.isdir(self.name):
             git_clone(self.url, self.settings.commit, self.name)
         else:
             git_reset(self.settings.commit, self.name)
-
-    def llvm_cflags(self, toolchain_dir):
-        cflags = f' --target={arch_str_target[self.settings.arch]}'
-        cflags += f' --gcc-toolchain={toolchain_dir}/'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/c++/{self.settings.gcc_ver}/{self.config.get_toolchain_name(self.settings)}/'
-        cflags += f' -I{toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/include/'
-        cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
-        cflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        cflags += ' -fuse-ld=lld -Wno-error'
-        return cflags
 
     def build_lib(self):
         os.chdir(self.name)
@@ -96,7 +74,7 @@ class Openssl(Framework):
             if self.settings.arch == 'armv4':
                 cflags += " -march=armv4"
         if self.settings.compiler == 'llvm':
-            cflags += self.llvm_cflags(f'{cwd}/../toolchain')
+            cflags += self.llvm_ldflags(f'{cwd}/../toolchain')
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv4':
@@ -170,7 +148,7 @@ class Openssl(Framework):
         gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-gcc'
         compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang'
 
-        cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
+        cflags = '' if self.settings.compiler == 'gcc' else self.llvm_ldflags(
             './toolchain')
         run_subprocess_env(
             f'{compiler_cmd} {includestr} {librarystr} {cflags} {self.fwDir}/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
