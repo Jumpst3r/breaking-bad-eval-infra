@@ -107,7 +107,8 @@ def toolchain(config: Config, settings: Settings, DOWNLOAD=True):
 
     fix_sysroot_symlink(config, settings)
 
-    check_llvm(settings.llvm_ver)
+    if settings.compiler == 'llvm':
+        check_llvm(settings.llvm_ver)
     set_toolchain_params(config, settings, toolchain_data)
 
 
