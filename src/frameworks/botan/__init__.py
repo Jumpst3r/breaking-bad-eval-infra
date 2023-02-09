@@ -4,7 +4,7 @@ from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
 import logging
 
-### Blinded Algos:
+# Blinded Algos:
 # ECDH
 # ECDSA
 
@@ -55,14 +55,18 @@ class Botan(Framework):
             ldflags = cflags
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_cflags(f'{cwd}/../toolchain')
+            ldflags = self.llvm_ldflags(f'{cwd}/../toolchain')
             if self.settings.arch == 'aarch64':
                 cflags += " -march=armv8-a"
+                ldflags += " -march=armv8-a"
             if self.settings.arch == 'armv4':
                 cflags += " -march=armv4"
                 cflags += ' -mfloat-abi=softfp'
+                ldflags += " -march=armv4"
+                ldflags += ' -mfloat-abi=softfp'
             if self.settings.arch == 'mips32el':
-                cflags += ' -Wl,-z,notext'
-            ldflags = self.llvm_ldflags(f'{cwd}/../toolchain')
+                cflags += ' -Wl,-z,notext -fPIC'
+                ldflags += ' -Wl,-z,notext -fPIC'
 
         logging.info(f'Setting CFLAGS to {cflags}')
 
