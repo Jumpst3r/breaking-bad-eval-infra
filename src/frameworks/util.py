@@ -130,6 +130,14 @@ class Framework:
         if self.settings.arch == 'riscv64':
             if self.settings.llvm_ver not in ['14', '15']:
                 cflags += f' -mno-relax'
+
+        if self.settings.arch == 'aarch64':
+            cflags += " -march=armv8-a"
+        if self.settings.arch == 'armv7':
+            cflags += " -march=armv7"
+            cflags += ' -mfloat-abi=softfp'
+        if self.settings.arch == 'mips32el':
+            cflags += ' -Wl,-z,notext'
         return cflags
 
     def llvm_ldflags(self, toolchain_dir):
@@ -137,10 +145,6 @@ class Framework:
         ldflags += f' -fuse-ld=lld'
         ldflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
         
-        # For older llvm versions use -mno-relax in riscv64
-        if self.settings.arch == 'riscv64':
-            if self.settings.llvm_ver not in ['14', '15']:
-                ldflags += f' -mno-relax'
         return ldflags
 
     def run(self, algo: Algo, resultDir='results'):
