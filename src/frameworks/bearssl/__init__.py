@@ -132,6 +132,8 @@ class Bearssl(Framework):
             Algo.CHACHA_POLY1305,
             Algo.HMAC_SHA1,
             Algo.HMAC_SHA2,
+            Algo.ECDSA,
+            Algo.RSA
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -143,13 +145,16 @@ class Bearssl(Framework):
             Algo.AES_CTR: 'aes-ctr',
             Algo.AES_GCM: 'aes-gcm',
             Algo.CHACHA_POLY1305: 'chacha-poly1305',
-            Algo.HMAC_SHA2: 'hmac-sha256'
+            Algo.HMAC_SHA1: 'hmac-sha1',
+            Algo.HMAC_SHA2: 'hmac-sha2',
+            Algo.ECDSA: 'ecdsa-p256',
+            Algo.RSA: 'rsa'
         }
 
         return f'@ {algo_str[algo]}'.split()
 
     def shared_objects(self) -> list[str]:
-        return ['libcrypto']
+        return ['libbearssl']
 
     def clean_report(self, scd):
         # mask = scd.DF['Symbol Name'].str.contains('hextobin')
