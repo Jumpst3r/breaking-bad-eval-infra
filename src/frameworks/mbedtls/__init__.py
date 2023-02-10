@@ -41,13 +41,6 @@ class Mbedtls(Framework):
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_cflags(f'{cwd}/../toolchain')
             ldflags = self.llvm_ldflags(f'{cwd}/../toolchain')
-            if self.settings.arch == 'aarch64':
-                cflags += " -march=armv8-a"
-            if self.settings.arch == 'armv4':
-                cflags += " -march=armv4"
-                cflags += ' -mfloat-abi=softfp'
-            if self.settings.arch == 'mips32el':
-                cflags += ' -Wl,-z,notext'
 
         logging.info(f'Setting CFLAGS to {cflags}')
 

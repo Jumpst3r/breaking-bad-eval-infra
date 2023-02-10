@@ -87,16 +87,6 @@ class Haclstar(Framework):
         if self.settings.compiler == 'llvm':
             ldflags += self.llvm_ldflags(f'{cwd}/toolchain')
             cflags += self.llvm_cflags(f'{cwd}/toolchain')
-            if self.settings.arch == 'aarch64':
-                cflags += " -march=armv8-a"
-            if self.settings.arch == 'armv4':
-                cflags += " -march=armv4"
-                cflags += ' -mfloat-abi=softfp'
-            if self.settings.arch == 'armv7':
-                cflags += " -march=armv7"
-                cflags += ' -mfloat-abi=softfp'
-            if self.settings.arch == 'mips32el':
-                ldflags += ' -Wl,-z,notext'
 
         logging.info(f'Setting CFLAGS to {cflags}')
         logging.info(f'Setting LDFLAGS to {ldflags}')
