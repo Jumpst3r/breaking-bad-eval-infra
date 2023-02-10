@@ -21,7 +21,6 @@ class Algo(Enum):
     CHACHA_POLY1305 = 7
     HMAC_SHA1 = 10
     HMAC_SHA2 = 11
-    HMAC_SHA3 = 12
     HMAC_BLAKE2 = 13
     CURVE25519 = 20
     ECDH_P256 = 21
@@ -39,7 +38,6 @@ class Algo(Enum):
             Algo.CHACHA_POLY1305: 'chacha-poly1305',
             Algo.HMAC_SHA1: 'hmac-sha1',
             Algo.HMAC_SHA2: 'hmac-sha2',
-            Algo.HMAC_SHA3: 'hmac-sha3',
             Algo.HMAC_BLAKE2: 'hmac-blake2',
             Algo.CURVE25519: 'curve25519',
             Algo.ECDH_P256: 'ecdh-p256',
@@ -60,7 +58,6 @@ def algo_from_str(s: str) -> Algo:
         'chacha-poly1305': Algo.CHACHA_POLY1305,
         'hmac-sha1': Algo.HMAC_SHA1,
         'hmac-sha2': Algo.HMAC_SHA2,
-        'hmac-sha3': Algo.HMAC_SHA3,
         'hmac-blake2': Algo.HMAC_BLAKE2,
         'curve25519': Algo.CURVE25519,
         'ecdh-p256': Algo.ECDH_P256,
