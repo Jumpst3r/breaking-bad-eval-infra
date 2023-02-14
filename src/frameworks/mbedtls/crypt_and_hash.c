@@ -321,10 +321,13 @@ int crypt_and_hash( int argc, char *argv[] )
             printf("Failed set key\n");
             goto exit;
         }
-        if( mbedtls_cipher_set_iv( &cipher_ctx, IV, 16 ) != 0 )
-        {
-            printf("Failed set iv\n");
-            goto exit;
+        if (strcmp(mmode, "chacha-poly1305")) {
+            // chachapoly does not support set_iv
+            if( mbedtls_cipher_set_iv( &cipher_ctx, IV, 16 ) != 0 )
+            {
+                printf("Failed set iv\n");
+                goto exit;
+            }
         }
         if( mbedtls_cipher_reset( &cipher_ctx ) != 0 )
         {
@@ -338,6 +341,14 @@ int crypt_and_hash( int argc, char *argv[] )
             goto exit;
         }
 
+        if (!strcmp(mmode, "chacha-poly1305")) 
+        {
+            // chachapoly requires a call to update_ad to work
+            if (mbedtls_cipher_update_ad(&cipher_ctx, NULL, 0) != 0) 
+            {
+                printf("Failed update_ad\n");
+            }
+        }
         /*
          * Encrypt and write the ciphertext.
          */
@@ -350,7 +361,6 @@ int crypt_and_hash( int argc, char *argv[] )
             {
                 goto exit;
             }
-
             if( mbedtls_cipher_update( &cipher_ctx, buffer, ilen, output, &olen ) != 0 )
             {
                 printf("Failed cipher update\n");
