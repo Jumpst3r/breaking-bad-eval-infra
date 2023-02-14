@@ -96,10 +96,10 @@ class Mbedtls(Framework):
         gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-gcc'
         compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang'
 
-        cflags = '' if self.settings.compiler == 'gcc' else self.llvm_cflags(
+        cflags = '' if self.settings.compiler == 'gcc' else self.llvm_ldflags(
             './toolchain')
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {librarystr} {cflags} {self.fwDir}/{self.name}/driver.c -lm -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {librarystr} {cflags} {self.fwDir}/{self.name}/driver.c {self.fwDir}/{self.name}/crypt_and_hash.c {self.fwDir}/{self.name}/ecdsa.c {self.fwDir}/{self.name}/ecdh.c -lm -o {self.rootfs}/driver.bin')
 
     def supported_ciphers(self) -> list[Algo]:
         return [
@@ -111,6 +111,9 @@ class Mbedtls(Framework):
             Algo.DES_CBC,
             Algo.CHACHA_POLY1305,
             Algo.HMAC_SHA2,
+            Algo.ECDH_P256,
+            Algo.ECDSA,
+            Algo.CURVE25519
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -125,15 +128,22 @@ class Mbedtls(Framework):
             Algo.ARIA_CBC: 'aria-cbc',
             Algo.DES_CBC: 'des-cbc',
             Algo.CHACHA_POLY1305: 'chacha-poly1305',
-            Algo.HMAC_SHA2: 'hmac-sha256'
+            Algo.HMAC_SHA2: 'hmac-sha256',
+            Algo.ECDH_P256: 'ecdh-p256',
+            Algo.ECDSA: 'ecdsa-p256',
+            Algo.CURVE25519: 'ecdh-25519'
         }
 
+        # ECDH and ECDSA require different inputs
+        if algo in [Algo.ECDH_P256, Algo.ECDSA, Algo.CURVE25519]:
+            return f'{algo_str[algo]} @'.split()
+
         # create input and output files
-        with open(f'input', 'w') as file:
+        with open(f'{self.rootfs}/input', 'w') as file:
             file.write('AAAAAAAAAAAAAAA')
 
         # empty output file
-        open('output', 'w').close()
+        open(f'{self.rootfs}/output', 'w').close()
 
         return f'0 input output {algo_str[algo]} SHA1 @'.split()
 
