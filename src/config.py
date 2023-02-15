@@ -142,8 +142,8 @@ class Config:
         #     logging.error('Framework missing')
         #     return False
 
-        # validate the framework entries exist
-        if settings.framework not in self.config['frameworks']:
-            raise Exception('Framework missing')
+        # # validate the framework entries exist
+        # if settings.framework not in self.config['frameworks']:
+        #     raise Exception('Framework missing')
 
         return True

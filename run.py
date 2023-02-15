@@ -11,6 +11,9 @@ example_usage = """example usage:
 
     python run.py -a riscv64 -t gcc --toolchain-version 11.3.0 -f haclstar -c main -o="-O3" hmac-sha2
     python run.py -a x86-64 -t llvm --toolchain-version 15 -f haclstar -c main -o="-O0" hmac-sha2
+
+Running in a different directory:
+    python ../run.py -a riscv64 -t gcc --toolchain-version 11.3.0 -f libsodium -c stable -o="-O2" --fw-dir ../src/frameworks -p ../config.json hmac-sha2
 """
 
 parser = argparse.ArgumentParser(
@@ -23,7 +26,7 @@ parser.add_argument('-t', '--toolchain', type=str, default='gcc',
 parser.add_argument('--toolchain-version', type=str,
                     help='Toolchain Version', required=True)
 parser.add_argument('-f', '--framework', type=str, help='Framework', required=True,
-                    choices=['haclstar', 'openssl', 'mbedtls', 'wolfssl', 'botan', 'bearssl'])
+                    choices=['haclstar', 'openssl', 'mbedtls', 'wolfssl', 'botan', 'bearssl', 'libsodium'])
 parser.add_argument('-c', '--commit', type=str,
                     help='Commit of the framework', default='main', required=True)
 parser.add_argument('target', nargs='+', type=str, help='Target algorithm(s) to be analyzed',
@@ -61,6 +64,9 @@ def build_framework(config: Config, settings: Settings, rootfs='rootfs', fwDir='
 
     if settings.framework == 'bearssl':
         f = Bearssl(settings, config, rootfs, fwDir)
+    
+    if settings.framework == 'libsodium':
+        f = Libsodium(settings, config, rootfs, fwDir)
 
     f.download()
     f.build()
