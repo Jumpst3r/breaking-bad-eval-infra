@@ -43,12 +43,12 @@ class Libsodium(Framework):
             if self.settings.arch == 'x86-i686':
                 cflags += " -m32 -march=i386"
             if self.settings.arch == 'aarch64':
+                cflags += " --specs=nosys.specs"
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv7':
+                cflags += " --specs=nosys.specs"
                 cflags += " -march=armv7"
                 cflags += ' -mfloat-abi=softfp'
-            if self.settings.arch == 'armv4':
-                cflags += " -march=armv4"
         if self.settings.compiler == 'llvm':
             ldflags += self.custom_llvm_ldflags(f'{cwd}/toolchain')
             cflags += self.llvm_cflags(f'{cwd}/toolchain')
@@ -103,11 +103,14 @@ class Libsodium(Framework):
     def supported_ciphers(self) -> list[Algo]:
         return [
             Algo.CHACHA_POLY1305,
-            Algo.HMAC_SHA1,
             Algo.HMAC_SHA2,
             Algo.HMAC_BLAKE2,
-            Algo.CURVE25519,
-            Algo.ECDH_P256
+            Algo.SECRET_BOX,
+            Algo.SECRET_STREAM,
+            Algo.CRYPTO_BOX,
+            Algo.CRYPTO_SIGN,
+            Algo.CRYPTO_SEAL,
+            Algo.CURVE25519
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -115,12 +118,15 @@ class Libsodium(Framework):
             raise "Unsupported algorithm"
 
         algo_str = {
-            Algo.CHACHA_POLY1305: 'chacha_poly1305',
-            Algo.HMAC_SHA1: 'hmac-sha1',
+            Algo.CHACHA_POLY1305: 'secretbox',
+            Algo.HMAC_BLAKE2: 'generichash',
             Algo.HMAC_SHA2: 'hmac-sha2',
-            Algo.HMAC_BLAKE2: 'hmac-blake2',
-            Algo.CURVE25519: 'ecdh-curve25519',
-            Algo.ECDH_P256: 'ecdh-p256',
+            Algo.SECRET_BOX: 'secretbox',
+            Algo.SECRET_STREAM: 'secretstream',
+            Algo.CRYPTO_BOX: 'crypto_box',
+            Algo.CRYPTO_SIGN: 'crypto_sign',
+            Algo.CRYPTO_SEAL: 'crypto_seal',
+            Algo.CURVE25519: 'crypto_kx'
         }
 
         return f'@ {algo_str[algo]}'.split()

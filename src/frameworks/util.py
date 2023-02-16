@@ -26,6 +26,12 @@ class Algo(Enum):
     ECDH_P256 = 21
     ECDSA = 22
     RSA = 23
+    SECRET_BOX = 50
+    SECRET_STREAM = 51
+    CRYPTO_BOX = 52     # Public key crypto
+    CRYPTO_SIGN = 53
+    CRYPTO_SEAL = 54 
+    
 
     def __str__(self):
         mapping = {
