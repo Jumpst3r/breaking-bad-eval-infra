@@ -48,7 +48,12 @@ class Algo(Enum):
             Algo.CURVE25519: 'curve25519',
             Algo.ECDH_P256: 'ecdh-p256',
             Algo.ECDSA: 'ecdsa',
-            Algo.RSA: 'rsa'
+            Algo.RSA: 'rsa',
+            Algo.SECRET_BOX: 'secretbox',
+            Algo.SECRET_STREAM: 'secretstream',
+            Algo.CRYPTO_BOX: 'crypto_box',
+            Algo.CRYPTO_SIGN: 'crypto_sign',
+            Algo.CRYPTO_SEAL: 'crypto_seal'
         }
         return mapping[self]
 
@@ -68,7 +73,12 @@ def algo_from_str(s: str) -> Algo:
         'curve25519': Algo.CURVE25519,
         'ecdh-p256': Algo.ECDH_P256,
         'ecdsa': Algo.ECDSA,
-        'rsa': Algo.RSA
+        'rsa': Algo.RSA,
+        'secretbox': Algo.SECRET_BOX,
+        'secretstream': Algo.SECRET_STREAM,
+        'crypto_box': Algo.CRYPTO_BOX,
+        'crypto_sign': Algo.CRYPTO_SIGN,
+        'crypto_seal': Algo.CRYPTO_SEAL
     }
     if s not in mapping:
         raise "Algorithm not supported"
