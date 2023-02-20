@@ -58,11 +58,20 @@ class Libsodium(Framework):
 
         logging.info(f'Calling ./configure')
         if self.settings.compiler == 'gcc':
+            # run_subprocess_env(f'./configure --host {self.config.get_toolchain_name(self.settings)}',
+            #                    cflags=cflags, ldflags=ldflags, path=f'{cwd}/toolchain/bin')
+            prefix = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}'
+            cc = f'{prefix}-gcc'
+            ld = f'{prefix}-ld'
+            ar = f'{prefix}-ar'
+            ranlib = f'{prefix}-ranlib'
             run_subprocess_env(f'./configure --host {self.config.get_toolchain_name(self.settings)}',
-                               cflags=cflags, ldflags=ldflags, path=f'{cwd}/toolchain/bin')
+                               cflags=cflags, ldflags=ldflags, cc=cc, ld=ld, ar=ar, ranlib=ranlib)
         elif self.settings.compiler == 'llvm':
+            # run_subprocess_env(f'./configure --host {self.config.get_toolchain_name(self.settings)}',
+            #                    cc='clang', cflags=cflags, ldflags=ldflags, path=f'{cwd}/toolchain/bin')
             run_subprocess_env(f'./configure --host {self.config.get_toolchain_name(self.settings)}',
-                               cc='clang', cflags=cflags, ldflags=ldflags, path=f'{cwd}/toolchain/bin')
+                               cflags=cflags, ldflags=ldflags, cc="clang", ar="llvm-ar", ranlib="llvm-ranlib")
 
         logging.info(f'Building {self.name} (make)')
         run_subprocess_env('make -j6', path=f'{cwd}/toolchain/bin')
