@@ -212,34 +212,5 @@
       "6",
       "5"
     ]
-  },
-  "frameworks": {
-    "openssl": {
-      
-    },
-    "botan": {
-      
-    },
-    "wolfssl": {
-      
-    },
-    "mbedtls": {
-      
-    },
-    "compare": {
-      
-    },
-    "haclstar": {
-      
-    },
-    "haclutil": {
-      
-    },
-    "opensslutils": {
-      
-    },
-    "bearssl": {
-      
-    }
   }
 }
