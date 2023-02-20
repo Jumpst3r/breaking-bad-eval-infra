@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    if (!strcmp(mode, "secretstream"))
+    else if (!strcmp(mode, "secretstream"))
     {
         unsigned char *plaintext2 = (unsigned char *)"lorem ipsum";
         size_t m2_len = sizeof(plaintext);
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
         /* The tag indicates that this is the final chunk, no need to read and decrypt more */
         assert(tag == crypto_secretstream_xchacha20poly1305_TAG_FINAL);
     }
-    if (!strcmp(mode, "generichash"))
+    else if (!strcmp(mode, "generichash"))
     {
         unsigned char hash[crypto_generichash_BYTES];
 
@@ -162,13 +162,13 @@ int main(int argc, char *argv[])
                            plaintext, m_len,
                            key, sizeof key);
     }
-    if (!strcmp(mode, "hmac-sha2"))
+    else if (!strcmp(mode, "hmac-sha2"))
     {
         unsigned char hash[crypto_auth_hmacsha512_BYTES];
 
         crypto_auth_hmacsha512(hash, plaintext, m_len, key);
     }
-    if (!strcmp(mode, "crypto_box"))
+    else if (!strcmp(mode, "crypto_box"))
     {
         size_t c_len = crypto_box_MACBYTES + m_len;
 
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    if (!strcmp(mode, "crypto_sign"))
+    else if (!strcmp(mode, "crypto_sign"))
     {
         unsigned char pk[crypto_sign_PUBLICKEYBYTES];
         unsigned char sk[crypto_sign_SECRETKEYBYTES];
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    if (!strcmp(mode, "crypto_seal"))
+    else if (!strcmp(mode, "crypto_seal"))
     {
         size_t c_len = crypto_box_SEALBYTES + m_len;
 
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    if (!strcmp(mode, "crypto_seal"))
+    else if (!strcmp(mode, "crypto_kx"))
     {
         unsigned char client_pk[crypto_kx_PUBLICKEYBYTES], client_sk[crypto_kx_SECRETKEYBYTES];
         unsigned char client_rx[crypto_kx_SESSIONKEYBYTES], client_tx[crypto_kx_SESSIONKEYBYTES];
@@ -283,6 +283,10 @@ int main(int argc, char *argv[])
             printf("crypto_kx Suspicious client public key, bail out\n");
             return -1;
         }
+    }
+    else {
+        printf("No supported algorithm selected");
+        return -1;
     }
 
     printf("successful\n");
