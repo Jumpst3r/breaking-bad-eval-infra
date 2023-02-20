@@ -45,5 +45,8 @@ def run_subprocess_env(args, cc='', ar='', cxx='', ld_lib='', ld='', cflags='', 
     my_env['LDFLAGS'] = ldflags
     my_env['LD_LIBRARY_PATH'] = ld_lib
     if path != '':
-        my_env['PATH'] = f'{path}:{my_env["PATH"]}'
+        if 'PATH' in my_env and len(my_env['PATH']) > 0:
+            my_env['PATH'] = f'{path}{os.pathsep}{my_env["PATH"]}'
+        else:
+            my_env['PATH'] = path
     run_subprocess(args, env=my_env)
