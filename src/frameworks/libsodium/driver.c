@@ -215,15 +215,16 @@ int main(int argc, char *argv[])
         crypto_sign(signed_message, &signed_message_len,
                     plaintext, m_len, sk);
 
-        unsigned char unsigned_message[m_len];
-        unsigned long long unsigned_message_len;
-        if (crypto_sign_open(unsigned_message, &unsigned_message_len,
-                             signed_message, signed_message_len, pk) != 0)
-        {
-            /* incorrect signature! */
-            printf("crypto_sign incorrect signature!\n");
-            return -1;
-        }
+        //// don't open the signature as this does not depend on any secret data
+        // unsigned char unsigned_message[m_len];
+        // unsigned long long unsigned_message_len;
+        // if (crypto_sign_open(unsigned_message, &unsigned_message_len,
+        //                      signed_message, signed_message_len, pk) != 0)
+        // {
+        //     /* incorrect signature! */
+        //     printf("crypto_sign incorrect signature!\n");
+        //     return -1;
+        // }
     }
     else if (!strcmp(mode, "crypto_seal"))
     {
@@ -289,6 +290,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    printf("successful\n");
+    printf("%s successful\n", mode);
     return 0;
 }
