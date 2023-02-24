@@ -2,12 +2,18 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/docker-existing-dockerfile
 {
 	"name": "Existing Dockerfile",
+	"build": {
+		// Sets the run context to one level up instead of the .devcontainer folder.
+		"context": "..",
 
-	// Sets the run context to one level up instead of the .devcontainer folder.
-	"context": "..",
+		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+		"dockerfile": "dev.Dockerfile",
 
-	// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
-	"dockerFile": "dev.Dockerfile",
+		"args": {
+            "BUILDKIT_INLINE_CACHE": "0"
+        }
+	},
+	
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
@@ -23,5 +29,14 @@
 
 	// Uncomment to connect as a non-root user if you've added one. See https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
-	"runArgs": ["--shm-size=10gb"]
+	"runArgs": ["--shm-size=10gb"],
+
+	"customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-python.python"
+            ]
+        }
+    }
 }
