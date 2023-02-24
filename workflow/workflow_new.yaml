@@ -46,12 +46,14 @@ spec:
         ["haclstar"]
     - name: target-algorithms
       # value: |
-      #   ["chacha-poly1305"]
+      #   "hmac-blake2 hmac-sha2 secretbox secretstream crypto_box crypto_sign curve25519"
       value: |
-        "chacha-poly1305 hmac-sha1 hmac-sha2 hmac-blake2 ecdh-curve25519 ecdh-p256"
+        "chacha-poly1305 hmac-sha1 hmac-sha2 curve25519 ecdh-p256"
     - name: optimizations
       value: |
-        ["-O2", "-O3", "-Os", "-Ofast", "-Oz"]
+        ["-O0", "-O1", "-O2", "-O3", "-Os", "-Ofast", "-Oz"]
+    - name: commit
+      value: "6c3b25f82ada299aa7bdce41d4d6207f4b0d7b95"
   templates:
   - name: schedule-framework-builds
     inputs:
@@ -61,6 +63,7 @@ spec:
       - name: frameworks
       - name: target-algorithms
       - name: optimizations
+      - name: commit
     steps:
     - - name: permute-params
         template: permute-params
@@ -76,6 +79,8 @@ spec:
               value: "{{inputs.parameters.target-algorithms}}"
             - name: optimizations
               value: "{{inputs.parameters.optimizations}}"
+            - name: commit
+              value: "{{inputs.parameters.commit}}"
     - - name: schedule-build
         template: schedule-build
         continueOn:
@@ -95,7 +100,7 @@ spec:
           - name: opt
             value: "{{item.opt}}"
           - name: commit
-            value: "main"
+            value: "{{item.commit}}"
           - name: image
             value: "{{item.image}}"
         withParam: "{{steps.permute-params.outputs.parameters.confmap}}"
@@ -112,7 +117,7 @@ spec:
       - name: opt
       - name: commit
       - name: image
-    parallelism: 5
+    parallelism: 8
     steps:
     - - name: schedule
         template: build
@@ -167,103 +172,24 @@ spec:
           memory: "1Gi"
         limits:
           cpu: "16"
-          memory: "16Gi"
+          memory: "32Gi"
       # command: ["sleep", "infinity"]
-      env:
-        - name: RAY_memory_usage_threshold
-          value: "1.8"
+      # env:
+        # - name: RAY_memory_monitor_refresh_ms
+        #   value: "0"
+      # command: [/bin/bash]
       command: ["python3", "run.py"]
       args:
-        - -a
-        - "{{inputs.parameters.arch}}"
-        - -t
-        - "{{inputs.parameters.toolchain}}"
-        - --toolchain-version
-        - "{{inputs.parameters.version}}"
-        - -f
-        - "{{inputs.parameters.framework}}"
-        - -c
-        - "{{inputs.parameters.commit}}"
-        - -o="{{inputs.parameters.opt}}"
-        - --fw-dir
-        - src/frameworks
-        - --result-dir
-        - /data
-        - -p
-        - config.json
+        - -a={{inputs.parameters.arch}}
+        - -t={{inputs.parameters.toolchain}}
+        - --toolchain-version={{inputs.parameters.version}}
+        - -f={{inputs.parameters.framework}}
+        - -c={{inputs.parameters.commit}}
+        - -o={{inputs.parameters.opt}}
+        - --fw-dir=src/frameworks
+        - --result-dir=/data
+        - -p=config.json
         - "{{inputs.parameters.target}}"
-      # "{{inputs.parameters.arch}} {{inputs.parameters.toolchain}} {{inputs.parameters.version}} {{inputs.parameters.framework}} {{inputs.parameters.commit}} {{inputs.parameters.opt}} {{inputs.parameters.target}}"]
-      # - env && mkdir test && cd test && echo python3 ../run.py -a {{inputs.parameters.arch}} -t {{inputs.parameters.toolchain}} --toolchain-version {{inputs.parameters.version}} -f {{inputs.parameters.framework}} -c {{inputs.parameters.commit}} -o="{{inputs.parameters.opt}}" {{inputs.parameters.target}} && python3 ../run.py -a {{inputs.parameters.arch}} -t {{inputs.parameters.toolchain}} --toolchain-version {{inputs.parameters.version}} -f {{inputs.parameters.framework}} -c {{inputs.parameters.commit}} -o=\"{{inputs.parameters.opt}}\" {{inputs.parameters.target}} && sleep infinity
-      # - env && mkdir test && cd test && ln -s /data ./results && python3 ../run.py -a {{inputs.parameters.arch}} -t {{inputs.parameters.toolchain}} --toolchain-version {{inputs.parameters.version}} -f {{inputs.parameters.framework}} -c {{inputs.parameters.commit}} -o=\"{{inputs.parameters.opt}}\" {{inputs.parameters.target}} && sleep infinity
-  # - name: reduce-global
-  #   retryStrategy:
-  #       limit: "3"
-  #       backoff:
-  #           duration: "3m"      
-  #           factor: "2"
-  #           maxDuration: "10m"
-  #   script:
-  #     image: python:alpine3.6
-  #     volumeMounts:
-  #     - name: volv
-  #       mountPath: /mnt/vol
-  #     command: [python]
-  #     source: |
-  #       import glob
-  #       import json
-  #       jlist = glob.glob('/mnt/vol/*.json')
-  #       print("jsonlist:")
-  #       print(jlist)
-  #       final = []
-  #       for r in jlist:
-  #         if '*' not in r:
-  #           continue
-  #         with open(r, 'r') as f:
-  #           res = json.load(f)
-  #         canonicalName = r.split('/')[-1]
-  #         jsondict = {}
-  #         jsondict['toolchain'] = canonicalName.split('*')[0]
-  #         jsondict['framework'] = canonicalName.split('*')[1]
-  #         jsondict['commit'] = canonicalName.split('*')[2]
-  #         jsondict['optlvl'] = canonicalName.split('*')[3]
-  #         jsondict['compiler'] = canonicalName.split('*')[4]
-  #         jsondict['results'] = res
-  #         final.append(res)
-  #       with open('/mnt/vol/finalres.json', 'w') as f: 
-  #         json.dump(final, f)
-  #   outputs:
-  #     artifacts:
-  #     - name: results
-  #       path: /mnt/vol/finalres.json
-  
-  # - name: getmapartifact
-  #   inputs:
-  #     parameters:
-  #     - name: algomap
-  #   script:
-  #     image: python:alpine3.6
-  #     volumeMounts:
-  #     - name: volv
-  #       mountPath: /mnt/vol
-  #     command: [python]
-  #     source: |
-  #       import json
-  #       import os
-  #       import glob
-  #       import time
-  #       files = glob.glob('/mnt/vol/*')
-  #       print(files)
-  #       algomap = r'''{{inputs.parameters.algomap}}'''
-  #       #algomap = algomap.replace('\\"', '|')
-  #       #algomap = algomap.replace('"', '')
-  #       #algomap = algomap.replace('|', '"')
-  #       print(algomap)
-  #       with open('/mnt/vol/algomap.json', 'w') as f:
-  #         f.write(algomap)
-  #       time.sleep(5)
-  #       files = glob.glob('/mnt/vol/*')
-  #       print(files)
-
   - name: permute-params
     inputs:
       parameters:
@@ -272,6 +198,7 @@ spec:
       - name: frameworks
       - name: target-algorithms
       - name: optimizations
+      - name: commit
     script:
       image: python:alpine3.6
       command: [python]
@@ -286,6 +213,7 @@ spec:
         fw = json.loads(r'''{{inputs.parameters.frameworks}}''')
         target = json.loads(r'''{{inputs.parameters.target-algorithms}}''')
         opt = json.loads(r'''{{inputs.parameters.optimizations}}''')
+        commit = '{{inputs.parameters.commit}}'
 
         print(archs)
         print(comps)
@@ -306,7 +234,8 @@ spec:
                       'framework': f,
                       'target': target,
                       'opt': o,
-                      'image': 'llvm15'
+                      'image': 'llvm15',
+                      'commit': commit
                     })
               else:
                 if a == 'riscv64' and v in ['5', '6', '7', '8', '9']:
@@ -319,7 +248,8 @@ spec:
                     'framework': f,
                     'target': target,
                     'opt': o,
-                    'image': f'llvm{v}'
+                    'image': f'llvm{v}',
+                    'commit': commit
                   })
         print(out_map)
         with open('/tmp/outmap.json', 'w') as f:
