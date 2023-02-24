@@ -8,7 +8,7 @@
 
 #include "Hacl_HMAC.h"
 #include "Hacl_Hash_SHA2.h"
-#include "Hacl_SHA3.h"
+#include "Hacl_Hash_SHA3.h"
 #include "Hacl_Hash_MD5.h"
 #include "Hacl_Hash_Blake2.h"
 #include "Hacl_Curve25519_51.h"
@@ -197,12 +197,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Do something with the output to prevent the compiler optimizing stuff away
-    printf("Output: ");
-    for(int i = 0; i < 16; i++) {
-        printf("%02x", output[i]);
-    }
-    printf("\n");
 
     return 0;
 }
