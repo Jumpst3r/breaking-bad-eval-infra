@@ -5,9 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static const unsigned char SHA256_OID[] = {
-    0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01};
-
 int hextobin(unsigned char *dst, const char *src)
 {
   size_t num;
@@ -140,7 +137,6 @@ int main(int argc, char **argv)
   }
   else if (strstr(mode, "ecdsa") != NULL)
   {
-    unsigned char signature[128];
     // br_ec_impl *ec;
     br_hash_compat_context hc;
     const br_hash_class *hf = &br_sha256_vtable;
@@ -208,12 +204,12 @@ int main(int argc, char **argv)
   }
   else if (!strcmp(mode, "rsa"))
   {
-    br_rsa_public pub = br_rsa_public_get_default();
-    br_rsa_private priv = br_rsa_private_get_default();
+    // br_rsa_public pub = br_rsa_public_get_default();
+    // br_rsa_private priv = br_rsa_private_get_default();
     br_rsa_pkcs1_sign sign = br_rsa_pkcs1_sign_get_default();
     br_rsa_pkcs1_vrfy vrfy = br_rsa_pkcs1_vrfy_get_default();
-    br_rsa_pss_sign pss_sign = br_rsa_pss_sign_get_default();
-    br_rsa_pss_vrfy pss_vrfy = br_rsa_pss_vrfy_get_default();
+    // br_rsa_pss_sign pss_sign = br_rsa_pss_sign_get_default();
+    // br_rsa_pss_vrfy pss_vrfy = br_rsa_pss_vrfy_get_default();
     br_rsa_oaep_encrypt menc = br_rsa_oaep_encrypt_get_default();
     br_rsa_oaep_decrypt mdec = br_rsa_oaep_decrypt_get_default();
     br_rsa_keygen kgen = br_rsa_keygen_get_default();
@@ -225,11 +221,12 @@ int main(int argc, char **argv)
     br_rsa_private_key sk;
     br_rsa_public_key pk;
 
-    unsigned char kbuf_priv[BR_RSA_KBUF_PRIV_SIZE(1024)];
-    unsigned char kbuf_pub[BR_RSA_KBUF_PUB_SIZE(1024)];
+    size_t rsa_size = 1024;
+    unsigned char kbuf_priv[BR_RSA_KBUF_PRIV_SIZE(rsa_size)];
+    unsigned char kbuf_pub[BR_RSA_KBUF_PUB_SIZE(rsa_size)];
 
     // generate keypair
-    if (!kgen(&rng.vtable, &sk, kbuf_priv, &pk, kbuf_pub, 1024, 17))
+    if (!kgen(&rng.vtable, &sk, kbuf_priv, &pk, kbuf_pub, rsa_size, 3))
     {
       printf("RSA keygen failed");
       exit(-1);
@@ -246,13 +243,13 @@ int main(int argc, char **argv)
 
     // PKCS1.5 (rsa sign)
     unsigned char sig[128];
-    if (!sign(SHA256_OID, hash_value, br_sha256_SIZE, &sk, sig))
+    if (!sign(BR_HASH_OID_SHA256, hash_value, br_sha256_SIZE, &sk, sig))
     {
       printf("RSA sign failed");
       exit(-1);
     }
     unsigned char hash_out[br_sha256_SIZE];
-    if (!vrfy(sig, sizeof(sig), SHA256_OID, br_sha256_SIZE, &pk, hash_out))
+    if (vrfy(sig, sizeof(sig), BR_HASH_OID_SHA1, br_sha256_SIZE, &pk, hash_out) != 1)
     {
       printf("RSA verify failed");
       exit(-1);
