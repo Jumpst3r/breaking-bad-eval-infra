@@ -30,8 +30,7 @@ class Algo(Enum):
     SECRET_STREAM = 51
     CRYPTO_BOX = 52     # Public key crypto
     CRYPTO_SIGN = 53
-    CRYPTO_SEAL = 54 
-    
+    CRYPTO_SEAL = 54
 
     def __str__(self):
         mapping = {
@@ -138,26 +137,31 @@ class Framework:
         cflags += f' --sysroot={toolchain_dir}/{self.config.get_toolchain_name(self.settings)}/sysroot/'
         cflags += f' -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
         cflags += f' -Wno-error'
-        
-        # For older llvm versions use -mno-relax in riscv64
+
         if self.settings.arch == 'riscv64':
-            if self.settings.llvm_ver not in ['14', '15']:
+            # For older llvm versions use -mno-relax in riscv64
+            if self.settings.llvm_ver not in ['14', '15', '16']:
                 cflags += f' -mno-relax'
+            # Older LLVM needs a workaround for lto
+            # One needs to tell opt which floating point ABI to use
+            if self.settings.llvm_ver not in ['15', '16'] and '-flto' in self.settings.optflag:
+                cflags += f' -Wl,-plugin-opt=-target-abi=lp64d'
 
         if self.settings.arch == 'aarch64':
             cflags += " -march=armv8-a"
         if self.settings.arch == 'armv7':
             cflags += " -march=armv7"
             cflags += ' -mfloat-abi=softfp'
-        if self.settings.arch == 'mips32el':
-            cflags += ' -Wl,-z,notext'
         return cflags
 
     def llvm_ldflags(self, toolchain_dir):
         ldflags = self.llvm_cflags(toolchain_dir)
         ldflags += f' -fuse-ld=lld'
         ldflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
-        
+
+        if self.settings.arch == 'mips32el':
+            ldflags += ' -Wl,-z,notext'
+
         return ldflags
 
     def run(self, algo: Algo, resultDir='results'):
