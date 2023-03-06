@@ -55,7 +55,16 @@ int main(int argc, char **argv)
    */
 
   /* A key */
-  unsigned char *key = (unsigned char *)argv[1];
+  /* A 256 bit key in hex */
+  char *key_hex = (char *)argv[1];
+  uint32_t key_len = 32;
+  uint8_t key[32];
+  int len = hextobin(key, key_hex);
+  if (len < 32)
+  {
+    printf("insufficient key length\n");
+    return -1;
+  }
 
   /* The encryption primitive to use */
   char *mode = argv[2];
@@ -76,19 +85,19 @@ int main(int argc, char **argv)
   if (!strcmp(mode, "aes-cbc"))
   {
     br_aes_ct_cbcenc_keys ctx;
-    br_aes_ct_cbcenc_init(&ctx, key, 16);
+    br_aes_ct_cbcenc_init(&ctx, key, 32);
 
     br_aes_ct_cbcenc_run(&ctx, iv, plaintext, br_aes_ct_BLOCK_SIZE); // inplace updates plaintext
 
     br_aes_ct_cbcdec_keys ctx2;
-    br_aes_ct_cbcdec_init(&ctx2, key, 16);
+    br_aes_ct_cbcdec_init(&ctx2, key, 32);
     br_aes_ct_cbcdec_run(&ctx2, iv, plaintext, 32); // len fixed to 32 bytes
     printf("AES-CBC successful");
   }
   else if (!strcmp(mode, "aes-ctr"))
   {
     br_aes_ct_ctr_keys ctx;
-    br_aes_ct_ctr_init(&ctx, key, 16);
+    br_aes_ct_ctr_init(&ctx, key, 32);
 
     br_aes_ct_ctr_run(&ctx, iv, 0, plaintext, sizeof(plaintext)); // inplace updates plaintext
     printf("AES-CTR successful");
@@ -97,7 +106,7 @@ int main(int argc, char **argv)
   {
     br_gcm_context ctx;
     br_aes_ct_ctr_keys bctx;
-    br_aes_ct_ctr_init(&bctx, key, 16);
+    br_aes_ct_ctr_init(&bctx, key, 32);
     br_gcm_init(&ctx, &bctx.vtable, br_ghash_ctmul);
     br_gcm_reset(&ctx, iv, sizeof(iv));
 
@@ -129,6 +138,11 @@ int main(int argc, char **argv)
       br_hmac_key_init(&kc, &br_sha1_vtable, key, sizeof(key));
     else if (strstr(mode, "sha2") != NULL)
       br_hmac_key_init(&kc, &br_sha256_vtable, key, sizeof(key));
+    else
+    {
+      printf("Unsupported hash algorithm\n");
+      return -1;
+    }
 
     br_hmac_init(&hc, &kc, 0);
     br_hmac_update(&hc, plaintext, sizeof(plaintext));
@@ -157,15 +171,20 @@ int main(int argc, char **argv)
       curve_id = BR_EC_secp521r1;
     else if (strstr(mode, "384") != NULL)
       curve_id = BR_EC_secp384r1;
+    else
+    {
+      printf("Curve not supported\n");
+      return -1;
+    }
 
     // setup rng
     br_hmac_drbg_context rng;
-    br_hmac_drbg_init(&rng, &br_sha256_vtable, plaintext, 16);
+    br_hmac_drbg_init(&rng, &br_sha256_vtable, key, 32);
 
     // Generate new EC keypair
-    br_ec_private_key key;
+    br_ec_private_key ec_key;
     unsigned char kbuf[BR_EC_KBUF_PRIV_MAX_SIZE];
-    int res = br_ec_keygen(&rng.vtable, ec, &key, kbuf, curve_id);
+    int res = br_ec_keygen(&rng.vtable, ec, &ec_key, kbuf, curve_id);
     if (res == 0)
     {
       printf("ECDSA gen privkey not successful\n");
@@ -175,7 +194,7 @@ int main(int argc, char **argv)
     // compute pubkey
     br_ec_public_key pubkey;
     unsigned char pubkbuf[BR_EC_KBUF_PUB_MAX_SIZE];
-    res = br_ec_compute_pub(ec, &pubkey, pubkbuf, &key);
+    res = br_ec_compute_pub(ec, &pubkey, pubkbuf, &ec_key);
     if (res == 0)
     {
       printf("ECDSA gen pubkey not successful\n");
@@ -185,7 +204,7 @@ int main(int argc, char **argv)
     // ECDSA signing
     uint8_t sig[256];
     br_ecdsa_sign sign = &br_ecdsa_i31_sign_raw;
-    size_t len = sign(ec, hf, hash_value, &key, sig);
+    size_t len = sign(ec, hf, hash_value, &ec_key, sig);
 
     if (len == 0)
     {
@@ -202,6 +221,91 @@ int main(int argc, char **argv)
     }
     printf("ECDSA successful");
   }
+  else if (strstr(mode, "ecdh") != NULL || strstr(mode, "25519") != NULL)
+  {
+    // // br_ec_impl *ec;
+    // br_hash_compat_context hc;
+    // const br_hash_class *hf = &br_sha256_vtable;
+
+    // // lets first hash the data to be signed
+    // uint8_t hash_value[br_sha256_SIZE];
+    // hf->init(&hc.vtable);
+    // hf->update(&hc.vtable, plaintext, sizeof(plaintext));
+    // hf->out(&hc.vtable, hash_value);
+
+    const br_ec_impl *ec = br_ec_get_default();
+    //  = strstr(mode, "25519") != NULL ? &br_ec_c25519_i31 : &br_ec_prime_i31;
+
+    int curve_id = 0;
+    if (strstr(mode, "p256") != NULL)
+      curve_id = BR_EC_secp256r1;
+    else if (strstr(mode, "521") != NULL)
+      curve_id = BR_EC_secp521r1;
+    else if (strstr(mode, "384") != NULL)
+      curve_id = BR_EC_secp384r1;
+    else if (strstr(mode, "25519") != NULL)
+      curve_id = BR_EC_curve25519;
+    else
+    {
+      printf("Curve not supported\n");
+      return -1;
+    }
+
+    // setup rng
+    br_hmac_drbg_context rng;
+    br_hmac_drbg_init(&rng, &br_sha256_vtable, key, 32);
+
+    // Generate new EC keypair
+    br_ec_private_key ec_key1, ec_key2;
+    unsigned char kbuf1[BR_EC_KBUF_PRIV_MAX_SIZE];
+    unsigned char kbuf2[BR_EC_KBUF_PRIV_MAX_SIZE];
+    size_t ec_key1_len = br_ec_keygen(&rng.vtable, ec, &ec_key1, kbuf1, curve_id);
+    if (ec_key1_len == 0)
+    {
+      printf("ECDH gen privkey not successful\n");
+      exit(-1);
+    }
+    size_t ec_key2_len = br_ec_keygen(&rng.vtable, ec, &ec_key2, kbuf2, curve_id);
+    if (ec_key1_len == 0)
+    {
+      printf("ECDH gen privkey not successful\n");
+      exit(-1);
+    }
+
+    // compute pubkey
+    br_ec_public_key pubkey1, pubkey2;
+    unsigned char pubkbuf1[BR_EC_KBUF_PUB_MAX_SIZE];
+    unsigned char pubkbuf2[BR_EC_KBUF_PUB_MAX_SIZE];
+    size_t pubkey1_len = br_ec_compute_pub(ec, &pubkey1, pubkbuf1, &ec_key1);
+    if (pubkey1_len == 0)
+    {
+      printf("ECDH gen pubkey not successful\n");
+      exit(-1);
+    }
+    size_t pubkey2_len = br_ec_compute_pub(ec, &pubkey2, pubkbuf2, &ec_key2);
+    if (pubkey2_len == 0)
+    {
+      printf("ECDH gen pubkey not successful\n");
+      exit(-1);
+    }
+
+    // ECDH key agreement
+    int res1 = ec->mul(pubkbuf1, pubkey1_len, kbuf2, ec_key2_len, curve_id);
+    int res2 = ec->mul(pubkbuf2, pubkey2_len, kbuf1, ec_key1_len, curve_id);
+    if (res1 != 1 || res2 != 1)
+    {
+      printf("ec multiplication failed\n");
+      return -1;
+    }
+
+    if (memcmp(pubkbuf1, pubkbuf2, pubkey1_len) != 0)
+    {
+      printf("ECDH key agreement failed\n");
+      return -1;
+    }
+
+    printf("ECDH successful");
+  }
   else if (!strcmp(mode, "rsa"))
   {
     // br_rsa_public pub = br_rsa_public_get_default();
@@ -216,7 +320,7 @@ int main(int argc, char **argv)
 
     // setup rng
     br_hmac_drbg_context rng;
-    br_hmac_drbg_init(&rng, &br_sha256_vtable, plaintext, 16);
+    br_hmac_drbg_init(&rng, &br_sha256_vtable, key, 32);
 
     br_rsa_private_key sk;
     br_rsa_public_key pk;
@@ -271,6 +375,11 @@ int main(int argc, char **argv)
     }
 
     printf("RSA successful");
+  }
+  else
+  {
+    printf("Unsupported algorithm\n");
+    return -1;
   }
 
   return 0;
