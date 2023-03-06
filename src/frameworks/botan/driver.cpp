@@ -104,6 +104,18 @@ int main(int argc, char **argv)
         mode.insert(0, botan_cipher_id);
         opmode = 1;
     }
+    else if (!strcmp(umode, "hmac-sha1"))
+    {
+        std::string id = "(SHA-160)";
+        hmacmode.insert(4, id);
+        opmode = 2;
+    }
+     else if (!strcmp(umode, "hmac-blake2"))
+    {
+        std::string id = "(Blake2b(512))";
+        hmacmode.insert(4, id);
+        opmode = 2;
+    }
     else if (!strcmp(umode, "hmac-sha256"))
     {
         std::string id = "(SHA-256)";
@@ -223,6 +235,10 @@ int main(int argc, char **argv)
         std::cout << "agreed key: " << std::endl << Botan::hex_encode(sA);
         return 0;
     }
+    else {
+        std::cout << "unsupported algorithm\n";
+        return -1;
+    }
         // const std::string path = argv[1];
         // printf("loading key\n");
         // Botan::DataSource_Stream in(path, true);
@@ -254,6 +270,8 @@ int main(int argc, char **argv)
 
         enc->start(iv);
         enc->finish(pt);
+
+        std::cout << "successful";
     }
     else if (opmode == 2){
         //hmac
@@ -266,6 +284,11 @@ int main(int argc, char **argv)
         mac->start();
         mac->update(data);
         Botan::secure_vector<uint8_t> tag = mac->final();
+        std::cout << "successful";
+    }
+    else {
+        std::cout << "unsuccessful";
+        return -1;
     }
     
 
