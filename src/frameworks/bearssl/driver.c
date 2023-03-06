@@ -353,7 +353,7 @@ int main(int argc, char **argv)
       exit(-1);
     }
     unsigned char hash_out[br_sha256_SIZE];
-    if (vrfy(sig, sizeof(sig), BR_HASH_OID_SHA1, br_sha256_SIZE, &pk, hash_out) != 1)
+    if (vrfy(sig, sizeof(sig), BR_HASH_OID_SHA256, br_sha256_SIZE, &pk, hash_out) != 1)
     {
       printf("RSA verify failed");
       exit(-1);
