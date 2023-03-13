@@ -133,6 +133,8 @@ class Bearssl(Framework):
             Algo.HMAC_SHA1,
             Algo.HMAC_SHA2,
             Algo.ECDSA,
+            Algo.ECDH_P256,
+            Algo.CURVE25519,
             Algo.RSA
         ]
 
@@ -148,6 +150,8 @@ class Bearssl(Framework):
             Algo.HMAC_SHA1: 'hmac-sha1',
             Algo.HMAC_SHA2: 'hmac-sha2',
             Algo.ECDSA: 'ecdsa-p256',
+            Algo.ECDH_P256: 'ecdh-p256',
+            Algo.CURVE25519: 'ecdh-25519',
             Algo.RSA: 'rsa'
         }
 
