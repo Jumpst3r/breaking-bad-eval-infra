@@ -83,6 +83,7 @@ class Openssl(Framework):
                 './Configure',
                 f'{arch_str_gcc[self.settings.arch]}',
                 f'--cross-compile-prefix={cwd}/../toolchain/{self.prefix}',
+                'no-async', # Some older versions of openssl do not support async with MUSL
                 cflags
             ]
             run_subprocess(configure)
