@@ -39,16 +39,15 @@ class Libsodium(Framework):
         cflags = "-gdwarf-4"
         cflags += f" {self.settings.optflag}"
         ldflags = ""
-        if self.settings.compiler == 'gcc':
-            if self.settings.arch == 'x86-i686':
-                cflags += " -m32 -march=i386"
-            if self.settings.arch == 'aarch64':
-                cflags += " --specs=nosys.specs"
-                cflags += " -march=armv8-a"
-            if self.settings.arch == 'armv7':
-                cflags += " --specs=nosys.specs"
-                cflags += " -march=armv7"
-                cflags += ' -mfloat-abi=softfp'
+        if self.settings.arch == 'x86-i686':
+            cflags += " -m32 -march=i386"
+        if self.settings.arch == 'aarch64':
+            cflags += " --specs=nosys.specs"
+            cflags += " -march=armv8-a"
+        if self.settings.arch == 'armv7':
+            cflags += " --specs=nosys.specs"
+            cflags += " -march=armv7"
+            cflags += ' -mfloat-abi=softfp'
         if self.settings.compiler == 'llvm':
             ldflags += self.custom_llvm_ldflags(f'{cwd}/toolchain')
             cflags += self.llvm_cflags(f'{cwd}/toolchain')
