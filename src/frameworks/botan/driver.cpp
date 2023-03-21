@@ -22,7 +22,6 @@
 #include <botan/pubkey.h>
 #include <botan/mac.h>
 
-
 int main(int argc, char **argv)
 {
     std::string ukey = (const char *)argv[1];
@@ -35,7 +34,7 @@ int main(int argc, char **argv)
     int opmode = 0;
     Botan::AutoSeeded_RNG rng;
     if (!strcmp(umode, "aes-cbc"))
-    {   
+    {
         mode = "PKCS7";
         botan_cipher_id = "AES-128/";
         mode.insert(0, "CBC/");
@@ -43,7 +42,7 @@ int main(int argc, char **argv)
         opmode = 1;
     }
     else if (!strcmp(umode, "aes-ctr"))
-    {   
+    {
         botan_cipher_id = "AES-128/";
         mode.insert(0, "CTR");
         mode.insert(0, botan_cipher_id);
@@ -110,7 +109,7 @@ int main(int argc, char **argv)
         hmacmode.insert(4, id);
         opmode = 2;
     }
-     else if (!strcmp(umode, "hmac-blake2"))
+    else if (!strcmp(umode, "hmac-blake2"))
     {
         std::string id = "(Blake2b(512))";
         hmacmode.insert(4, id);
@@ -151,14 +150,16 @@ int main(int argc, char **argv)
         Botan::PK_Signer signer(key, rng, "EMSA1(SHA-256)");
         signer.update(data);
         std::vector<uint8_t> signature = signer.signature(rng);
-        std::cout << "Signature:" << std::endl << Botan::hex_encode(signature);
+        std::cout << "Signature:" << std::endl
+                  << Botan::hex_encode(signature);
         // verify signature
         Botan::PK_Verifier verifier(key, "EMSA1(SHA-256)");
         verifier.update(data);
-        std::cout << std::endl << "is " << (verifier.check_signature(signature) ? "valid" : "invalid");
+        std::cout << std::endl
+                  << "is " << (verifier.check_signature(signature) ? "valid" : "invalid");
         return 0;
     }
-    else if (!strcmp(umode, "rsa")) 
+    else if (!strcmp(umode, "rsa"))
     {
         const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
         Botan::AutoSeeded_RNG rng;
@@ -172,11 +173,13 @@ int main(int argc, char **argv)
         Botan::PK_Signer signer(key, rng, "EMSA1(SHA-256)");
         signer.update(data);
         std::vector<uint8_t> signature = signer.signature(rng);
-        std::cout << "Signature:" << std::endl << Botan::hex_encode(signature);
+        std::cout << "Signature:" << std::endl
+                  << Botan::hex_encode(signature);
         // verify signature
         Botan::PK_Verifier verifier(key, "EMSA1(SHA-256)");
         verifier.update(data);
-        std::cout << std::endl << "is " << (verifier.check_signature(signature) ? "valid" : "invalid");
+        std::cout << std::endl
+                  << "is " << (verifier.check_signature(signature) ? "valid" : "invalid");
         return 0;
     }
     else if (umode_str.find("curve25519") != std::string::npos)
@@ -199,7 +202,8 @@ int main(int argc, char **argv)
         if (sA != sB)
             return 1;
 
-        std::cout << "agreed key: " << std::endl << Botan::hex_encode(sA);
+        std::cout << "agreed key: " << std::endl
+                  << Botan::hex_encode(sA);
         return 0;
     }
     else if (umode_str.find("ecdh") != std::string::npos)
@@ -232,32 +236,36 @@ int main(int argc, char **argv)
         if (sA != sB)
             return 1;
 
-        std::cout << "agreed key: " << std::endl << Botan::hex_encode(sA);
+        std::cout << "agreed key: " << std::endl
+                  << Botan::hex_encode(sA);
         return 0;
     }
-    else {
+    else
+    {
         std::cout << "unsupported algorithm\n";
         return -1;
     }
-        // const std::string path = argv[1];
-        // printf("loading key\n");
-        // Botan::DataSource_Stream in(path, true);
-        // printf("loaded key\n");
-        // std::unique_ptr<Botan::Private_Key> key(Botan::PKCS8::load_key(in));
-        // printf("decoded key\n");
-        // std::string text("This is a tasty burger!");
-        // std::vector<uint8_t> data(text.data(),text.data()+text.length());
-        // // sign data
-        // Botan::PK_Signer signer(*key, rng, "EMSA1(SHA-256)");
-        // signer.update(data);
-        // std::vector<uint8_t> signature = signer.signature(rng);
-        // std::cout << "Signature:" << std::endl << Botan::hex_encode(signature) << std::flush;
+    // const std::string path = argv[1];
+    // printf("loading key\n");
+    // Botan::DataSource_Stream in(path, true);
+    // printf("loaded key\n");
+    // std::unique_ptr<Botan::Private_Key> key(Botan::PKCS8::load_key(in));
+    // printf("decoded key\n");
+    // std::string text("This is a tasty burger!");
+    // std::vector<uint8_t> data(text.data(),text.data()+text.length());
+    // // sign data
+    // Botan::PK_Signer signer(*key, rng, "EMSA1(SHA-256)");
+    // signer.update(data);
+    // std::vector<uint8_t> signature = signer.signature(rng);
+    // std::cout << "Signature:" << std::endl << Botan::hex_encode(signature) << std::flush;
 
-    if (opmode == 1){
+    if (opmode == 1)
+    {
         const std::string plaintext("Your great-grandfather gave this watch to your granddad for good luck. Unfortunately, Dane's luck wasn't as good as his old man's.");
         std::vector<uint8_t> key = Botan::hex_decode(ukey);
         std::unique_ptr<Botan::Cipher_Mode> enc = Botan::Cipher_Mode::create(mode, Botan::ENCRYPTION);
-        if (!enc->valid_keylength(key.size())) {
+        if (!enc->valid_keylength(key.size()))
+        {
             key.resize(enc->minimum_keylength(), 0);
         }
         enc->set_key(key);
@@ -273,12 +281,13 @@ int main(int argc, char **argv)
 
         std::cout << "successful";
     }
-    else if (opmode == 2){
-        //hmac
+    else if (opmode == 2)
+    {
+        // hmac
         const std::vector<uint8_t> key = Botan::hex_decode(ukey);
         const std::vector<uint8_t> data = Botan::hex_decode("6BC1BEE22E409F96E93D7E117393172A");
         std::unique_ptr<Botan::MessageAuthenticationCode> mac(Botan::MessageAuthenticationCode::create(hmacmode));
-        if(!mac)
+        if (!mac)
             return 1;
         mac->set_key(key);
         mac->start();
@@ -286,11 +295,11 @@ int main(int argc, char **argv)
         Botan::secure_vector<uint8_t> tag = mac->final();
         std::cout << "successful";
     }
-    else {
+    else
+    {
         std::cout << "unsuccessful";
         return -1;
     }
-    
 
     return 0;
 }

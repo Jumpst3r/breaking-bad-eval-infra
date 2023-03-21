@@ -71,7 +71,8 @@ int main(int argc, char *argv[])
 
     uint8_t key[32];
     int len = hextobin(key, key_hex);
-    if(len < 32) {
+    if (len < 32)
+    {
         return -1;
     }
 
@@ -196,7 +197,6 @@ int main(int argc, char *argv[])
     {
         return -1;
     }
-
 
     return 0;
 }

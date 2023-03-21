@@ -51,9 +51,10 @@ static void dump_buf(const char *title, unsigned char *buf, size_t len)
     size_t i;
 
     mbedtls_printf("%s", title);
-    for (i = 0; i < len; i++) {
-        mbedtls_printf("%c%c", "0123456789ABCDEF" [buf[i] / 16],
-                       "0123456789ABCDEF" [buf[i] % 16]);
+    for (i = 0; i < len; i++)
+    {
+        mbedtls_printf("%c%c", "0123456789ABCDEF"[buf[i] / 16],
+                       "0123456789ABCDEF"[buf[i] % 16]);
     }
     mbedtls_printf("\n");
 }
@@ -64,7 +65,8 @@ static void dump_pubkey(const char *title, mbedtls_ecdsa_context *key)
     size_t len;
 
     if (mbedtls_ecp_point_write_binary(&key->MBEDTLS_PRIVATE(grp), &key->MBEDTLS_PRIVATE(Q),
-                                       MBEDTLS_ECP_PF_UNCOMPRESSED, &len, buf, sizeof(buf)) != 0) {
+                                       MBEDTLS_ECP_PF_UNCOMPRESSED, &len, buf, sizeof(buf)) != 0)
+    {
         mbedtls_printf("internal error\n");
         return;
     }
@@ -76,8 +78,7 @@ static void dump_pubkey(const char *title, mbedtls_ecdsa_context *key)
 #define dump_pubkey(a, b)
 #endif
 
-
-int ecdsa(char* ec, char *rand, size_t r_len)
+int ecdsa(char *ec, char *rand, size_t r_len)
 {
     int ret = 1;
     int exit_code = MBEDTLS_EXIT_FAILURE;
@@ -96,7 +97,6 @@ int ecdsa(char* ec, char *rand, size_t r_len)
     memset(sig, 0, sizeof(sig));
     memset(message, 0x25, sizeof(message));
 
-
     /*
      * Generate a key pair for signing
      */
@@ -105,8 +105,9 @@ int ecdsa(char* ec, char *rand, size_t r_len)
 
     mbedtls_entropy_init(&entropy);
     if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
-                                     (const unsigned char *) rand, 
-                                     r_len)) != 0) {
+                                     (const unsigned char *)rand,
+                                     r_len)) != 0)
+    {
         mbedtls_printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
         goto exit;
     }
@@ -119,13 +120,15 @@ int ecdsa(char* ec, char *rand, size_t r_len)
         ec_grp = MBEDTLS_ECP_DP_SECP256R1;
     else if (strstr(ec, "521") != NULL)
         ec_grp = MBEDTLS_ECP_DP_SECP521R1;
-    else {
+    else
+    {
         mbedtls_printf(" failed\n unknown curve\n");
         goto exit;
     }
 
     if ((ret = mbedtls_ecdsa_genkey(&ctx_sign, ec_grp,
-                                    mbedtls_ctr_drbg_random, &ctr_drbg)) != 0) {
+                                    mbedtls_ctr_drbg_random, &ctr_drbg)) != 0)
+    {
         mbedtls_printf(" failed\n  ! mbedtls_ecdsa_genkey returned %d\n", ret);
         goto exit;
     }
@@ -140,7 +143,8 @@ int ecdsa(char* ec, char *rand, size_t r_len)
     // mbedtls_printf("  . Computing message hash...");
     // fflush(stdout);
 
-    if ((ret = mbedtls_sha256(message, sizeof(message), hash, 0)) != 0) {
+    if ((ret = mbedtls_sha256(message, sizeof(message), hash, 0)) != 0)
+    {
         mbedtls_printf(" failed\n  ! mbedtls_sha256 returned %d\n", ret);
         goto exit;
     }
@@ -158,7 +162,8 @@ int ecdsa(char* ec, char *rand, size_t r_len)
     if ((ret = mbedtls_ecdsa_write_signature(&ctx_sign, MBEDTLS_MD_SHA256,
                                              hash, sizeof(hash),
                                              sig, sizeof(sig), &sig_len,
-                                             mbedtls_ctr_drbg_random, &ctr_drbg)) != 0) {
+                                             mbedtls_ctr_drbg_random, &ctr_drbg)) != 0)
+    {
         mbedtls_printf(" failed\n  ! mbedtls_ecdsa_write_signature returned -0x%x\n", -ret);
         mbedtls_printf("  ! Group supports ecdse: %d\n", mbedtls_ecdsa_can_do(ec_grp));
         goto exit;
@@ -179,13 +184,15 @@ int ecdsa(char* ec, char *rand, size_t r_len)
 
     if ((ret =
              mbedtls_ecp_group_copy(&ctx_verify.MBEDTLS_PRIVATE(grp),
-                                    &ctx_sign.MBEDTLS_PRIVATE(grp))) != 0) {
+                                    &ctx_sign.MBEDTLS_PRIVATE(grp))) != 0)
+    {
         mbedtls_printf(" failed\n  ! mbedtls_ecp_group_copy returned %d\n", ret);
         goto exit;
     }
 
     if ((ret =
-             mbedtls_ecp_copy(&ctx_verify.MBEDTLS_PRIVATE(Q), &ctx_sign.MBEDTLS_PRIVATE(Q))) != 0) {
+             mbedtls_ecp_copy(&ctx_verify.MBEDTLS_PRIVATE(Q), &ctx_sign.MBEDTLS_PRIVATE(Q))) != 0)
+    {
         mbedtls_printf(" failed\n  ! mbedtls_ecp_copy returned %d\n", ret);
         goto exit;
     }
@@ -198,7 +205,8 @@ int ecdsa(char* ec, char *rand, size_t r_len)
 
     if ((ret = mbedtls_ecdsa_read_signature(&ctx_verify,
                                             hash, sizeof(hash),
-                                            sig, sig_len)) != 0) {
+                                            sig, sig_len)) != 0)
+    {
         mbedtls_printf(" failed\n  ! mbedtls_ecdsa_read_signature returned %d\n", ret);
         goto exit;
     }
@@ -217,5 +225,5 @@ exit:
 
     mbedtls_exit(exit_code);
 }
-#endif /* MBEDTLS_ECDSA_C && MBEDTLS_ENTROPY_C && MBEDTLS_CTR_DRBG_C &&
+#endif /* MBEDTLS_ECDSA_C && MBEDTLS_ENTROPY_C && MBEDTLS_CTR_DRBG_C && \
           ECPARAMS */

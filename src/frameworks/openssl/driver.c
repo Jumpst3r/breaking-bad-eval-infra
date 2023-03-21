@@ -14,7 +14,8 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 
 char *hn;
 
-void print_it(const char *label, const unsigned char *buff, size_t len) {
+void print_it(const char *label, const unsigned char *buff, size_t len)
+{
   if (!buff || !len)
     return;
 
@@ -27,12 +28,14 @@ void print_it(const char *label, const unsigned char *buff, size_t len) {
   printf("\n");
 }
 
-void handleErrors(void) {
+void handleErrors(void)
+{
   ERR_print_errors_fp(stderr);
   exit(EXIT_FAILURE);
 }
 
-int hextobin(unsigned char *dst, const char *src) {
+int hextobin(unsigned char *dst, const char *src)
+{
   size_t num;
   unsigned acc;
   int z;
@@ -40,21 +43,32 @@ int hextobin(unsigned char *dst, const char *src) {
   num = 0;
   z = 0;
   acc = 0;
-  while (*src != 0) {
+  while (*src != 0)
+  {
     int c = *src++;
-    if (c >= '0' && c <= '9') {
+    if (c >= '0' && c <= '9')
+    {
       c -= '0';
-    } else if (c >= 'A' && c <= 'F') {
+    }
+    else if (c >= 'A' && c <= 'F')
+    {
       c -= ('A' - 10);
-    } else if (c >= 'a' && c <= 'f') {
+    }
+    else if (c >= 'a' && c <= 'f')
+    {
       c -= ('a' - 10);
-    } else {
+    }
+    else
+    {
       continue;
     }
-    if (z) {
+    if (z)
+    {
       *dst++ = (acc << 4) + c;
       num++;
-    } else {
+    }
+    else
+    {
       acc = c;
     }
     z = !z;
@@ -64,7 +78,8 @@ int hextobin(unsigned char *dst, const char *src) {
 
 // https://wiki.openssl.org/index.php/EVP_Signing_and_Verifying
 int hmac_it(const unsigned char *msg, size_t mlen, unsigned char **val,
-            size_t *vlen, EVP_PKEY *pkey) {
+            size_t *vlen, EVP_PKEY *pkey)
+{
   /* Returned to caller */
   int result = 0;
   EVP_MD_CTX *ctx = NULL;
@@ -78,38 +93,44 @@ int hmac_it(const unsigned char *msg, size_t mlen, unsigned char **val,
   *vlen = 0;
 
   ctx = EVP_MD_CTX_new();
-  if (ctx == NULL) {
+  if (ctx == NULL)
+  {
     printf("EVP_MD_CTX_create failed, error 0x%lx\n", ERR_get_error());
     goto err;
   }
 
   rc = EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey);
-  if (rc != 1) {
+  if (rc != 1)
+  {
     printf("EVP_DigestSignInit failed, error 0x%lx\n", ERR_get_error());
     goto err;
   }
 
   rc = EVP_DigestSignUpdate(ctx, msg, mlen);
-  if (rc != 1) {
+  if (rc != 1)
+  {
     printf("EVP_DigestSignUpdate failed, error 0x%lx\n", ERR_get_error());
     goto err;
   }
 
   rc = EVP_DigestSignFinal(ctx, NULL, &req);
-  if (rc != 1) {
+  if (rc != 1)
+  {
     printf("EVP_DigestSignFinal failed (1), error 0x%lx\n", ERR_get_error());
     goto err;
   }
 
   *val = OPENSSL_malloc(req);
-  if (*val == NULL) {
+  if (*val == NULL)
+  {
     printf("OPENSSL_malloc failed, error 0x%lx\n", ERR_get_error());
     goto err;
   }
 
   *vlen = req;
   rc = EVP_DigestSignFinal(ctx, *val, vlen);
-  if (rc != 1) {
+  if (rc != 1)
+  {
     printf("EVP_DigestSignFinal failed (3), return code %d, error 0x%lx\n", rc,
            ERR_get_error());
     goto err;
@@ -119,7 +140,8 @@ int hmac_it(const unsigned char *msg, size_t mlen, unsigned char **val,
 
 err:
   EVP_MD_CTX_free(ctx);
-  if (!result) {
+  if (!result)
+  {
     OPENSSL_free(*val);
     *val = NULL;
   }
@@ -128,7 +150,8 @@ err:
 
 int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
             unsigned char *iv, unsigned char *ciphertext,
-            const EVP_CIPHER *algo) {
+            const EVP_CIPHER *algo)
+{
   EVP_CIPHER_CTX *ctx;
 
   int len;
@@ -171,26 +194,31 @@ int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
   return ciphertext_len;
 }
 
-int make_keys(EVP_PKEY **skey, unsigned char *hkey, int keylen) {
+int make_keys(EVP_PKEY **skey, unsigned char *hkey, int keylen)
+{
 
   int result = -1;
 
-  do {
+  do
+  {
     const EVP_MD *md = EVP_get_digestbyname(hn);
     assert(md != NULL);
-    if (md == NULL) {
+    if (md == NULL)
+    {
       printf("EVP_get_digestbyname failed, error 0x%lx\n", ERR_get_error());
       break; /* failed */
     }
 
     int size = EVP_MD_size(md);
     assert(size >= 16);
-    if (!(size >= 16)) {
+    if (!(size >= 16))
+    {
       printf("EVP_MD_size failed, error 0x%lx\n", ERR_get_error());
       break; /* failed */
     }
 
-    if (!(size <= keylen)) {
+    if (!(size <= keylen))
+    {
       printf("EVP_MD_size is too large, sizeof key: %d, sizeof md: %d \n",
              keylen, size);
       return 1;
@@ -198,7 +226,8 @@ int make_keys(EVP_PKEY **skey, unsigned char *hkey, int keylen) {
 
     *skey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hkey, size);
     assert(*skey != NULL);
-    if (*skey == NULL) {
+    if (*skey == NULL)
+    {
       printf("EVP_PKEY_new_mac_key failed, error 0x%lx\n", ERR_get_error());
       break;
     }
@@ -213,7 +242,8 @@ int make_keys(EVP_PKEY **skey, unsigned char *hkey, int keylen) {
   return !!result;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   /*
    * Set up the key and iv. Do I need to say to not hard code these in a
    * real application? :-)
@@ -232,7 +262,8 @@ int main(int argc, char **argv) {
   /* Message to be encrypted */
   unsigned char *plaintext = (unsigned char *)"The quick brown fox";
 
-  if (!strcmp(mode, "compare")) {
+  if (!strcmp(mode, "compare"))
+  {
     int LEN = 16;
     uint8_t b1[LEN];
     uint8_t b2[LEN];
@@ -266,7 +297,8 @@ int main(int argc, char **argv) {
   //   alg = EVP_bf_cbc();
   // else if (!strcmp(mode, "cast-cbc"))
   //   alg = EVP_cast5_cbc();
-  else if (!strcmp(mode, "hmac-sha256") || !strcmp(mode, "hmac-sha512")) {
+  else if (!strcmp(mode, "hmac-sha256") || !strcmp(mode, "hmac-sha512"))
+  {
     unsigned char *sig = NULL;
     unsigned char bkey[256];
     int res = hextobin(bkey, key);
@@ -279,7 +311,9 @@ int main(int argc, char **argv) {
     size_t slen = 0;
     hmac_it(plaintext, strlen((char *)plaintext), &sig, &slen, skey);
     return 0;
-  } else {
+  }
+  else
+  {
     return 1;
   }
 
