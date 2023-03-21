@@ -49,13 +49,12 @@ class Bearssl(Framework):
 
         cflags = "-gdwarf-4"
         cflags += f" {self.settings.optflag}"
-        if self.settings.compiler == 'gcc':
-            if self.settings.arch == 'x86-i686':
-                cflags += " -m32 -march=i386"
-            if self.settings.arch == 'aarch64':
-                cflags += " -march=armv8-a"
-            if self.settings.arch == 'armv4':
-                cflags += " -march=armv4"
+        if self.settings.arch == 'x86-i686':
+            cflags += " -m32 -march=i386"
+        if self.settings.arch == 'aarch64':
+            cflags += " -march=armv8-a"
+        if self.settings.arch == 'armv4':
+            cflags += " -march=armv4"
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_cflags(f'{cwd}/../toolchain')
 
