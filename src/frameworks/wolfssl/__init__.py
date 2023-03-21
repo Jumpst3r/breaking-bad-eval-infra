@@ -117,6 +117,7 @@ class Wolfssl(Framework):
             Algo.CAMELLIA_CBC,
             Algo.DES_CBC,
             Algo.HMAC_SHA2,
+            Algo.CHACHA_POLY1305
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -129,7 +130,8 @@ class Wolfssl(Framework):
             Algo.AES_GCM: 'aes-gcm',
             Algo.CAMELLIA_CBC: 'camellia-cbc',
             Algo.DES_CBC: 'des-cbc',
-            Algo.HMAC_SHA2: 'hmac-sha256'
+            Algo.HMAC_SHA2: 'hmac-sha256',
+            Algo.CHACHA_POLY1305: 'chachapoly1305'
         }
 
         return f'@ {algo_str[algo]}'.split()
