@@ -57,7 +57,7 @@ class Wolfssl(Framework):
         run_subprocess('./autogen.sh')
 
         logging.info(f'Configuring {self.name} (configure)')
-        common = f'--enable-all-crypto --disable-shared --enable-opensslall --enable-static --host={host_str[self.settings.arch]}'
+        common = f'--enable-all-crypto --disable-shared --enable-opensslall --enable-static --disable-optflags --host={host_str[self.settings.arch]}'
 
         prefix = f'{cwd}/../toolchain/bin/{self.config.get_toolchain_name(self.settings)}'
         if self.settings.compiler == 'gcc':
