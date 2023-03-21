@@ -285,7 +285,8 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    else {
+    else
+    {
         printf("No supported algorithm selected");
         return -1;
     }
