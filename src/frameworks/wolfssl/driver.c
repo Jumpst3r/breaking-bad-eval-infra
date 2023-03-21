@@ -12,6 +12,7 @@ Adapted from https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Dec
 #include <wolfssl/wolfcrypt/sha256.h>
 #include <wolfssl/wolfcrypt/sha512.h>
 #include <wolfssl/wolfcrypt/hmac.h>
+#include <wolfssl/wolfcrypt/chacha20_poly1305.h>
 
 #include <string.h>
 
@@ -65,8 +66,9 @@ static size_t
 }
 
 /*
-mode 0: SHA256
-mode 1: SHA512
+mode 0: SHA1
+mode 1: SHA256
+mode 2: SHA512
 */
 int hmac(const byte *key, int keysize, int mode)
 {
@@ -80,7 +82,25 @@ int hmac(const byte *key, int keysize, int mode)
         exit(1);
     }
 
-    ret = wc_HmacSetKey(&hmac, (mode == 0) ? WC_SHA256 : WC_SHA512, key, keysize);
+    int hash_func = -1;
+    if (mode == 0)
+    {
+        hash_func = WC_SHA;
+    }
+    else if (mode == 1)
+    {
+        hash_func = WC_SHA256;
+    }
+    else if (mode == 2)
+    {
+        hash_func = WC_SHA512;
+    }
+    else
+    {
+        printf("Unknown hash function");
+        exit(-1);
+    }
+    ret = wc_HmacSetKey(&hmac, hash_func, key, keysize);
     if (ret != 0)
     {
         printf("Issue with set key\n");
@@ -99,6 +119,7 @@ int hmac(const byte *key, int keysize, int mode)
         printf("Issue with hmac final\n");
         exit(1);
     }
+    printf("hmac successful");
     return ret;
 }
 
@@ -112,6 +133,8 @@ int encrypt_aes(Aes *ctx, const byte *key, int keysize, int dir, int mode)
     const byte iv[] = {0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
     byte in[32] = {0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
     byte out[32];
+    byte result[32];
+    byte auth_tag[16];
     int ret;
     ret = wc_AesSetKey(ctx, key, keysize, iv, dir);
     if (ret != 0)
@@ -129,21 +152,40 @@ int encrypt_aes(Aes *ctx, const byte *key, int keysize, int dir, int mode)
     }
     else if (mode == 2)
     {
-        ret = wc_AesGcmSetKey(ctx, key, sizeof(key));
+        ret = wc_AesGcmSetKey(ctx, key, keysize);
         if (ret != 0)
+        {
+            printf("Failed tp set gcm key: ERRNO %d\n", ret);
             return 1;
-        byte auth_tag[32];
-        byte auth_vec[32];
-        ret = wc_AesGcmEncrypt(ctx, out, in, sizeof(in), iv, sizeof(iv), auth_tag, sizeof(auth_tag), auth_vec, sizeof(auth_vec));
-        if (ret != 0)
-            return 1;
+        }
+        ret = wc_AesGcmEncrypt(ctx, out, in, sizeof(in), iv, sizeof(iv), auth_tag, sizeof(auth_tag), NULL, 0);
     }
 
     if (ret != 0)
     {
-        printf("Failed to set key: ERRNO %d\n", ret);
+        printf("Failed to encrypt (AES): ERRNO %d\n", ret);
         exit(1);
     }
+
+    if (mode == 0)
+    {
+        ret = wc_AesCbcDecrypt(ctx, result, out, sizeof(out));
+    }
+    else if (mode == 1)
+    {
+        // ret = wc_AesCtrDecrypt(ctx, result, out, sizeof(out));
+        ret = 0;
+    }
+    else if (mode == 2)
+    {
+        ret = wc_AesGcmDecrypt(ctx, result, out, sizeof(out), iv, sizeof(iv), auth_tag, sizeof(auth_tag), NULL, 0);
+    }
+
+    if (ret == 0)
+    {
+        printf("aes successful");
+    }
+
     return ret;
 }
 
@@ -165,6 +207,35 @@ int encrypt_camellia(Camellia *ctx, const byte *key, int keysize)
         printf("Failed to set key: ERRNO %d\n", ret);
         exit(1);
     }
+    return ret;
+}
+
+int chachapoly(const byte *key, int keysize)
+{
+    if (keysize != 32)
+    {
+        printf("unsupported keysize: %d", keysize);
+        exit(-1);
+    }
+    const byte iv[12] = {0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
+    byte in[16] = {0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
+    byte out[16];
+    byte authtag[16];
+    int ret;
+    ret = wc_ChaCha20Poly1305_Encrypt(key, iv, NULL, 0, in, sizeof(in), out, authtag);
+    if (ret != 0)
+    {
+        printf("Failed to encrypt (chachapoly) %d\n", ret);
+        exit(1);
+    }
+    byte decrypted[16];
+    ret = wc_ChaCha20Poly1305_Decrypt(key, iv, NULL, 0, out, sizeof(in), authtag, decrypted);
+    if (ret != 0)
+    {
+        printf("Failed to decrypt (chachapoly) %d\n", ret);
+        exit(1);
+    }
+    printf("chachapoly successful");
     return ret;
 }
 
@@ -195,6 +266,11 @@ int main(int argc, char **argv)
     byte *KEY = calloc(500, sizeof(byte));
 
     int keysize = hextobin(KEY, key);
+    if (keysize < 32)
+    {
+        printf("Key is too short: %d\n", keysize);
+        return -1;
+    }
 
     /* The encryption primitive to use */
     char *mode = argv[2];
@@ -224,16 +300,25 @@ int main(int argc, char **argv)
         Des3 enc;
         encrypt_des3(&enc, KEY, keysize);
     }
-    else if (!strcmp(mode, "hmac-sha256"))
+    else if (!strcmp(mode, "chachapoly1305"))
+    {
+        chachapoly(KEY, keysize);
+    }
+    else if (!strcmp(mode, "hmac-sha1"))
     {
         hmac(KEY, keysize, 0);
     }
-    else if (!strcmp(mode, "hmac-sha512"))
+    else if (!strcmp(mode, "hmac-sha256"))
     {
         hmac(KEY, keysize, 1);
     }
+    else if (!strcmp(mode, "hmac-sha512"))
+    {
+        hmac(KEY, keysize, 2);
+    }
     else
     {
+        printf("Unsupported arguments");
         return 1;
     }
 
