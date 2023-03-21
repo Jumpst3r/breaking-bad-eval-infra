@@ -167,17 +167,20 @@ int crypt_and_hash( int argc, char *argv[] )
     else if (!strcmp(mmode, "aria-cbc")) alg = "ARIA-128-CBC";
     else if (!strcmp(mmode, "des-cbc")) alg = "DES-EDE3-CBC";
     else if (!strcmp(mmode, "chacha-poly1305")) alg = "CHACHA20-POLY1305";
-    else if (!strcmp(mmode, "hmac-sha256") || !strcmp(mmode, "hmac-sha512")){
+    else if (!strcmp(mmode, "hmac-sha1") || !strcmp(mmode, "hmac-sha256") || !strcmp(mmode, "hmac-sha512")){
         unsigned char hmacResult[32];
         mbedtls_md_context_t ctx;
         char *payload = "some text";
         mbedtls_md_type_t md_type;
         if (!strcmp(mmode, "hmac-sha256")){
             md_type = MBEDTLS_MD_SHA256;
-            }
-        if  (!strcmp(mmode, "hmac-sha512")){
+        }
+        if (!strcmp(mmode, "hmac-sha512")){
             md_type = MBEDTLS_MD_SHA512;
-            }
+        }
+        if (!strcmp(mmode, "hmac-sha1")) {
+            md_type = MBEDTLS_MD_SHA1;
+        }
         const size_t payloadLength = strlen(payload);
         mbedtls_md_init(&ctx);
         if (mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1)){
@@ -197,9 +200,14 @@ int crypt_and_hash( int argc, char *argv[] )
             printf("Failed hmac finish\n");
             goto exit;
         }
+        printf("hmac successful");
         mbedtls_md_free(&ctx);
    
         exit(0);
+    }
+    else {
+        printf("unsupported parameters");
+        exit(-1);
     }
     cipher_info = mbedtls_cipher_info_from_string( alg );
     if( cipher_info == NULL )
