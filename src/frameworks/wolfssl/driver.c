@@ -13,56 +13,14 @@ Adapted from https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Dec
 #include <wolfssl/wolfcrypt/sha512.h>
 #include <wolfssl/wolfcrypt/hmac.h>
 #include <wolfssl/wolfcrypt/chacha20_poly1305.h>
+#include <wolfssl/wolfcrypt/curve25519.h>
+#include "chex.h"
 
 #include <string.h>
 
 void handleErrors(void)
 {
     abort();
-}
-
-// from BearSSL test_crypto.c - hextobin(). Force no-inline to properly remove key parsing secret dep leaks from report by matching the symbold name
-static size_t
-    __attribute__((noinline)) hextobin(unsigned char *dst, const char *src)
-{
-    size_t num;
-    unsigned acc;
-    int z;
-
-    num = 0;
-    z = 0;
-    acc = 0;
-    while (*src != 0)
-    {
-        int c = *src++;
-        if (c >= '0' && c <= '9')
-        {
-            c -= '0';
-        }
-        else if (c >= 'A' && c <= 'F')
-        {
-            c -= ('A' - 10);
-        }
-        else if (c >= 'a' && c <= 'f')
-        {
-            c -= ('a' - 10);
-        }
-        else
-        {
-            continue;
-        }
-        if (z)
-        {
-            *dst++ = (acc << 4) + c;
-            num++;
-        }
-        else
-        {
-            acc = c;
-        }
-        z = !z;
-    }
-    return num;
 }
 
 /*
@@ -113,7 +71,7 @@ int hmac(const byte *key, int keysize, int mode)
         printf("Issue with update\n");
         exit(1);
     }
-    ret = wc_HmacFinal(&hmac, hash);
+    ret = wc_HmacFinal(&hmac, (byte *)hash);
     if (ret != 0)
     {
         printf("Issue with hmac final\n");
@@ -210,6 +168,51 @@ int encrypt_camellia(Camellia *ctx, const byte *key, int keysize)
     return ret;
 }
 
+int x25519(byte *seed, int seed_size)
+{
+    WC_RNG rng;
+    int ret;
+    
+    wc_rng_new(seed, seed_size, NULL);
+
+    ret = wc_InitRng(&rng);
+    if (ret != 0){
+        printf("RNG init failed");
+        exit(-1);
+    }
+
+    curve25519_key client_key, server_key;
+
+    wc_curve25519_init(&client_key);
+    wc_curve25519_init(&server_key);
+
+    ret = wc_curve25519_make_key(&rng, 32, &client_key);
+    if (ret != 0)
+    {
+        printf("could not generate key: ERRNO %d\n", ret);
+        exit(-1);
+    }
+
+    ret = wc_curve25519_make_key(&rng, 32, &server_key);
+    if (ret != 0)
+    {
+        printf("could not generate key\n");
+        exit(-1);
+    }
+
+    byte sharedKey[32];
+    unsigned int key_len = 32;
+    ret = wc_curve25519_shared_secret(&client_key, &server_key, sharedKey, &key_len);
+    if (ret != 0)
+    {
+        printf("could not generate shared key: ERRNO %d\n", ret);
+        exit(-1);
+    }
+    
+    printf("curve25519 successful");
+    return ret;
+}
+
 int chachapoly(const byte *key, int keysize)
 {
     if (keysize != 32)
@@ -262,10 +265,11 @@ int encrypt_des3(Des3 *ctx, const byte *key, int keysize)
 
 int main(int argc, char **argv)
 {
-    const char *key = (const char *)argv[1];
-    byte *KEY = calloc(500, sizeof(byte));
+    const char *key_hex = (const char *)argv[1];
+    byte key[500];
 
-    int keysize = hextobin(KEY, key);
+    int keysize = chex_decode(key, 500, key_hex, 64);
+    // int keysize = hextobin(KEY, key);
     if (keysize < 32)
     {
         printf("Key is too short: %d\n", keysize);
@@ -278,43 +282,47 @@ int main(int argc, char **argv)
     if (!strcmp(mode, "aes-cbc"))
     {
         Aes enc;
-        encrypt_aes(&enc, KEY, keysize, AES_ENCRYPTION, 0);
+        encrypt_aes(&enc, key, keysize, AES_ENCRYPTION, 0);
     }
     else if (!strcmp(mode, "aes-ctr"))
     {
         Aes enc;
-        encrypt_aes(&enc, KEY, keysize, AES_ENCRYPTION, 1);
+        encrypt_aes(&enc, key, keysize, AES_ENCRYPTION, 1);
     }
     else if (!strcmp(mode, "aes-gcm"))
     {
         Aes enc;
-        encrypt_aes(&enc, KEY, keysize, AES_ENCRYPTION, 2);
+        encrypt_aes(&enc, key, keysize, AES_ENCRYPTION, 2);
     }
     else if (!strcmp(mode, "camellia-cbc"))
     {
         Camellia enc;
-        encrypt_camellia(&enc, KEY, keysize);
+        encrypt_camellia(&enc, key, keysize);
     }
     else if (!strcmp(mode, "des-cbc"))
     {
         Des3 enc;
-        encrypt_des3(&enc, KEY, keysize);
+        encrypt_des3(&enc, key, keysize);
     }
     else if (!strcmp(mode, "chachapoly1305"))
     {
-        chachapoly(KEY, keysize);
+        chachapoly(key, keysize);
     }
     else if (!strcmp(mode, "hmac-sha1"))
     {
-        hmac(KEY, keysize, 0);
+        hmac(key, keysize, 0);
     }
     else if (!strcmp(mode, "hmac-sha256"))
     {
-        hmac(KEY, keysize, 1);
+        hmac(key, keysize, 1);
     }
     else if (!strcmp(mode, "hmac-sha512"))
     {
-        hmac(KEY, keysize, 2);
+        hmac(key, keysize, 2);
+    }
+    else if (!strcmp(mode, "curve25519"))
+    {
+        x25519(key, keysize);
     }
     else
     {
