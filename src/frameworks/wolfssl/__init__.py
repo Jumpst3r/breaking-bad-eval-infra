@@ -122,7 +122,8 @@ class Wolfssl(Framework):
             Algo.HMAC_SHA1,
             Algo.HMAC_SHA2,
             Algo.CHACHA_POLY1305,
-            Algo.CURVE25519
+            Algo.CURVE25519,
+            Algo.ECDH_P256
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -138,7 +139,8 @@ class Wolfssl(Framework):
             Algo.HMAC_SHA1: 'hmac-sha1',
             Algo.HMAC_SHA2: 'hmac-sha256',
             Algo.CHACHA_POLY1305: 'chachapoly1305',
-            Algo.CURVE25519: 'curve25519'
+            Algo.CURVE25519: 'curve25519',
+            Algo.ECDH_P256: 'ecdh-p256'
         }
 
         return f'@ {algo_str[algo]}'.split()

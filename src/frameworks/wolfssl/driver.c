@@ -2,6 +2,8 @@
 Adapted from https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 (WolfSSL OpenSSL EVP compat mode)
 
+Blinded targets: ECDH
+
 */
 
 #include <stdio.h>
@@ -14,14 +16,14 @@ Adapted from https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Dec
 #include <wolfssl/wolfcrypt/hmac.h>
 #include <wolfssl/wolfcrypt/chacha20_poly1305.h>
 #include <wolfssl/wolfcrypt/curve25519.h>
+#include <wolfssl/wolfcrypt/ecc.h>
 #include "chex.h"
 
 #include <string.h>
 
-void handleErrors(void)
-{
-    abort();
-}
+// DO NOT USE PRINTF
+// In this special case it can lead to false positives
+// Due to static linking we trace all memory regions
 
 /*
 mode 0: SHA1
@@ -77,7 +79,7 @@ int hmac(const byte *key, int keysize, int mode)
         printf("Issue with hmac final\n");
         exit(1);
     }
-    printf("hmac successful");
+    // printf("hmac successful");
     return ret;
 }
 
@@ -172,11 +174,10 @@ int x25519(byte *seed, int seed_size)
 {
     WC_RNG rng;
     int ret;
-    
-    wc_rng_new(seed, seed_size, NULL);
 
-    ret = wc_InitRng(&rng);
-    if (ret != 0){
+    ret = wc_InitRngNonce(&rng, seed, seed_size);
+    if (ret != 0)
+    {
         printf("RNG init failed");
         exit(-1);
     }
@@ -208,8 +209,95 @@ int x25519(byte *seed, int seed_size)
         printf("could not generate shared key: ERRNO %d\n", ret);
         exit(-1);
     }
-    
-    printf("curve25519 successful");
+
+    byte priv[32];
+    unsigned int privSz = 32;
+    ret = wc_curve25519_export_public(&client_key, priv, &privSz);
+    if (ret != 0)
+    {
+        printf("error exporting key: ERRNO %d\n", ret);
+        exit(-1);
+    }
+    // printf("curve25519 successful ");
+
+    // for(int i = 0; i < 32; i++)
+    //     printf("%x", priv[i]);
+
+    return ret;
+}
+
+/*
+mode 0: p256r1
+mode 1: p512r1
+*/
+int ecdh(byte *seed, int seed_size, int mode)
+{
+    WC_RNG rng;
+    int ret;
+
+    // wc_rng_new(seed, seed_size, NULL);
+
+    ret = wc_InitRngNonce(&rng, seed, seed_size);
+    if (ret != 0)
+    {
+        printf("RNG init failed");
+        exit(-1);
+    }
+
+    ecc_key client_key, server_key;
+
+    wc_ecc_init(&client_key);
+    wc_ecc_init(&server_key);
+
+    int curveid = 0;
+    if (mode == 0)
+        curveid = ECC_SECP256R1;
+    else if (mode == 1)
+        curveid = ECC_SECP521R1;
+    else
+    {
+        printf("unsupported curve\n");
+        exit(-1);
+    }
+
+    int keysize = wc_ecc_get_curve_size_from_id(curveid);
+    ret = wc_ecc_make_key_ex(&rng, keysize, &client_key, curveid);
+    if (ret != 0)
+    {
+        printf("could not generate key: ERRNO %d\n", ret);
+        exit(-1);
+    }
+
+    ret = wc_ecc_make_key_ex(&rng, keysize, &server_key, curveid);
+    if (ret != 0)
+    {
+        printf("could not generate key\n");
+        exit(-1);
+    }
+
+    ret = wc_ecc_set_rng(&client_key, &rng);
+    if (ret != 0)
+    {
+        printf("could not set key rng\n");
+        exit(-1);
+    }
+    // ret = wc_ecc_set_rng(&server_key, &rng);
+    // if (ret != 0)
+    // {
+    //     printf("could not set key rng\n");
+    //     exit(-1);
+    // }
+
+    byte sharedKey[32];
+    unsigned int key_len = 32;
+    ret = wc_ecc_shared_secret(&client_key, &server_key, sharedKey, &key_len);
+    if (ret != 0)
+    {
+        printf("could not generate shared key: ERRNO %d\n", ret);
+        exit(-1);
+    }
+
+    // printf("ecdh successful");
     return ret;
 }
 
@@ -238,7 +326,7 @@ int chachapoly(const byte *key, int keysize)
         printf("Failed to decrypt (chachapoly) %d\n", ret);
         exit(1);
     }
-    printf("chachapoly successful");
+    // printf("chachapoly successful");
     return ret;
 }
 
@@ -320,9 +408,18 @@ int main(int argc, char **argv)
     {
         hmac(key, keysize, 2);
     }
+    else if (!strcmp(mode, "ecdh-p256"))
+    {
+        ecdh(key, keysize, 0);
+    }
+    else if (!strcmp(mode, "ecdh-p521"))
+    {
+        ecdh(key, keysize, 1);
+    }
     else if (!strcmp(mode, "curve25519"))
     {
         x25519(key, keysize);
+        // ecdh(key, keysize, 2);
     }
     else
     {
