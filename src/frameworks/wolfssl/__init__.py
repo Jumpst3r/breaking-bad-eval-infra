@@ -51,6 +51,8 @@ class Wolfssl(Framework):
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_ldflags(f'{cwd}/../toolchain')
 
+        cflags += ' -DWOLFSSL_GENSEED_FORTEST -w'
+
         logging.info(f'Setting CFLAGS to {cflags}')
 
         logging.info(f'Configuring {self.name} (autogen)')
