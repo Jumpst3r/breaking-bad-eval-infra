@@ -28,6 +28,12 @@ class Settings:
         self.optflag = optflag
         self.commit = commit
 
+        # there is some weird behavior with the musl lib that comes with newer
+        # gcc toolchains for ARM
+        # we hardcode arm's gcc version to 9.3.0
+        if arch == 'armv7' and compiler == 'llvm':
+            self.gcc_ver = '9.3.0'
+
 
 def replace_placholders(toolchain_name: str, gcc_ver: str, llvm_ver: str, obj: Dict) -> Dict:
     """Replace placeholders in config.json. Currently there are three distinct
