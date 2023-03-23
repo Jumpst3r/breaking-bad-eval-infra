@@ -12,7 +12,7 @@ host_str = {
     'x86-i686': 'x86',
     'armv4': 'arm',
     'armv7': 'arm',
-    'aarch64': 'arm',
+    'aarch64': 'aarch64',
     'mips32el': 'mips'
 }
 
@@ -51,7 +51,8 @@ class Wolfssl(Framework):
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_ldflags(f'{cwd}/../toolchain')
 
-        cflags += ' -DWOLFSSL_GENSEED_FORTEST -w'
+        # cflags += ' -DWOLFSSL_GENSEED_FORTEST -w'
+        # cflags += ' -DSINGLE_THREADED'
 
         logging.info(f'Setting CFLAGS to {cflags}')
 
@@ -59,7 +60,7 @@ class Wolfssl(Framework):
         run_subprocess('./autogen.sh')
 
         logging.info(f'Configuring {self.name} (configure)')
-        common = f'--enable-all-crypto --disable-shared --enable-opensslall --enable-static --disable-optflags --host={host_str[self.settings.arch]}'
+        common = f'--enable-all-crypto --disable-shared --enable-singlethread --enable-opensslall --enable-static --disable-optflags --host={host_str[self.settings.arch]}'
 
         prefix = f'{cwd}/../toolchain/bin/{self.config.get_toolchain_name(self.settings)}'
         if self.settings.compiler == 'gcc':
@@ -101,16 +102,26 @@ class Wolfssl(Framework):
         includestr += f' -I{self.name}/wolfssl'
         includestr += f' -I{self.name}/wolfssl/openssl'
         includestr += f' -I{self.name}/wolfssl/wolfcrypt'
-        includestr += f'-I{self.fwDir}/{self.name}/'
+        includestr += f' -I{self.fwDir}/{self.name}/'
         librarystr = f'{self.name}/src/.libs/libwolfssl.a'
 
         gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-gcc'
         compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang'
 
-        cflags = '' if self.settings.compiler == 'gcc' else self.llvm_ldflags(
-            './toolchain')
+        cflags = ""
+        if self.settings.arch == 'x86-i686':
+            cflags += " -m32 -march=i386"
+        if self.settings.arch == 'aarch64':
+            cflags += " -march=armv8-a"
+        if self.settings.arch == 'armv4':
+            cflags += " -march=armv4"
+        if self.settings.arch == 'armv7':
+            cflags += ' -march=armv7 -mthumb'
+        if self.settings.compiler == 'llvm':
+            cflags += self.llvm_ldflags(f'./toolchain')
+
         run_subprocess_env(
-            f'{compiler_cmd} {includestr} {cflags} -lm -lpthread {self.fwDir}/{self.name}/driver.c {librarystr} -o {self.rootfs}/driver.bin')
+            f'{compiler_cmd} {includestr} {cflags} -lm {self.fwDir}/{self.name}/driver.c {librarystr} -o {self.rootfs}/driver.bin')
 
     def supported_ciphers(self) -> list[Algo]:
         return [
