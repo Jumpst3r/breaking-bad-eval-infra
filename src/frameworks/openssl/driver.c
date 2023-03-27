@@ -10,6 +10,10 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include <openssl/ecdh.h>
+#include <openssl/ec.h>
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
 #include <string.h>
 
 char *hn;
@@ -194,6 +198,189 @@ int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
   return ciphertext_len;
 }
 
+int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
+            unsigned char *iv, unsigned char *plaintext, const EVP_CIPHER *algo)
+{
+  EVP_CIPHER_CTX *ctx;
+
+  int len;
+
+  int plaintext_len;
+
+  /* Create and initialise the context */
+  if (!(ctx = EVP_CIPHER_CTX_new()))
+    handleErrors();
+
+  /*
+   * Initialise the decryption operation. IMPORTANT - ensure you use a key
+   * and IV size appropriate for your cipher
+   * In this example we are using 256 bit AES (i.e. a 256 bit key). The
+   * IV size for *most* modes is the same as the block size. For AES this
+   * is 128 bits
+   */
+  if (1 != EVP_DecryptInit_ex(ctx, algo, NULL, key, iv))
+    handleErrors();
+
+  /*
+   * Provide the message to be decrypted, and obtain the plaintext output.
+   * EVP_DecryptUpdate can be called multiple times if necessary.
+   */
+  if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+    handleErrors();
+  plaintext_len = len;
+
+  /*
+   * Finalise the decryption. Further plaintext bytes may be written at
+   * this stage.
+   */
+  if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
+    handleErrors();
+  plaintext_len += len;
+
+  /* Clean up */
+  EVP_CIPHER_CTX_free(ctx);
+
+  return plaintext_len;
+}
+
+EVP_PKEY *gen_x25519_key()
+{
+  /* Generate private and public key */
+  EVP_PKEY *pkey = NULL;
+  EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
+  int ret = EVP_PKEY_keygen_init(pctx);
+  if (ret <= 0)
+  {
+    printf("keygen init failed");
+  }
+  ret = EVP_PKEY_keygen(pctx, &pkey);
+  if (ret <= 0)
+  {
+    printf("keygen failed");
+  }
+  EVP_PKEY_CTX_free(pctx);
+  return pkey;
+}
+
+EVP_PKEY *gen_pkey(const int type, const int curve)
+{
+  /* Create the context for generating the parameters */
+  EVP_PKEY_CTX *pctx = NULL, *kctx = NULL;
+  EVP_PKEY *params = NULL, *key = NULL;
+
+  // skip for x25519 as it does not need params
+  if (!(type == EVP_PKEY_EC && curve == NID_X25519))
+  {
+    if (!(pctx = EVP_PKEY_CTX_new_id(type, NULL)))
+      exit(-100);
+    if (!EVP_PKEY_paramgen_init(pctx))
+      exit(-100);
+    /* Set the paramgen parameters according to the type */
+    switch (type)
+    {
+    case EVP_PKEY_EC:
+      /* Use the NID_X9_62_prime256v1 named curve - defined in obj_mac.h */
+      if (!EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, curve))
+        exit(-100);
+      break;
+    case EVP_PKEY_DSA:
+      /* Set a bit length of 2048 */
+      if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(pctx, 512))
+        exit(-100);
+      break;
+
+    case EVP_PKEY_DH:
+      /* Set a prime length of 2048 */
+      if (!EVP_PKEY_CTX_set_dh_paramgen_prime_len(pctx, 512))
+        exit(-100);
+    }
+
+    /* Generate parameters */
+    if (!EVP_PKEY_paramgen(pctx, &params))
+      exit(-100);
+
+    if (!(kctx = EVP_PKEY_CTX_new(params, NULL)))
+      exit(-100);
+  }
+  else
+  {
+    if (!(kctx = EVP_PKEY_CTX_new_id(type, NULL)))
+      exit(-100);
+  }
+
+  if (!EVP_PKEY_keygen_init(kctx))
+    exit(-100);
+
+  /* RSA keys set the key length during key generation rather than parameter generation! */
+  if (type == EVP_PKEY_RSA)
+  {
+    if (!EVP_PKEY_CTX_set_rsa_keygen_bits(kctx, 512))
+      exit(-100);
+  }
+
+  /* Generate the key */
+  if (EVP_PKEY_keygen(kctx, &key) <= 0)
+    exit(-100);
+
+  if (pctx != NULL)
+    EVP_PKEY_CTX_free(pctx);
+  EVP_PKEY_CTX_free(kctx);
+
+  return key;
+}
+
+int ecdh(unsigned char *key, int key_len, const int type, const int curve)
+{
+  EVP_PKEY_CTX *ctx;
+  size_t keylen;
+  EVP_PKEY *pkey, *peerkey;
+  // somehow curve25519 keygen needs a custom function
+  // not sure what causes this
+  if (curve == NID_X25519)
+  {
+    pkey = gen_x25519_key();
+    peerkey = gen_x25519_key();
+  }
+  else
+  {
+    pkey = gen_pkey(type, curve);
+    peerkey = gen_pkey(type, curve);
+  }
+
+  ctx = EVP_PKEY_CTX_new(pkey, NULL);
+  if (!ctx)
+    exit(-10);
+  /* Error occurred */
+  if (EVP_PKEY_derive_init(ctx) <= 0)
+    /* Error */
+    exit(-11);
+  if (EVP_PKEY_derive_set_peer(ctx, peerkey) <= 0)
+    /* Error */
+    exit(-12);
+
+  /* Determine buffer length */
+  if (EVP_PKEY_derive(ctx, NULL, &keylen) <= 0)
+    /* Error */
+    exit(-13);
+
+  if (keylen > key_len)
+    exit(-20);
+  // skey = OPENSSL_malloc(skeylen);
+
+  if (EVP_PKEY_derive(ctx, key, &keylen) <= 0)
+    /* Error */
+    exit(-15);
+
+  for (int i = 0; i < keylen; i++)
+  {
+    printf("%02x", key[i]);
+  }
+
+  /* Shared secret is skey bytes written to buffer skey */
+  EVP_PKEY_CTX_free(ctx);
+  return 0;
+}
+
 int make_keys(EVP_PKEY **skey, unsigned char *hkey, int keylen)
 {
 
@@ -301,7 +488,7 @@ int main(int argc, char **argv)
   {
     unsigned char *sig = NULL;
     unsigned char bkey[256];
-    int res = hextobin(bkey, key);
+    int res = hextobin(bkey, (const char *)key);
     EVP_PKEY *skey = NULL;
     if (!strcmp(mode, "hmac-sha256"))
       hn = "SHA256";
@@ -312,9 +499,33 @@ int main(int argc, char **argv)
     hmac_it(plaintext, strlen((char *)plaintext), &sig, &slen, skey);
     return 0;
   }
+  else if (!strcmp(mode, "ecdh-p256"))
+  {
+    int dkeylen = 256;
+    unsigned char dkey[dkeylen];
+
+    // reseed random generator with input key
+    RAND_seed(key, strlen((const char *)key));
+
+    ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X9_62_prime256v1);
+    printf("successful");
+    return 0;
+  }
+  else if (!strcmp(mode, "x25519"))
+  {
+    int dkeylen = 256;
+    unsigned char dkey[dkeylen];
+
+    // reseed random generator with input key
+    RAND_seed(key, strlen((const char *)key));
+
+    ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X25519);
+    printf("successful");
+    return 0;
+  }
   else
   {
-    return 1;
+    return -1;
   }
 
   /*
@@ -333,9 +544,17 @@ int main(int argc, char **argv)
   ciphertext_len =
       encrypt(plaintext, strlen((char *)plaintext), key, iv, ciphertext, alg);
 
-  /* Do something useful with the ciphertext here */
-  // printf("Ciphertext is:\n");
-  // BIO_dump_fp (stdout, (const char *)ciphertext, ciphertext_len);
+  unsigned char decrypted[128];
+  int decrypted_len = decrypt(ciphertext, ciphertext_len, key, iv, decrypted, alg);
+
+  if (strlen((const char *)plaintext) != decrypted_len || memcmp(plaintext, decrypted, decrypted_len) != 0)
+  {
+    printf("huh?");
+  }
+  else
+  {
+    printf("success");
+  }
 
   return 0;
 }
