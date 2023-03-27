@@ -157,6 +157,8 @@ class Openssl(Framework):
             Algo.DES_CBC,
             Algo.CHACHA_POLY1305,
             Algo.HMAC_SHA2,
+            Algo.ECDH_P256,
+            Algo.CURVE25519
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -171,7 +173,9 @@ class Openssl(Framework):
             Algo.ARIA_CBC: 'aria-cbc',
             Algo.DES_CBC: 'des-cbc',
             Algo.CHACHA_POLY1305: 'chacha_poly1305',
-            Algo.HMAC_SHA2: 'hmac-sha256'
+            Algo.HMAC_SHA2: 'hmac-sha256',
+            Algo.ECDH_P256: 'ecdh-p256',
+            Algo.CURVE25519: 'x25519'
         }
 
         return f'@ {algo_str[algo]}'.split()
