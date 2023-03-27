@@ -16,8 +16,6 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 #include <openssl/rsa.h>
 #include <string.h>
 
-char *hn;
-
 void print_it(const char *label, const unsigned char *buff, size_t len)
 {
   if (!buff || !len)
@@ -91,7 +89,7 @@ int hmac_it(const unsigned char *msg, size_t mlen, unsigned char **val,
   int rc;
 
   if (!msg || !mlen || !val || !pkey)
-    return 0;
+    exit(-300);
 
   *val = NULL;
   *vlen = 0;
@@ -100,35 +98,35 @@ int hmac_it(const unsigned char *msg, size_t mlen, unsigned char **val,
   if (ctx == NULL)
   {
     printf("EVP_MD_CTX_create failed, error 0x%lx\n", ERR_get_error());
-    goto err;
+    exit(-300);
   }
 
   rc = EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey);
   if (rc != 1)
   {
     printf("EVP_DigestSignInit failed, error 0x%lx\n", ERR_get_error());
-    goto err;
+    exit(-300);
   }
 
   rc = EVP_DigestSignUpdate(ctx, msg, mlen);
   if (rc != 1)
   {
     printf("EVP_DigestSignUpdate failed, error 0x%lx\n", ERR_get_error());
-    goto err;
+    exit(-300);
   }
 
   rc = EVP_DigestSignFinal(ctx, NULL, &req);
   if (rc != 1)
   {
     printf("EVP_DigestSignFinal failed (1), error 0x%lx\n", ERR_get_error());
-    goto err;
+    exit(-300);
   }
 
   *val = OPENSSL_malloc(req);
   if (*val == NULL)
   {
     printf("OPENSSL_malloc failed, error 0x%lx\n", ERR_get_error());
-    goto err;
+    exit(-300);
   }
 
   *vlen = req;
@@ -137,12 +135,11 @@ int hmac_it(const unsigned char *msg, size_t mlen, unsigned char **val,
   {
     printf("EVP_DigestSignFinal failed (3), return code %d, error 0x%lx\n", rc,
            ERR_get_error());
-    goto err;
+    exit(-300);
   }
 
   result = 1;
 
-err:
   EVP_MD_CTX_free(ctx);
   if (!result)
   {
@@ -381,7 +378,63 @@ int ecdh(unsigned char *key, int key_len, const int type, const int curve)
   return 0;
 }
 
-int make_keys(EVP_PKEY **skey, unsigned char *hkey, int keylen)
+size_t sign(const char *msg, const int curve)
+{
+  EVP_PKEY *key;
+  if (curve == NID_X25519)
+  {
+    key = gen_x25519_key();
+  }
+  else
+  {
+    key = gen_pkey(EVP_PKEY_EC, curve);
+  }
+
+  EVP_MD_CTX *mdctx = NULL;
+  int ret = 0;
+  size_t slen = 0;
+
+  unsigned char *sig = NULL;
+
+  /* Create the Message Digest Context */
+  if (!(mdctx = EVP_MD_CTX_create()))
+    exit(-200);
+
+  /* Initialise the DigestSign operation - SHA-256 has been selected as the message digest function in this example */
+  if (1 != EVP_DigestSignInit(mdctx, NULL, EVP_sha256(), NULL, key))
+    exit(-200);
+
+  /* Call update with the message */
+  if (1 != EVP_DigestSignUpdate(mdctx, msg, strlen(msg)))
+    exit(-200);
+
+  /* Finalise the DigestSign operation */
+  /* First call EVP_DigestSignFinal with a NULL sig parameter to obtain the length of the
+   * signature. Length is returned in slen */
+  if (1 != EVP_DigestSignFinal(mdctx, NULL, &slen))
+    exit(-200);
+  /* Allocate memory for the signature based on size in slen */
+  if (!(sig = OPENSSL_malloc(sizeof(unsigned char) * (slen))))
+    exit(-200);
+  /* Obtain the signature */
+  if (1 != EVP_DigestSignFinal(mdctx, sig, &slen))
+    exit(-200);
+
+  /* Clean up */
+  if (sig && !ret)
+    OPENSSL_free(sig);
+  if (mdctx)
+    EVP_MD_CTX_destroy(mdctx);
+
+  for (int i = 0; i < slen; i++)
+  {
+    printf("%02x", sig[i]);
+  }
+
+  return slen;
+}
+
+int make_keys(EVP_PKEY **skey, unsigned char *hkey, int keylen, char *hn)
 {
 
   int result = -1;
@@ -484,19 +537,25 @@ int main(int argc, char **argv)
   //   alg = EVP_bf_cbc();
   // else if (!strcmp(mode, "cast-cbc"))
   //   alg = EVP_cast5_cbc();
-  else if (!strcmp(mode, "hmac-sha256") || !strcmp(mode, "hmac-sha512"))
+  else if (!strcmp(mode, "hmac-sha1") || !strcmp(mode, "hmac-sha256") || !strcmp(mode, "hmac-sha512") || !strcmp(mode, "hmac-blake2"))
   {
     unsigned char *sig = NULL;
     unsigned char bkey[256];
     int res = hextobin(bkey, (const char *)key);
     EVP_PKEY *skey = NULL;
-    if (!strcmp(mode, "hmac-sha256"))
+    char *hn;
+    if (!strcmp(mode, "hmac-sha1"))
+      hn = "SHA1";
+    else if (!strcmp(mode, "hmac-sha256"))
       hn = "SHA256";
     else if (!strcmp(mode, "hmac-sha512"))
       hn = "SHA512";
-    make_keys(&skey, bkey, res);
+    else if (!strcmp(mode, "hmac-blake2"))
+      hn = "BLAKE2s256";
+    make_keys(&skey, bkey, res, hn);
     size_t slen = 0;
     hmac_it(plaintext, strlen((char *)plaintext), &sig, &slen, skey);
+    printf("success");
     return 0;
   }
   else if (!strcmp(mode, "ecdh-p256"))
@@ -521,6 +580,15 @@ int main(int argc, char **argv)
 
     ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X25519);
     printf("successful");
+    return 0;
+  }
+  else if (!strcmp(mode, "ecdsa"))
+  {
+    // reseed random generator with input key
+    RAND_seed(key, strlen((const char *)key));
+
+    size_t len = sign((const char *)plaintext, NID_X9_62_prime256v1);
+    printf("successful: %d\n", (int)len);
     return 0;
   }
   else

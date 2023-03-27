@@ -66,7 +66,7 @@ class Openssl(Framework):
 
         cflags = "-gdwarf-4"
         cflags += f" {self.settings.optflag}"
-        
+
         if self.settings.arch == 'x86-i686':
             cflags += " -m32 -march=i386"
         if self.settings.arch == 'aarch64':
@@ -83,7 +83,7 @@ class Openssl(Framework):
                 './Configure',
                 f'{arch_str_gcc[self.settings.arch]}',
                 f'--cross-compile-prefix={cwd}/../toolchain/{self.prefix}',
-                'no-async', # Some older versions of openssl do not support async with MUSL
+                'no-async',  # Some older versions of openssl do not support async with MUSL
                 cflags
             ]
             run_subprocess(configure)
@@ -156,9 +156,12 @@ class Openssl(Framework):
             Algo.ARIA_CBC,
             Algo.DES_CBC,
             Algo.CHACHA_POLY1305,
+            Algo.HMAC_SHA1,
             Algo.HMAC_SHA2,
+            Algo.HMAC_BLAKE2,
             Algo.ECDH_P256,
-            Algo.CURVE25519
+            Algo.CURVE25519,
+            Algo.ECDSA
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -173,9 +176,12 @@ class Openssl(Framework):
             Algo.ARIA_CBC: 'aria-cbc',
             Algo.DES_CBC: 'des-cbc',
             Algo.CHACHA_POLY1305: 'chacha_poly1305',
+            Algo.HMAC_SHA1: 'hmac-sha1',
             Algo.HMAC_SHA2: 'hmac-sha256',
+            Algo.HMAC_BLAKE2: 'hmac-blake2',
             Algo.ECDH_P256: 'ecdh-p256',
-            Algo.CURVE25519: 'x25519'
+            Algo.CURVE25519: 'x25519',
+            Algo.ECDSA: 'ecdsa'
         }
 
         return f'@ {algo_str[algo]}'.split()
