@@ -7,13 +7,13 @@ import logging
 logging.getLogger().setLevel(logging.DEBUG)
 
 host_str = {
-    'riscv64': 'riscv64',
-    'x86-64': 'x86_64',
-    'x86-i686': 'x86',
-    'armv4': 'arm',
-    'armv7': 'arm',
-    'aarch64': 'aarch64',
-    'mips32el': 'mips'
+    'riscv64': 'riscv64-unknown-linux-musl',
+    'x86-64': 'x86_64-unknown-linux-musl',
+    'x86-i686': 'i686-unknown-linux-musl',
+    'armv4': 'arm-unknown-linux-musl',
+    'armv7': 'arm-unknown-linux-musl',
+    'aarch64': 'aarch64-unknown-linux-musl',
+    'mips32el': 'mips-unknown-linux-musl'
 }
 
 
@@ -60,7 +60,7 @@ class Wolfssl(Framework):
         run_subprocess('./autogen.sh')
 
         logging.info(f'Configuring {self.name} (configure)')
-        common = f'--enable-all-crypto --disable-shared --enable-singlethread --enable-opensslall --enable-static --disable-optflags --host={host_str[self.settings.arch]}'
+        common = f'--enable-all-crypto --disable-shared --enable-cryptonly --disable-examples --enable-static --disable-optflags --host={host_str[self.settings.arch]}'
 
         prefix = f'{cwd}/../toolchain/bin/{self.config.get_toolchain_name(self.settings)}'
         if self.settings.compiler == 'gcc':
@@ -108,7 +108,8 @@ class Wolfssl(Framework):
         gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-gcc'
         compiler_cmd = gcc_toolchain if self.settings.compiler == 'gcc' else 'clang'
 
-        cflags = ""
+        cflags = "-gdwarf-4"
+        cflags += f" {self.settings.optflag}"
         if self.settings.arch == 'x86-i686':
             cflags += " -m32 -march=i386"
         if self.settings.arch == 'aarch64':
