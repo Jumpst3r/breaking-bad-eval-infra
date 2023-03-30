@@ -42,6 +42,9 @@ RUN ln -s /usr/bin/python3.9 /usr/local/sbin/python3 \
 
 RUN pip install Jinja2 jsonschema setuptools
 
+# Install go (necessary for boringssl)
+RUN wget -q -O - https://go.dev/dl/go1.20.2.linux-amd64.tar.gz | tar -v -C /usr/local -xz
+ENV PATH $PATH:/usr/local/go/bin
 
 # WORKDIR /install
 ADD ./microsurf /install
