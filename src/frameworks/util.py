@@ -8,7 +8,7 @@ from src.config import Settings, Config
 from microsurf.microsurf import SCDetector
 from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
-from microsurf.utils.generators import hex_key_generator, SecretGenerator
+from microsurf.utils.generators import hex_key_generator, hex_key_generator_fixed, SecretGenerator
 
 
 class Algo(Enum):
@@ -171,7 +171,8 @@ class Framework:
         sharedObjects = self.shared_objects()
 
         # keylen hardcoded to 256
-        fct = hex_key_generator(256)
+        fct = hex_key_generator_fixed(256, seed=1)
+        # fct = hex_key_generator(256)
 
         args = self.gen_args(algo)
 
@@ -194,7 +195,7 @@ class Framework:
         lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(
             binaryLoader=binLoader, flagVariableHitCount=True)]
         scd = SCDetector(modules=lmodues, getAssembly=True)
-        scd.initTraceCount = 5
+        scd.initTraceCount = 10
         scd.exec()
 
         scd = self.clean_report(scd)
