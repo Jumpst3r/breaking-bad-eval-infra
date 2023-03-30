@@ -26,10 +26,15 @@ RUN pip3 install Jinja2 jsonschema
 # RUN ln -s /usr/bin/llvm-ranlib-15 /usr/bin/llvm-ranlib
 #RUN wget https://registrationcenter-download.intel.com/akdlm/irc_nas/18673/l_BaseKit_p_2022.2.0.262.sh && sh ./l_BaseKit_p_2022.2.0.262.sh -a --components intel.oneapi.lin.dpcpp-cpp-compiler -s --eula accept 
 
+# Install go (necessary for boringssl)
+RUN wget -q -O - https://go.dev/dl/go1.20.2.linux-amd64.tar.gz | tar -v -C /usr/local -xz
+ENV PATH $PATH:/usr/local/go/bin
 
 # WORKDIR /install
 ADD ./microsurf /install
 RUN pip install /install/
+
+
 
 # WORKDIR /build
 # ADD ./ /build
