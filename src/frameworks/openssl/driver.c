@@ -14,6 +14,7 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 #include <openssl/ec.h>
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
+#include <openssl/hmac.h>
 #include <string.h>
 
 void print_it(const char *label, const unsigned char *buff, size_t len)
@@ -76,77 +77,6 @@ int hextobin(unsigned char *dst, const char *src)
     z = !z;
   }
   return num;
-}
-
-// https://wiki.openssl.org/index.php/EVP_Signing_and_Verifying
-int hmac_it(const unsigned char *msg, size_t mlen, unsigned char **val,
-            size_t *vlen, EVP_PKEY *pkey)
-{
-  /* Returned to caller */
-  int result = 0;
-  EVP_MD_CTX *ctx = NULL;
-  size_t req = 0;
-  int rc;
-
-  if (!msg || !mlen || !val || !pkey)
-    exit(-300);
-
-  *val = NULL;
-  *vlen = 0;
-
-  ctx = EVP_MD_CTX_new();
-  if (ctx == NULL)
-  {
-    printf("EVP_MD_CTX_create failed, error 0x%lx\n", ERR_get_error());
-    exit(-300);
-  }
-
-  rc = EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey);
-  if (rc != 1)
-  {
-    printf("EVP_DigestSignInit failed, error 0x%lx\n", ERR_get_error());
-    exit(-300);
-  }
-
-  rc = EVP_DigestSignUpdate(ctx, msg, mlen);
-  if (rc != 1)
-  {
-    printf("EVP_DigestSignUpdate failed, error 0x%lx\n", ERR_get_error());
-    exit(-300);
-  }
-
-  rc = EVP_DigestSignFinal(ctx, NULL, &req);
-  if (rc != 1)
-  {
-    printf("EVP_DigestSignFinal failed (1), error 0x%lx\n", ERR_get_error());
-    exit(-300);
-  }
-
-  *val = OPENSSL_malloc(req);
-  if (*val == NULL)
-  {
-    printf("OPENSSL_malloc failed, error 0x%lx\n", ERR_get_error());
-    exit(-300);
-  }
-
-  *vlen = req;
-  rc = EVP_DigestSignFinal(ctx, *val, vlen);
-  if (rc != 1)
-  {
-    printf("EVP_DigestSignFinal failed (3), return code %d, error 0x%lx\n", rc,
-           ERR_get_error());
-    exit(-300);
-  }
-
-  result = 1;
-
-  EVP_MD_CTX_free(ctx);
-  if (!result)
-  {
-    OPENSSL_free(*val);
-    *val = NULL;
-  }
-  return result;
 }
 
 int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
@@ -434,54 +364,6 @@ size_t sign(const char *msg, const int curve)
   return slen;
 }
 
-int make_keys(EVP_PKEY **skey, unsigned char *hkey, int keylen, char *hn)
-{
-
-  int result = -1;
-
-  do
-  {
-    const EVP_MD *md = EVP_get_digestbyname(hn);
-    assert(md != NULL);
-    if (md == NULL)
-    {
-      printf("EVP_get_digestbyname failed, error 0x%lx\n", ERR_get_error());
-      break; /* failed */
-    }
-
-    int size = EVP_MD_size(md);
-    assert(size >= 16);
-    if (!(size >= 16))
-    {
-      printf("EVP_MD_size failed, error 0x%lx\n", ERR_get_error());
-      break; /* failed */
-    }
-
-    if (!(size <= keylen))
-    {
-      printf("EVP_MD_size is too large, sizeof key: %d, sizeof md: %d \n",
-             keylen, size);
-      return 1;
-    }
-
-    *skey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hkey, size);
-    assert(*skey != NULL);
-    if (*skey == NULL)
-    {
-      printf("EVP_PKEY_new_mac_key failed, error 0x%lx\n", ERR_get_error());
-      break;
-    }
-
-    result = 0;
-
-  } while (0);
-
-  OPENSSL_cleanse(hkey, sizeof(hkey));
-
-  /* Convert to 0/1 result */
-  return !!result;
-}
-
 int main(int argc, char **argv)
 {
   /*
@@ -495,12 +377,13 @@ int main(int argc, char **argv)
   /* The encryption primitive to use */
   char *mode = argv[2];
 
-  const EVP_CIPHER *alg;
+  const EVP_CIPHER *alg = NULL;
   /* A 128 bit IV */
-  unsigned char *iv = (unsigned char *)"0123456789012345";
+  unsigned char *iv = (unsigned char *)"012345678901234567890123456789012345";
 
   /* Message to be encrypted */
   unsigned char *plaintext = (unsigned char *)"The quick brown fox";
+  size_t p_len = strlen((char *)plaintext);
 
   if (!strcmp(mode, "compare"))
   {
@@ -521,7 +404,7 @@ int main(int argc, char **argv)
   else if (!strcmp(mode, "aes-ctr"))
     alg = EVP_aes_128_ctr();
   else if (!strcmp(mode, "aes-gcm"))
-    alg = EVP_aes_128_ctr();
+    alg = EVP_aes_128_gcm();
   else if (!strcmp(mode, "camellia-cbc"))
     alg = EVP_camellia_128_cbc();
   // else if (!strcmp(mode, "aria-cbc"))
@@ -539,22 +422,23 @@ int main(int argc, char **argv)
   //   alg = EVP_cast5_cbc();
   else if (!strcmp(mode, "hmac-sha1") || !strcmp(mode, "hmac-sha256") || !strcmp(mode, "hmac-sha512") || !strcmp(mode, "hmac-blake2"))
   {
-    unsigned char *sig = NULL;
+    unsigned char md[256];
     unsigned char bkey[256];
-    int res = hextobin(bkey, (const char *)key);
-    EVP_PKEY *skey = NULL;
-    char *hn;
+    int klen = hextobin(bkey, (const char *)key);
+    uint8_t *res;
+    unsigned int md_len;
     if (!strcmp(mode, "hmac-sha1"))
-      hn = "SHA1";
+      res = HMAC(EVP_sha1(), bkey, klen, plaintext, p_len, md, &md_len);
     else if (!strcmp(mode, "hmac-sha256"))
-      hn = "SHA256";
+      res = HMAC(EVP_sha256(), bkey, klen, plaintext, p_len, md, &md_len);
     else if (!strcmp(mode, "hmac-sha512"))
-      hn = "SHA512";
+      res = HMAC(EVP_sha512(), bkey, klen, plaintext, p_len, md, &md_len);
     else if (!strcmp(mode, "hmac-blake2"))
-      hn = "BLAKE2s256";
-    make_keys(&skey, bkey, res, hn);
-    size_t slen = 0;
-    hmac_it(plaintext, strlen((char *)plaintext), &sig, &slen, skey);
+      res = HMAC(EVP_blake2s256(), bkey, klen, plaintext, p_len, md, &md_len);
+    else
+      res = NULL;
+    if (res == NULL)
+      exit(-123);
     printf("success");
     return 0;
   }
@@ -603,10 +487,7 @@ int main(int argc, char **argv)
    */
   unsigned char ciphertext[128];
 
-  /* Buffer for the decrypted text */
-  unsigned char decryptedtext[128];
-
-  int decryptedtext_len, ciphertext_len;
+  int ciphertext_len;
 
   /* Encrypt the plaintext */
   ciphertext_len =
