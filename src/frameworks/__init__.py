@@ -8,3 +8,4 @@ from .old.opensslutils import Opensslutils
 from .haclstar import Haclstar
 from .bearssl import Bearssl
 from .libsodium import Libsodium
+from .boringssl import Boringssl

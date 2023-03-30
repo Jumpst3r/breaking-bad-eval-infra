@@ -26,7 +26,7 @@ parser.add_argument('-t', '--toolchain', type=str, default='gcc',
 parser.add_argument('--toolchain-version', type=str,
                     help='Toolchain Version', required=True)
 parser.add_argument('-f', '--framework', type=str, help='Framework', required=True,
-                    choices=['haclstar', 'openssl', 'mbedtls', 'wolfssl', 'botan', 'bearssl', 'libsodium'])
+                    choices=['haclstar', 'openssl', 'mbedtls', 'wolfssl', 'botan', 'bearssl', 'libsodium', 'boringssl'])
 parser.add_argument('-c', '--commit', type=str,
                     help='Commit of the framework', default='main', required=True)
 parser.add_argument('target', nargs='+', type=str, help='Target algorithm(s) to be analyzed',
@@ -36,8 +36,10 @@ parser.add_argument('-o', '--opt', '--optimization', type=str,
                     help='Optimization (default: -O2)', default='-O2')
 parser.add_argument('-p', '--path', type=str,
                     help='path to config', default='../config.json')
-parser.add_argument('--result-dir', type=str, help='Result directory', default='./results')
-parser.add_argument('--fw-dir', type=str, help="Directory to frameworks directory", default='src/frameworks')
+parser.add_argument('--result-dir', type=str,
+                    help='Result directory', default='./results')
+parser.add_argument('--fw-dir', type=str,
+                    help="Directory to frameworks directory", default='src/frameworks')
 
 args = parser.parse_args()
 
@@ -64,9 +66,12 @@ def build_framework(config: Config, settings: Settings, rootfs='rootfs', fwDir='
 
     if settings.framework == 'bearssl':
         f = Bearssl(settings, config, rootfs, fwDir)
-    
+
     if settings.framework == 'libsodium':
         f = Libsodium(settings, config, rootfs, fwDir)
+
+    if settings.framework == 'boringssl':
+        f = Boringssl(settings, config, rootfs, fwDir)
 
     f.download()
     f.build()
@@ -122,7 +127,7 @@ for t in target:
     else:
         res['leaks'] = 0
         res['details'] = []
-    
+
     results.append(res)
 
 # dump the content into a json file
