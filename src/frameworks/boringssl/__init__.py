@@ -26,6 +26,7 @@ class Boringssl(Framework):
         cxx = f'{prefix}-g++'
         ld = f'{prefix}-ld'
         ar = f'{prefix}-ar'
+        extra_cflags_format = extra_cflags.replace(" ", "\"\n\t\"")
         return f"""
 # the name of the target operating system
 set(CMAKE_SYSTEM_NAME Linux)
@@ -44,15 +45,28 @@ set(CMAKE_LINKER {ld})
 # set OPTFLAG
 set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
 
-add_compile_options("{extra_cflags}")
+add_compile_options("{extra_cflags_format}")
 """
 
-    def llvm_toolchain_cmake(self, toolchain_dir, extra_cflags):
+    def llvm_toolchain_cmake(self, toolchain_dir, extra_cflags, extra_ldflags):
         triple = self.config.get_toolchain_name(self.settings)
         cc = f'clang'
         cxx = f'clang++'
         ld = f'ld.lld'
         ar = f'llvm-ar'
+
+        arch_str = {
+            'riscv64': 'riscv64',
+            'x86-64': 'x86_64',
+            'x86-i686': 'i686',
+            'aarch64': 'aarch64',
+            'armv7': 'arm',
+            'mips32el': 'mips'
+        }
+
+        extra_cflags_format = extra_cflags.replace(" ", "\"\n\t\"")
+        extra_ldflags_format = extra_ldflags.replace(" ", "\"\n\t\"")
+
         return f"""
 # the name of the target operating system
 set(CMAKE_SYSTEM_NAME Linux)
@@ -62,7 +76,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
-set(CMAKE_SYSTEM_PROCESSOR "{self.settings.arch}")
+set(CMAKE_SYSTEM_PROCESSOR "{arch_str[self.settings.arch]}")
 
 # which compilers to use for C and C++
 set(CMAKE_C_COMPILER   {cc})
@@ -74,11 +88,14 @@ set(CMAKE_LINKER {ld})
 set(toolchain {toolchain_dir})
 set(triple {triple})
 set(gcc_ver {self.settings.gcc_ver})
-set(CMAKE_SYSROOT ${{toolchain}}/riscv64-buildroot-linux-musl/sysroot)
+set(CMAKE_SYSROOT ${{toolchain}}/${{triple}}/sysroot)
 set(CLANG_TARGET_TRIPLE ${{triple}})
 set(CMAKE_C_COMPILER_TARGET ${{CLANG_TARGET_TRIPLE}})
 set(CMAKE_CXX_COMPILER_TARGET ${{CLANG_TARGET_TRIPLE}})
 set(CMAKE_ASM_COMPILER_TARGET ${{CLANG_TARGET_TRIPLE}})
+
+# where is the target environment located
+set(CMAKE_FIND_ROOT_PATH  ${{CMAKE_SYSROOT}})
 
 # add custom flags
 add_compile_options(
@@ -86,11 +103,13 @@ add_compile_options(
     "-I${{toolchain}}/${{triple}}/include/"
     "-I${{toolchain}}/${{triple}}/include/c++/${{gcc_ver}}/"
     "-I${{toolchain}}/${{triple}}/include/c++/${{gcc_ver}}/${{triple}}"
-    "{extra_cflags}"
+    "{extra_cflags_format}"
 )
 add_link_options(
     "-L${{toolchain}}/lib/gcc/${{triple}}/${{gcc_ver}}"
     "-B${{toolchain}}/lib/gcc/${{triple}}/${{gcc_ver}}"
+    "-fuse-ld=lld"
+    "{extra_ldflags_format}"
 )
 
 # set OPTFLAG
@@ -108,17 +127,19 @@ set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
         logging.info(
             f'Generating toolchain.cmake for {self.settings.compiler} on {self.settings.arch}')
 
-        cflags = "-gdwarf-4"
+        cflags = "-gdwarf-4 -Wno-error"
         ldflags = ""
         if self.settings.arch == 'x86-i686':
             cflags += " -m32 -march=i386"
         if self.settings.arch == 'aarch64':
-            cflags += " --specs=nosys.specs"
+            # cflags += " --specs=nosys.specs"
             cflags += " -march=armv8-a"
         if self.settings.arch == 'armv7':
-            cflags += " --specs=nosys.specs"
-            cflags += " -march=armv7"
-            cflags += ' -mfloat-abi=softfp'
+            # cflags += " --specs=nosys.specs"
+            cflags += " -march=armv7-a"
+            cflags += ' -mfloat-abi=hard'
+        if self.settings.arch == 'mips32el':
+            ldflags += '-Wl,-z,notext'
         # if self.settings.compiler == 'llvm':
             # cflags += self.llvm_cflags(f'{cwd}/toolchain')
 
@@ -128,7 +149,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
                     f'{cwd}/toolchain', cflags))
             elif self.settings.compiler == 'llvm':
                 file.write(self.llvm_toolchain_cmake(
-                    f'{cwd}/toolchain', cflags))
+                    f'{cwd}/toolchain', cflags, ldflags))
 
         logging.info('Created custom toolchain config for cmake')
 
