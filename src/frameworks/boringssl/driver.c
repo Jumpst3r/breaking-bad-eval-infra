@@ -16,6 +16,7 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 #include <openssl/rsa.h>
 #include <openssl/hmac.h>
 #include <openssl/aead.h>
+#include <fipsmodule/rand/internal.h>
 #include <string.h>
 
 void print_it(const char *label, const unsigned char *buff, size_t len)
@@ -346,22 +347,23 @@ size_t sign(const char *msg, const int curve)
   if (1 != EVP_DigestSignFinal(mdctx, sig, &slen))
     exit(-200);
 
+  for (int i = 0; i < slen; i++)
+  {
+    printf("%02x", sig[i]);
+  }
+
   /* Clean up */
   if (sig && !ret)
     OPENSSL_free(sig);
   if (mdctx)
     EVP_MD_CTX_destroy(mdctx);
 
-  for (int i = 0; i < slen; i++)
-  {
-    printf("%02x", sig[i]);
-  }
-
   return slen;
 }
 
 int main(int argc, char **argv)
 {
+  CRYPTO_library_init();
   /*
    * Set up the key and iv. Do I need to say to not hard code these in a
    * real application? :-)
@@ -381,6 +383,8 @@ int main(int argc, char **argv)
   /* Message to be encrypted */
   unsigned char *plaintext = (unsigned char *)"The quick brown fox";
   size_t p_len = strlen((char *)plaintext);
+
+  // RAND_bytes_with_additional_data()
 
   if (!strcmp(mode, "compare"))
   {
@@ -492,7 +496,12 @@ int main(int argc, char **argv)
     unsigned char dkey[dkeylen];
 
     // reseed random generator with input key
+    // this is pretty hacky as it misuses with additional data
+    // this call also adds the additional data to the entropy
+    // this can be verified by using deterministic and removing the lines below
     RAND_seed(key, strlen((const char *)key));
+    uint8_t temp[8];
+    RAND_bytes_with_additional_data(temp, 1, key);
 
     ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X9_62_prime256v1);
     printf("successful");
@@ -505,6 +514,8 @@ int main(int argc, char **argv)
 
     // reseed random generator with input key
     RAND_seed(key, strlen((const char *)key));
+    uint8_t temp[8];
+    RAND_bytes_with_additional_data(temp, 1, key);
 
     ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X25519);
     printf("successful");
@@ -514,6 +525,8 @@ int main(int argc, char **argv)
   {
     // reseed random generator with input key
     RAND_seed(key, strlen((const char *)key));
+    uint8_t temp[8];
+    RAND_bytes_with_additional_data(temp, 1, key);
 
     size_t len = sign((const char *)plaintext, NID_X9_62_prime256v1);
     printf("successful: %d\n", (int)len);
