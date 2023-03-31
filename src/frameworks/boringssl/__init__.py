@@ -7,6 +7,15 @@ import logging
 
 logging.getLogger().setLevel(logging.DEBUG)
 
+arch_str = {
+    'riscv64': 'riscv64',
+    'x86-64': 'x86_64',
+    'x86-i686': 'i686',
+    'aarch64': 'aarch64',
+    'armv7': 'arm',
+    'mips32el': 'mips'
+}
+
 
 class Boringssl(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
@@ -28,6 +37,8 @@ class Boringssl(Framework):
         ar = f'{prefix}-ar'
         extra_cflags_format = extra_cflags.replace(" ", "\"\n\t\"")
         return f"""
+set(CMAKE_SYSTEM_PROCESSOR "{arch_str[self.settings.arch]}")
+
 # the name of the target operating system
 set(CMAKE_SYSTEM_NAME Linux)
 
@@ -54,15 +65,6 @@ add_compile_options("{extra_cflags_format}")
         cxx = f'clang++'
         ld = f'ld.lld'
         ar = f'llvm-ar'
-
-        arch_str = {
-            'riscv64': 'riscv64',
-            'x86-64': 'x86_64',
-            'x86-i686': 'i686',
-            'aarch64': 'aarch64',
-            'armv7': 'arm',
-            'mips32el': 'mips'
-        }
 
         extra_cflags_format = extra_cflags.replace(" ", "\"\n\t\"")
         extra_ldflags_format = extra_ldflags.replace(" ", "\"\n\t\"")
@@ -140,6 +142,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
             cflags += ' -mfloat-abi=hard'
         if self.settings.arch == 'mips32el':
             ldflags += '-Wl,-z,notext'
+        if self.settings.arch == 'riscv64' and self.settings.llvm_ver not in ['14', '15', '16']:
+            cflags += f' -mno-relax'
         # if self.settings.compiler == 'llvm':
             # cflags += self.llvm_cflags(f'{cwd}/toolchain')
 
@@ -153,8 +157,16 @@ set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
 
         logging.info('Created custom toolchain config for cmake')
 
+        logging.info(
+            'Forcing fvisbility=default in CMakeLists.txt of boringSSL')
+        with open("../CMakeLists.txt", "r") as fin:
+            data = fin.read()
+        data = data.replace('-fvisibility=hidden', '-fvisibility=default')
+        with open("../CMakeLists.txt", "w") as fout:
+            fout.write(data)
+
         run_subprocess(
-            'cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release ..')
+            'cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DBORINGSSL_UNSAFE_DETERMINISTIC_MODE=1 -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release ..')
 
         logging.info(f'Building {self.name} (make)')
         run_subprocess_env('make -j6')
@@ -182,6 +194,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
         cwd = os.getcwd()
 
         includestr = f'-I{self.name}/include'
+        includestr += f' -I{self.name}/crypto'
         librarystr = f'-L{cwd}/{self.rootfs}/{self.libdir} -lcrypto'
 
         gcc_toolchain = f'{cwd}/toolchain/bin/{self.config.get_toolchain_name(self.settings)}-gcc'
