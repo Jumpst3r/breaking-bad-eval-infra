@@ -54,7 +54,9 @@ set(CMAKE_AR {ar})
 set(CMAKE_LINKER {ld})
 
 # set OPTFLAG
-set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
+set(CMAKE_CXX_FLAGS "{self.settings.optflag}")
+set(CMAKE_C_FLAGS "{self.settings.optflag}")
+set(CMAKE_ASM_FLAGS "{self.settings.optflag}")
 
 add_compile_options("{extra_cflags_format}")
 """
@@ -115,7 +117,9 @@ add_link_options(
 )
 
 # set OPTFLAG
-set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
+set(CMAKE_CXX_FLAGS "{self.settings.optflag}")
+set(CMAKE_C_FLAGS "{self.settings.optflag}")
+set(CMAKE_ASM_FLAGS "{self.settings.optflag}")
 """
 
     def build_lib(self):
@@ -166,7 +170,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "{self.settings.optflag}")
             fout.write(data)
 
         run_subprocess(
-            'cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DBORINGSSL_UNSAFE_DETERMINISTIC_MODE=1 -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release ..')
+            'cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DBORINGSSL_UNSAFE_DETERMINISTIC_MODE=1 -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=None ..')
 
         logging.info(f'Building {self.name} (make)')
         run_subprocess_env('make -j6')
