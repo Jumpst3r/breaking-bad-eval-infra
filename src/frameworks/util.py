@@ -164,15 +164,16 @@ class Framework:
 
         return ldflags
 
+    def secretgen(self, algo: Algo) -> SecretGenerator:
+        return hex_key_generator_fixed(256, seed=1)
+
     def run(self, algo: Algo, resultDir='results'):
         rootfs = os.getcwd() + '/rootfs'
         binpath = rootfs + '/driver.bin'
 
         sharedObjects = self.shared_objects()
 
-        # keylen hardcoded to 256
-        fct = hex_key_generator_fixed(256, seed=1)
-        # fct = hex_key_generator(256)
+        fct = self.secretgen(algo)
 
         args = self.gen_args(algo)
 
@@ -195,7 +196,7 @@ class Framework:
         lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(
             binaryLoader=binLoader, flagVariableHitCount=True)]
         scd = SCDetector(modules=lmodues, getAssembly=True)
-        scd.initTraceCount = 10
+        scd.initTraceCount = 8
         scd.exec()
 
         scd = self.clean_report(scd)

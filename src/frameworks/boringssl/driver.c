@@ -16,6 +16,7 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 #include <openssl/rsa.h>
 #include <openssl/hmac.h>
 #include <openssl/aead.h>
+#include <openssl/bytestring.h>
 #include <fipsmodule/rand/internal.h>
 #include <string.h>
 
@@ -253,69 +254,154 @@ EVP_PKEY *gen_pkey(const int type, const int curve)
   return key;
 }
 
-int ecdh(unsigned char *key, int key_len, const int type, const int curve)
+EVP_PKEY *read_key(const char *filename)
+{
+  int max_size = 512;
+  uint8_t buffer[max_size];
+  int size = 0;
+  memset(buffer, 0, max_size);
+  FILE *fptr = fopen(filename, "rb");
+  if (fptr == NULL)
+  {
+    printf("could not open key file: %s\n", filename);
+    exit(-1);
+  }
+
+  size = fread(buffer, sizeof(uint8_t), max_size, fptr);
+
+  printf("read %d bytes from %s\n", size, filename);
+
+  fclose(fptr);
+
+  CBS cbs;
+  CBS_init(&cbs, buffer, size);
+
+  printf("data:\n");
+  for (int i = 0; i < size; i++)
+    printf("%02x", buffer[i]);
+  printf("\n");
+
+  EVP_PKEY *key = EVP_parse_private_key(&cbs);
+  if (key == NULL)
+  {
+    printf("could not parse key\n");
+    exit(-9);
+  }
+  return key;
+}
+
+void read_two_keys(const char *filename, EVP_PKEY **key1, EVP_PKEY **key2)
+{
+  int max_size = 1024;
+  uint8_t buffer[max_size];
+  int size = 0;
+  memset(buffer, 0, max_size);
+  FILE *fptr = fopen(filename, "rb");
+  if (fptr == NULL)
+  {
+    printf("could not open key file: %s\n", filename);
+    exit(-1);
+  }
+
+  size = fread(buffer, sizeof(uint8_t), max_size, fptr);
+
+  printf("read %d bytes from %s\n", size, filename);
+
+  fclose(fptr);
+
+  CBS cbs;
+  CBS_init(&cbs, buffer, size);
+
+  printf("data:\n");
+  for (int i = 0; i < size; i++)
+    printf("%02x", buffer[i]);
+  printf("\n");
+
+  *key1 = EVP_parse_private_key(&cbs);
+  if (*key1 == NULL)
+  {
+    printf("could not parse key\n");
+    exit(-9);
+  }
+  *key2 = EVP_parse_private_key(&cbs);
+  if (*key2 == NULL)
+  {
+    printf("could not parse key\n");
+    exit(-9);
+  }
+
+  if (EVP_PKEY_cmp(*key1, *key2) == 1)
+  {
+    printf("the two keys are the same\n");
+    exit(-5);
+  }
+
+  return;
+}
+
+int ecdh(const int type, const int curve, const char *key1_fname)
 {
   EVP_PKEY_CTX *ctx;
-  size_t keylen;
   EVP_PKEY *pkey, *peerkey;
   // somehow curve25519 keygen needs a custom function
   // not sure what causes this
-  if (curve == NID_X25519)
-  {
-    pkey = gen_x25519_key();
-    peerkey = gen_x25519_key();
-  }
-  else
-  {
-    pkey = gen_pkey(type, curve);
-    peerkey = gen_pkey(type, curve);
-  }
+  // if (curve == NID_X25519)
+  // {
+  //   pkey = gen_x25519_key();
+  //   peerkey = gen_x25519_key();
+  // }
+  // else
+  // {
+  //   pkey = gen_pkey(type, curve);
+  //   peerkey = gen_pkey(type, curve);
+  // }
+
+  read_two_keys(key1_fname, &pkey, &peerkey);
 
   ctx = EVP_PKEY_CTX_new(pkey, NULL);
-  if (!ctx)
+  if (ctx == NULL)
     exit(-10);
   /* Error occurred */
-  if (EVP_PKEY_derive_init(ctx) <= 0)
+  if (EVP_PKEY_derive_init(ctx) != 1)
     /* Error */
     exit(-11);
-  if (EVP_PKEY_derive_set_peer(ctx, peerkey) <= 0)
+  if (EVP_PKEY_derive_set_peer(ctx, peerkey) != 1)
     /* Error */
     exit(-12);
 
+  size_t keylen;
   /* Determine buffer length */
   if (EVP_PKEY_derive(ctx, NULL, &keylen) <= 0)
     /* Error */
     exit(-13);
 
-  if (keylen > key_len)
-    exit(-20);
+  printf("keylen: %d\n", keylen);
+  // if (keylen > key_len)
+  //   exit(-20);
   // skey = OPENSSL_malloc(skeylen);
+  // uint8_t key[keylen];
+  uint8_t *key = OPENSSL_malloc(keylen);
 
   if (EVP_PKEY_derive(ctx, key, &keylen) <= 0)
     /* Error */
     exit(-15);
 
+  printf("key: ");
   for (int i = 0; i < keylen; i++)
   {
     printf("%02x", key[i]);
   }
 
-  /* Shared secret is skey bytes written to buffer skey */
   EVP_PKEY_CTX_free(ctx);
+  EVP_PKEY_free(pkey);
+  EVP_PKEY_free(peerkey);
+  OPENSSL_free(key);
   return 0;
 }
 
-size_t sign(const char *msg, const int curve)
+size_t sign(const char *msg, const int curve, const char *key_filename)
 {
-  EVP_PKEY *key;
-  if (curve == NID_X25519)
-  {
-    key = gen_x25519_key();
-  }
-  else
-  {
-    key = gen_pkey(EVP_PKEY_EC, curve);
-  }
+  EVP_PKEY *key = read_key(key_filename);
 
   EVP_MD_CTX *mdctx = NULL;
   int ret = 0;
@@ -325,28 +411,47 @@ size_t sign(const char *msg, const int curve)
 
   /* Create the Message Digest Context */
   if (!(mdctx = EVP_MD_CTX_create()))
-    exit(-200);
+  {
+    printf("could not create md ctx");
+    exit(-1);
+  }
 
   /* Initialise the DigestSign operation - SHA-256 has been selected as the message digest function in this example */
   if (1 != EVP_DigestSignInit(mdctx, NULL, EVP_sha256(), NULL, key))
-    exit(-200);
+  {
+    printf("could not digest init");
+    exit(-1);
+  }
 
   /* Call update with the message */
   if (1 != EVP_DigestSignUpdate(mdctx, msg, strlen(msg)))
-    exit(-200);
+  {
+    printf("could not EVP_DigestSignUpdate");
+    exit(-1);
+  }
 
   /* Finalise the DigestSign operation */
   /* First call EVP_DigestSignFinal with a NULL sig parameter to obtain the length of the
    * signature. Length is returned in slen */
   if (1 != EVP_DigestSignFinal(mdctx, NULL, &slen))
-    exit(-200);
+  {
+    printf("could not EVP_DigestSignFinal");
+    exit(-1);
+  }
   /* Allocate memory for the signature based on size in slen */
   if (!(sig = OPENSSL_malloc(sizeof(unsigned char) * (slen))))
-    exit(-200);
+  {
+    printf("could not OPENSSL_malloc");
+    exit(-1);
+  }
   /* Obtain the signature */
   if (1 != EVP_DigestSignFinal(mdctx, sig, &slen))
-    exit(-200);
+  {
+    printf("could not EVP_DigestSignFinal");
+    exit(-1);
+  }
 
+  printf("signature: ");
   for (int i = 0; i < slen; i++)
   {
     printf("%02x", sig[i]);
@@ -357,6 +462,8 @@ size_t sign(const char *msg, const int curve)
     OPENSSL_free(sig);
   if (mdctx)
     EVP_MD_CTX_destroy(mdctx);
+
+  EVP_PKEY_free(key);
 
   return slen;
 }
@@ -383,8 +490,6 @@ int main(int argc, char **argv)
   /* Message to be encrypted */
   unsigned char *plaintext = (unsigned char *)"The quick brown fox";
   size_t p_len = strlen((char *)plaintext);
-
-  // RAND_bytes_with_additional_data()
 
   if (!strcmp(mode, "compare"))
   {
@@ -430,7 +535,7 @@ int main(int argc, char **argv)
 
     int res;
     EVP_AEAD_CTX *ctx = EVP_AEAD_CTX_new(aead, bkey, EVP_AEAD_key_length(aead), EVP_AEAD_DEFAULT_TAG_LENGTH);
-    ;
+
     if (ctx == NULL)
     {
       printf("could not create aead ctx\n");
@@ -492,43 +597,37 @@ int main(int argc, char **argv)
   }
   else if (!strcmp(mode, "ecdh-p256"))
   {
-    int dkeylen = 256;
-    unsigned char dkey[dkeylen];
-
     // reseed random generator with input key
     // this is pretty hacky as it misuses with additional data
     // this call also adds the additional data to the entropy
     // this can be verified by using deterministic and removing the lines below
-    RAND_seed(key, strlen((const char *)key));
-    uint8_t temp[8];
-    RAND_bytes_with_additional_data(temp, 1, key);
+    // RAND_seed(key, strlen((const char *)key));
+    // uint8_t temp[8];
+    // RAND_bytes_with_additional_data(temp, 1, key);
 
-    ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X9_62_prime256v1);
+    ecdh(EVP_PKEY_EC, NID_X9_62_prime256v1, argv[1]);
     printf("successful");
     return 0;
   }
   else if (!strcmp(mode, "x25519"))
   {
-    int dkeylen = 256;
-    unsigned char dkey[dkeylen];
-
     // reseed random generator with input key
-    RAND_seed(key, strlen((const char *)key));
-    uint8_t temp[8];
-    RAND_bytes_with_additional_data(temp, 1, key);
+    // RAND_seed(key, strlen((const char *)key));
+    // uint8_t temp[8];
+    // RAND_bytes_with_additional_data(temp, 1, key);
 
-    ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X25519);
+    ecdh(EVP_PKEY_EC, NID_X25519, argv[1]);
     printf("successful");
     return 0;
   }
   else if (!strcmp(mode, "ecdsa"))
   {
     // reseed random generator with input key
-    RAND_seed(key, strlen((const char *)key));
-    uint8_t temp[8];
-    RAND_bytes_with_additional_data(temp, 1, key);
+    // RAND_seed(key, strlen((const char *)key));
+    // uint8_t temp[8];
+    // RAND_bytes_with_additional_data(temp, 1, key);
 
-    size_t len = sign((const char *)plaintext, NID_X9_62_prime256v1);
+    size_t len = sign((const char *)plaintext, NID_X9_62_prime256v1, argv[1]);
     printf("successful: %d\n", (int)len);
     return 0;
   }
