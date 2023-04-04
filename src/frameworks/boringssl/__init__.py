@@ -2,8 +2,9 @@ from ..util import *
 import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
+# from cryptography.hazmat.primitives.asymmetric import ec
 import logging
-
+from .keygen import SECP256PrivateKeyGeneratorBoringSSL, ECDHP256PrivateKeyGeneratorBoringSSL
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -222,6 +223,16 @@ set(CMAKE_ASM_FLAGS "{self.settings.optflag}")
             Algo.CURVE25519,
             Algo.ECDSA
         ]
+
+    def secretgen(self, algo: Algo) -> SecretGenerator:
+        if algo == Algo.ECDSA:
+            return SECP256PrivateKeyGeneratorBoringSSL(0)
+        elif algo == Algo.ECDH_P256:
+            return ECDHP256PrivateKeyGeneratorBoringSSL(0, 'p256')
+        elif algo == Algo.CURVE25519:
+            return ECDHP256PrivateKeyGeneratorBoringSSL(0, 'x25519')
+        else:
+            return hex_key_generator_fixed(256, seed=1)
 
     def gen_args(self, algo: Algo) -> list[str]:
         if algo not in self.supported_ciphers():
