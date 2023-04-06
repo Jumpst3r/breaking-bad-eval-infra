@@ -15,6 +15,7 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
 #include <openssl/hmac.h>
+#include <openssl/pem.h>
 #include <string.h>
 
 void print_it(const char *label, const unsigned char *buff, size_t len)
@@ -170,6 +171,15 @@ int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
   return plaintext_len;
 }
 
+EVP_PKEY *read_pkey(const char *filename)
+{
+  FILE *file = fopen(filename, "rb");
+  EVP_PKEY *pkey = NULL;
+  PEM_read_PrivateKey(file, &pkey, NULL, NULL);
+  fclose(file);
+  return pkey;
+}
+
 EVP_PKEY *gen_x25519_key()
 {
   /* Generate private and public key */
@@ -256,7 +266,7 @@ EVP_PKEY *gen_pkey(const int type, const int curve)
   return key;
 }
 
-int ecdh(unsigned char *key, int key_len, const int type, const int curve)
+int ecdh(unsigned char *key, int key_len, const int type, const int curve, const char *fname)
 {
   EVP_PKEY_CTX *ctx;
   size_t keylen;
@@ -265,12 +275,12 @@ int ecdh(unsigned char *key, int key_len, const int type, const int curve)
   // not sure what causes this
   if (curve == NID_X25519)
   {
-    pkey = gen_x25519_key();
+    pkey = read_pkey(fname);
     peerkey = gen_x25519_key();
   }
   else
   {
-    pkey = gen_pkey(type, curve);
+    pkey = read_pkey(fname);
     peerkey = gen_pkey(type, curve);
   }
 
@@ -308,16 +318,18 @@ int ecdh(unsigned char *key, int key_len, const int type, const int curve)
   return 0;
 }
 
-size_t sign(const char *msg, const int curve)
+size_t sign(const char *msg, const int curve, const char *fname)
 {
   EVP_PKEY *key;
   if (curve == NID_X25519)
   {
-    key = gen_x25519_key();
+    // key = gen_x25519_key();
+    key = read_pkey(fname);
   }
   else
   {
-    key = gen_pkey(EVP_PKEY_EC, curve);
+    // key = gen_pkey(EVP_PKEY_EC, curve);
+    key = read_pkey(fname);
   }
 
   EVP_MD_CTX *mdctx = NULL;
@@ -448,9 +460,9 @@ int main(int argc, char **argv)
     unsigned char dkey[dkeylen];
 
     // reseed random generator with input key
-    RAND_seed(key, strlen((const char *)key));
+    // RAND_seed(key, strlen((const char *)key));
 
-    ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X9_62_prime256v1);
+    ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X9_62_prime256v1, argv[1]);
     printf("successful");
     return 0;
   }
@@ -460,18 +472,18 @@ int main(int argc, char **argv)
     unsigned char dkey[dkeylen];
 
     // reseed random generator with input key
-    RAND_seed(key, strlen((const char *)key));
+    // RAND_seed(key, strlen((const char *)key));
 
-    ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X25519);
+    ecdh(dkey, dkeylen, EVP_PKEY_EC, NID_X25519, argv[1]);
     printf("successful");
     return 0;
   }
   else if (!strcmp(mode, "ecdsa"))
   {
     // reseed random generator with input key
-    RAND_seed(key, strlen((const char *)key));
+    // RAND_seed(key, strlen((const char *)key));
 
-    size_t len = sign((const char *)plaintext, NID_X9_62_prime256v1);
+    size_t len = sign((const char *)plaintext, NID_X9_62_prime256v1, argv[1]);
     printf("successful: %d\n", (int)len);
     return 0;
   }

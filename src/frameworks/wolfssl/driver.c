@@ -90,10 +90,11 @@ mode 2: gcm
 */
 int encrypt_aes(Aes *ctx, const byte *key, int keysize, int dir, int mode)
 {
-    const byte iv[] = {0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
-    byte in[32] = {0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD};
-    byte out[32];
-    byte result[32];
+    const byte iv[16] = {0xFF, 0xFE, 0xFF, 0xFF, 0xFE, 0xFD, 0xFF, 0xFF, 0xFA, 0xFE, 0xFF, 0xFD};
+    byte in[64];
+    memset(in, 0x9A, sizeof(in));
+    byte out[sizeof(in)];
+    byte result[sizeof(in)];
     byte auth_tag[16];
     int ret;
     ret = wc_AesSetKey(ctx, key, keysize, iv, dir);
@@ -116,7 +117,7 @@ int encrypt_aes(Aes *ctx, const byte *key, int keysize, int dir, int mode)
         if (ret != 0)
         {
             printf("Failed tp set gcm key: ERRNO %d\n", ret);
-            return 1;
+            exit(-1);
         }
         ret = wc_AesGcmEncrypt(ctx, out, in, sizeof(in), iv, sizeof(iv), auth_tag, sizeof(auth_tag), NULL, 0);
     }
@@ -172,10 +173,10 @@ int encrypt_camellia(Camellia *ctx, const byte *key, int keysize)
 
 int x25519(byte *seed, int seed_size)
 {
-    WC_RNG rng;
+    WC_RNG rng_seed;
     int ret;
 
-    ret = wc_InitRngNonce(&rng, seed, seed_size);
+    ret = wc_InitRngNonce(&rng_seed, seed, seed_size);
     if (ret != 0)
     {
         printf("RNG init failed");
@@ -187,14 +188,14 @@ int x25519(byte *seed, int seed_size)
     wc_curve25519_init(&client_key);
     wc_curve25519_init(&server_key);
 
-    ret = wc_curve25519_make_key(&rng, 32, &client_key);
+    ret = wc_curve25519_make_key(&rng_seed, 32, &client_key);
     if (ret != 0)
     {
         printf("could not generate key: ERRNO %d\n", ret);
         exit(-1);
     }
 
-    ret = wc_curve25519_make_key(&rng, 32, &server_key);
+    ret = wc_curve25519_make_key(&rng_seed, 32, &server_key);
     if (ret != 0)
     {
         printf("could not generate key\n");
@@ -232,12 +233,19 @@ mode 1: p512r1
 */
 int ecdh(byte *seed, int seed_size, int mode)
 {
-    WC_RNG rng;
+    WC_RNG rng_seed, rng;
     int ret;
 
     // wc_rng_new(seed, seed_size, NULL);
 
-    ret = wc_InitRngNonce(&rng, seed, seed_size);
+    ret = wc_InitRngNonce(&rng_seed, seed, seed_size);
+    if (ret != 0)
+    {
+        printf("RNG init failed");
+        exit(-1);
+    }
+
+    ret = wc_InitRng(&rng);
     if (ret != 0)
     {
         printf("RNG init failed");
@@ -261,14 +269,14 @@ int ecdh(byte *seed, int seed_size, int mode)
     }
 
     int keysize = wc_ecc_get_curve_size_from_id(curveid);
-    ret = wc_ecc_make_key_ex(&rng, keysize, &client_key, curveid);
+    ret = wc_ecc_make_key_ex(&rng_seed, keysize, &client_key, curveid);
     if (ret != 0)
     {
         printf("could not generate key: ERRNO %d\n", ret);
         exit(-1);
     }
 
-    ret = wc_ecc_make_key_ex(&rng, keysize, &server_key, curveid);
+    ret = wc_ecc_make_key_ex(&rng_seed, keysize, &server_key, curveid);
     if (ret != 0)
     {
         printf("could not generate key\n");

@@ -4,6 +4,8 @@ from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
 import logging
 
+from .keygen import BotanGenerator
+
 # Blinded Algos:
 # ECDH
 # ECDSA
@@ -150,6 +152,16 @@ class Botan(Framework):
             Algo.ECDSA,
             Algo.RSA
         ]
+
+    def secretgen(self, algo: Algo) -> SecretGenerator:
+        if algo in [Algo.ECDSA, Algo.ECDH_P256]:
+            return BotanGenerator(0, 'p256')
+        elif algo == Algo.RSA:
+            return BotanGenerator(0, 'rsa')
+        elif algo == Algo.CURVE25519:
+            return BotanGenerator(0, 'x25519')
+        else:
+            return hex_key_generator_fixed(256, seed=1)
 
     def gen_args(self, algo: Algo) -> list[str]:
         if algo not in self.supported_ciphers():
