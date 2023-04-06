@@ -76,7 +76,7 @@ int crypt_and_hash(int argc, char *argv[])
     int exit_code = MBEDTLS_EXIT_FAILURE;
     int mode;
     size_t keylen, ilen, olen;
-    FILE *fkey, *fin = NULL, *fout = NULL;
+    FILE *fin = NULL, *fout = NULL;
 
     char *p;
     unsigned char IV[16];
@@ -84,7 +84,6 @@ int crypt_and_hash(int argc, char *argv[])
     unsigned char digest[MBEDTLS_MD_MAX_SIZE];
     unsigned char buffer[1024];
     unsigned char output[1024];
-    unsigned char diff;
 
     const mbedtls_cipher_info_t *cipher_info;
     const mbedtls_md_info_t *md_info;

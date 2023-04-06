@@ -21,6 +21,35 @@
 #include <botan/data_src.h>
 #include <botan/pubkey.h>
 #include <botan/mac.h>
+#include <botan/pk_keys.h>
+
+#include <fstream>
+#include <iostream>
+#include <span>
+
+std::vector<std::unique_ptr<Botan::Private_Key>> load_keys(std::string filename)
+{
+    std::ifstream file(filename, std::fstream::binary);
+
+    Botan::DataSource_Stream ds = Botan::DataSource_Stream(file);
+
+    std::vector<std::unique_ptr<Botan::Private_Key>> res;
+    while (!ds.end_of_data())
+    {
+        try
+        {
+            res.push_back(Botan::PKCS8::load_key(ds));
+        }
+        catch (Botan::Decoding_Error)
+        {
+        }
+
+        std::cout << "Bytes read: " << ds.get_bytes_read()
+                  << " End: " << ds.end_of_data() << "\n";
+    }
+    // res.push_back(Botan::PKCS8::load_key(ds));
+    return res;
+}
 
 int main(int argc, char **argv)
 {
@@ -130,20 +159,19 @@ int main(int argc, char **argv)
     else if (umode_str.find("ecdsa") != std::string::npos)
     {
         // from https://github.com/randombit/botan/blob/master/src/examples/ecdsa.cpp
-        const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
+        // const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
         Botan::AutoSeeded_RNG rng;
-        rng.add_entropy(rnd_seed.data(), rnd_seed.size());
+        // rng.add_entropy(rnd_seed.data(), rnd_seed.size());
 
-        // ec domain
-        Botan::EC_Group domain;
-        if (umode_str.find("p256") != std::string::npos)
-            domain = Botan::EC_Group("secp256r1");
-        else if (umode_str.find("p384") != std::string::npos)
-            domain = Botan::EC_Group("secp384r1");
-        else if (umode_str.find("p521") != std::string::npos)
-            domain = Botan::EC_Group("secp521r1");
-
-        Botan::ECDSA_PrivateKey key(rng, domain);
+        auto keys = load_keys(ukey);
+        if (keys.size() < 1)
+        {
+            std::cerr << "could not load key from file\n";
+            return -4;
+        }
+        Botan::ECDSA_PrivateKey key = Botan::ECDSA_PrivateKey(
+            keys[0]->algorithm_identifier(),
+            keys[0]->private_key_bits());
         std::string text("This is a tasty burger!");
         std::vector<uint8_t> data(text.data(), text.data() + text.length());
         // sign data
@@ -161,11 +189,19 @@ int main(int argc, char **argv)
     }
     else if (!strcmp(umode, "rsa"))
     {
-        const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
+        // const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
         Botan::AutoSeeded_RNG rng;
-        rng.add_entropy(rnd_seed.data(), rnd_seed.size());
+        // rng.add_entropy(rnd_seed.data(), rnd_seed.size());
 
-        Botan::RSA_PrivateKey key(rng, 1024);
+        auto keys = load_keys(ukey);
+        if (keys.size() < 1)
+        {
+            std::cerr << "could not load key from file\n";
+            return -4;
+        }
+        Botan::RSA_PrivateKey key = Botan::RSA_PrivateKey(
+            keys[0]->algorithm_identifier(),
+            keys[0]->private_key_bits());
 
         std::string text("This is a tasty burger!");
         std::vector<uint8_t> data(text.data(), text.data() + text.length());
@@ -184,14 +220,24 @@ int main(int argc, char **argv)
     }
     else if (umode_str.find("curve25519") != std::string::npos)
     {
-        const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
         Botan::AutoSeeded_RNG rng;
-        rng.add_entropy(rnd_seed.data(), rnd_seed.size());
 
         std::string kdf = "KDF2(SHA-256)";
 
-        Botan::Curve25519_PrivateKey keyA(rng);
-        Botan::Curve25519_PrivateKey keyB(rng);
+        auto keys = load_keys(ukey);
+
+        if (keys.size() < 2)
+        {
+            std::cerr << "Could not load two keys from file\n";
+            return -1;
+        }
+
+        Botan::Curve25519_PrivateKey keyA = Botan::Curve25519_PrivateKey(
+            keys[0]->algorithm_identifier(),
+            keys[0]->private_key_bits());
+        Botan::Curve25519_PrivateKey keyB = Botan::Curve25519_PrivateKey(
+            keys[1]->algorithm_identifier(),
+            keys[1]->private_key_bits());
 
         Botan::PK_Key_Agreement ecdhA(keyA, rng, kdf);
         Botan::PK_Key_Agreement ecdhB(keyB, rng, kdf);
@@ -209,23 +255,27 @@ int main(int argc, char **argv)
     else if (umode_str.find("ecdh") != std::string::npos)
     {
         // from https://github.com/randombit/botan/blob/master/src/examples/ecdh.cpp
-        const std::vector<uint8_t> rnd_seed = Botan::hex_decode(ukey);
         Botan::AutoSeeded_RNG rng;
-        rng.add_entropy(rnd_seed.data(), rnd_seed.size());
-
-        // ec domain
-        Botan::EC_Group domain;
-        if (umode_str.find("p256") != std::string::npos)
-            domain = Botan::EC_Group("secp256r1");
-        else if (umode_str.find("p384") != std::string::npos)
-            domain = Botan::EC_Group("secp384r1");
-        else if (umode_str.find("p521") != std::string::npos)
-            domain = Botan::EC_Group("secp521r1");
 
         std::string kdf = "KDF2(SHA-256)";
+
+        auto keys = load_keys(ukey);
+
+        if (keys.size() < 2)
+        {
+            std::cerr << "Could not load two keys from file\n";
+            return -1;
+        }
+
+        Botan::ECDH_PrivateKey keyA = Botan::ECDH_PrivateKey(
+            keys[0]->algorithm_identifier(),
+            keys[0]->private_key_bits());
+        Botan::ECDH_PrivateKey keyB = Botan::ECDH_PrivateKey(
+            keys[1]->algorithm_identifier(),
+            keys[1]->private_key_bits());
         // generate ECDH keys
-        Botan::ECDH_PrivateKey keyA(rng, domain);
-        Botan::ECDH_PrivateKey keyB(rng, domain);
+        // Botan::ECDH_PrivateKey keyA(rng, domain);
+        // Botan::ECDH_PrivateKey keyB(rng, domain);
         // Construct key agreements
         Botan::PK_Key_Agreement ecdhA(keyA, rng, kdf);
         Botan::PK_Key_Agreement ecdhB(keyB, rng, kdf);

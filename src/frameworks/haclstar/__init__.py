@@ -167,7 +167,8 @@ class Haclstar(Framework):
             Algo.HMAC_SHA2,
             Algo.HMAC_BLAKE2,
             Algo.CURVE25519,
-            Algo.ECDH_P256
+            Algo.ECDH_P256,
+            Algo.ECDSA
         ]
 
     def gen_args(self, algo: Algo) -> list[str]:
@@ -181,8 +182,9 @@ class Haclstar(Framework):
             Algo.HMAC_BLAKE2: 'hmac-blake2',
             Algo.CURVE25519: 'ecdh-curve25519',
             Algo.ECDH_P256: 'ecdh-p256',
+            Algo.ECDSA: 'ecdsa-p256',
         }
-        
+
         return f'@ {algo_str[algo]}'.split()
 
     def shared_objects(self) -> list[str]:

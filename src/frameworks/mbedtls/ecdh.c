@@ -46,8 +46,8 @@ int ecdh(char *ec, char *rand, size_t r_len)
     int ret = 1;
     int exit_code = MBEDTLS_EXIT_FAILURE;
     mbedtls_ecdh_context ctx_cli, ctx_srv;
-    mbedtls_entropy_context entropy;
-    mbedtls_ctr_drbg_context ctr_drbg;
+    mbedtls_entropy_context entropy, entropy2;
+    mbedtls_ctr_drbg_context ctr_drbg, ctr_drbg_seeded;
     unsigned char cli_to_srv[256], srv_to_cli[256];
 
     size_t srv_olen;
@@ -59,6 +59,7 @@ int ecdh(char *ec, char *rand, size_t r_len)
     mbedtls_ecdh_init(&ctx_cli);
     mbedtls_ecdh_init(&ctx_srv);
     mbedtls_ctr_drbg_init(&ctr_drbg);
+    mbedtls_ctr_drbg_init(&ctr_drbg_seeded);
 
     /*
      * Initialize random number generation
@@ -66,11 +67,24 @@ int ecdh(char *ec, char *rand, size_t r_len)
     // mbedtls_printf("  . Seed the random number generator...");
     // fflush(stdout);
 
+    // We just seed the rng with the randomness that is provided
+    // This works because this rng is only used in generating the client keypair
     mbedtls_entropy_init(&entropy);
-    if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
+    if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg_seeded, mbedtls_entropy_func,
                                      &entropy,
                                      (const unsigned char *)rand,
                                      r_len)) != 0)
+    {
+        mbedtls_printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n",
+                       ret);
+        goto exit;
+    }
+
+    mbedtls_entropy_init(&entropy2);
+    if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
+                                     &entropy,
+                                     NULL,
+                                     0)) != 0)
     {
         mbedtls_printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n",
                        ret);
@@ -107,7 +121,7 @@ int ecdh(char *ec, char *rand, size_t r_len)
 
     ret = mbedtls_ecdh_make_params(&ctx_cli, &cli_olen, cli_to_srv,
                                    sizeof(cli_to_srv),
-                                   mbedtls_ctr_drbg_random, &ctr_drbg);
+                                   mbedtls_ctr_drbg_random, &ctr_drbg_seeded);
     if (ret != 0)
     {
         mbedtls_printf(" failed\n  ! mbedtls_ecdh_make_params returned %d\n",

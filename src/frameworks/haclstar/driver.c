@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     char *mode = argv[2];
 
     /* A 128 bit IV */
-    uint8_t *iv = (uint8_t *)"0123456789012345";
+    uint8_t *iv = (uint8_t *)"0123456789012345678912345678912";
 
     /* Message to be encrypted */
     uint8_t *plaintext = (uint8_t *)"The quick brown fox";
@@ -112,11 +112,11 @@ int main(int argc, char *argv[])
     }
     else if (!strcmp(mode, "MD5"))
     {
-        Hacl_Hash_MD5_legacy_hash(key, key_len, output);
+        Hacl_Streaming_MD5_legacy_hash(key, key_len, output);
     }
     else if (!strcmp(mode, "SHA1"))
     {
-        Hacl_Hash_SHA1_legacy_hash(key, key_len, output);
+        Hacl_Streaming_SHA1_legacy_hash(key, key_len, output);
     }
     else if (!strcmp(mode, "SHA2"))
     {
@@ -192,6 +192,28 @@ int main(int argc, char *argv[])
             printf("could not perform ecdh");
             return -1;
         }
+    }
+    else if (!strcmp(mode, "ecdsa-p256"))
+    {
+        if (!Hacl_P256_validate_private_key(key))
+        {
+            printf("key not valid");
+            return -1;
+        }
+        uint8_t sig[64];
+        if (!Hacl_P256_ecdsa_sign_p256_sha2(sig, m_len, plaintext, key, iv))
+        {
+            printf("Could not create ecdsa signature\n");
+            return -1;
+        }
+        // uint8_t pub[64];
+        // if (!Hacl_P256_dh_initiator(pub, key))
+        // {
+        //     printf("could not generate public key");
+        //     return -1;
+        // }
+
+        // if (!Hacl_P256_ecdsa_verif_p256_sha2(m_len, plaintext, pub, ))
     }
     else
     {
