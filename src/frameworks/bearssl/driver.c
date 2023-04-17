@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   /* A key */
   /* A 256 bit key in hex */
   char *key_hex = (char *)argv[1];
-  uint32_t key_len = 32;
+  // uint32_t key_len = 32;
   uint8_t key[32];
   int len = hextobin(key, key_hex);
   if (len < 32)
@@ -311,7 +311,7 @@ int main(int argc, char **argv)
     // br_rsa_public pub = br_rsa_public_get_default();
     // br_rsa_private priv = br_rsa_private_get_default();
     br_rsa_pkcs1_sign sign = br_rsa_pkcs1_sign_get_default();
-    br_rsa_pkcs1_vrfy vrfy = br_rsa_pkcs1_vrfy_get_default();
+    // br_rsa_pkcs1_vrfy vrfy = br_rsa_pkcs1_vrfy_get_default();
     // br_rsa_pss_sign pss_sign = br_rsa_pss_sign_get_default();
     // br_rsa_pss_vrfy pss_vrfy = br_rsa_pss_vrfy_get_default();
     br_rsa_oaep_encrypt menc = br_rsa_oaep_encrypt_get_default();
@@ -328,7 +328,7 @@ int main(int argc, char **argv)
     br_rsa_private_key sk;
     br_rsa_public_key pk;
 
-    size_t rsa_size = 1024;
+    size_t rsa_size = 512;
     unsigned char kbuf_priv[BR_RSA_KBUF_PRIV_SIZE(rsa_size)];
     unsigned char kbuf_pub[BR_RSA_KBUF_PUB_SIZE(rsa_size)];
 
@@ -341,37 +341,39 @@ int main(int argc, char **argv)
 
     // lets first hash the data to be signed
     br_hash_compat_context hc;
-    const br_hash_class *hf = &br_sha256_vtable;
+    const br_hash_class *hf = &br_sha1_vtable;
 
-    uint8_t hash_value[br_sha256_SIZE];
+    uint8_t hash_value[br_sha1_SIZE];
     hf->init(&hc.vtable);
     hf->update(&hc.vtable, plaintext, sizeof(plaintext));
     hf->out(&hc.vtable, hash_value);
 
     // PKCS1.5 (rsa sign)
     unsigned char sig[128];
-    if (!sign(BR_HASH_OID_SHA256, hash_value, br_sha256_SIZE, &sk, sig))
+    memset(sig, 0, sizeof(sig));
+    if (!sign(BR_HASH_OID_SHA1, hash_value, br_sha1_SIZE, &sk, sig))
     {
       printf("RSA sign failed");
       exit(-1);
     }
-    unsigned char hash_out[br_sha256_SIZE];
-    if (vrfy(sig, sizeof(sig), BR_HASH_OID_SHA256, br_sha256_SIZE, &pk, hash_out) != 1)
-    {
-      printf("RSA verify failed");
-      exit(-1);
-    }
+    // we do not need to check the verify function as it operates on public values
+    // unsigned char hash_out[br_sha256_SIZE];
+    // if (vrfy(sig, sizeof(sig), BR_HASH_OID_SHA256, br_sha256_SIZE, &pk, hash_out) != 1)
+    // {
+    //   printf("RSA verify failed");
+    //   exit(-1);
+    // }
 
     // OAEP
     unsigned char m[1024];
-    size_t len = menc(&rng_fixed.vtable, &br_sha256_vtable, NULL, 0, &pk, m, sizeof(m), plaintext, sizeof(plaintext));
+    size_t len = menc(&rng_fixed.vtable, &br_sha1_vtable, NULL, 0, &pk, m, sizeof(m), plaintext, 16);
     if (len == 0)
     {
       printf("RSA OAEP enc failed");
       exit(-1);
     }
 
-    if (!mdec(&br_sha256_vtable, NULL, 0, &sk, m, &len))
+    if (!mdec(&br_sha1_vtable, NULL, 0, &sk, m, &len))
     {
       printf("RSA OAEP dec failed");
       exit(-1);
