@@ -322,6 +322,9 @@ int main(int argc, char **argv)
     br_hmac_drbg_context rng;
     br_hmac_drbg_init(&rng, &br_sha256_vtable, key, 32);
 
+    br_hmac_drbg_context rng_fixed;
+    br_hmac_drbg_init(&rng_fixed, &br_sha256_vtable, NULL, 0);
+
     br_rsa_private_key sk;
     br_rsa_public_key pk;
 
@@ -361,7 +364,7 @@ int main(int argc, char **argv)
 
     // OAEP
     unsigned char m[1024];
-    size_t len = menc(&rng.vtable, &br_sha256_vtable, NULL, 0, &pk, m, sizeof(m), plaintext, sizeof(plaintext));
+    size_t len = menc(&rng_fixed.vtable, &br_sha256_vtable, NULL, 0, &pk, m, sizeof(m), plaintext, sizeof(plaintext));
     if (len == 0)
     {
       printf("RSA OAEP enc failed");
