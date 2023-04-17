@@ -6,6 +6,7 @@ from src.config import *
 from src.frameworks import *
 from src.frameworks.util import *
 from src.toolchain import *
+from src.process import *
 
 example_usage = """example usage:
 
@@ -40,6 +41,7 @@ parser.add_argument('--result-dir', type=str,
                     help='Result directory', default='./results')
 parser.add_argument('--fw-dir', type=str,
                     help="Directory to frameworks directory", default='src/frameworks')
+parser.add_argument('--save-binaries', action=argparse.BooleanOptionalAction, default=True)
 
 args = parser.parse_args()
 
@@ -166,3 +168,6 @@ with contextlib.closing(sqlite3.connect(f'{args.result_dir}/database.db')) as co
         ))
 
         con.commit()
+
+if args.save_binaries:
+    run_subprocess(f'zip -r {resultDir}/rootfs.zip rootfs')
