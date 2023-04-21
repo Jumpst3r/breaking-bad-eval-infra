@@ -25,13 +25,12 @@
 
 #include <fstream>
 #include <iostream>
-#include <span>
 
 std::vector<std::unique_ptr<Botan::Private_Key>> load_keys(std::string filename)
 {
     std::ifstream file(filename, std::fstream::binary);
 
-    Botan::DataSource_Stream ds = Botan::DataSource_Stream(file);
+    Botan::DataSource_Stream ds(file, "<std::ifstream>");
 
     std::vector<std::unique_ptr<Botan::Private_Key>> res;
     while (!ds.end_of_data())
