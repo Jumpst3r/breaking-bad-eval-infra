@@ -119,10 +119,10 @@ class Botan(Framework):
         includestr += f' -I{self.name}/build/include'
 
         # Use the correct name irrespectove of the version
-        if self.settings.commit.startswith('2.'):
-            librarystr = f'-L{cwd}/{self.rootfs}/{self.libdir} -lbotan-2'
-        else:
+        if self.settings.commit.startswith('3.'):
             librarystr = f'-L{cwd}/{self.rootfs}/{self.libdir} -lbotan-3'
+        else:
+            librarystr = f'-L{cwd}/{self.rootfs}/{self.libdir} -lbotan-2'
 
         if self.settings.arch == 'x86-i686' and self.settings.compiler == 'gcc':
             # older x86 archs need the atomic library to emulate atomic instructions
@@ -186,10 +186,10 @@ class Botan(Framework):
         return f'@ {algo_str[algo]}'.split()
 
     def shared_objects(self) -> list[str]:
-        if self.settings.commit.startswith('2.'):
-            return ['libbotan-2']
-        else:
+        if self.settings.commit.startswith('3.'):
             return ['libbotan-3']
+        else:
+            return ['libbotan-2']
 
     def clean_report(self, scd):
         # mask = scd.DF['Symbol Name'].str.contains('hextobin')
