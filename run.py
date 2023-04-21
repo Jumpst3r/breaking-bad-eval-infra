@@ -107,30 +107,33 @@ quote = '"'
 resultDir += f'-{settings.optflag.replace(" ", "_").replace(quote, "")}'
 
 for t in target:
-    scd = f.run(algo_from_str(t), resultDir=resultDir)
+    try:
+        scd = f.run(algo_from_str(t), resultDir=resultDir)
 
-    res = {
-        'arch': settings.arch,
-        'toolchain': settings.compiler,
-        'toolchain-version': args.toolchain_version,
-        'framework': args.framework,
-        'commit': args.commit,
-        'optflag': args.opt,
-        'foldername': resultDir,
-        'tracecount': scd.initTraceCount,
-        'algo': t
-    }
+        res = {
+            'arch': settings.arch,
+            'toolchain': settings.compiler,
+            'toolchain-version': args.toolchain_version,
+            'framework': args.framework,
+            'commit': args.commit,
+            'optflag': args.opt,
+            'foldername': resultDir,
+            'tracecount': scd.initTraceCount,
+            'algo': t
+        }
 
-    if 'DF' in dir(scd):
-        # Leaks were found
-        res['leaks'] = len(scd.DF)
-        res['details'] = scd.DF.to_dict('records')
+        if 'DF' in dir(scd):
+            # Leaks were found
+            res['leaks'] = len(scd.DF)
+            res['details'] = scd.DF.to_dict('records')
 
-    else:
-        res['leaks'] = 0
-        res['details'] = []
+        else:
+            res['leaks'] = 0
+            res['details'] = []
 
-    results.append(res)
+        results.append(res)
+    except Exception as e:
+        print(str(e))
 
 # dump the content into a json file
 with open(f'{resultDir}/data.json', 'w') as f:
