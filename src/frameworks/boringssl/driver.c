@@ -11,13 +11,14 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 #include <openssl/ecdh.h>
+#include <openssl/ecdsa.h>
 #include <openssl/ec.h>
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
 #include <openssl/hmac.h>
 #include <openssl/aead.h>
 #include <openssl/bytestring.h>
-#include <fipsmodule/rand/internal.h>
+// #include <fipsmodule/rand/internal.h>
 #include <string.h>
 
 void print_it(const char *label, const unsigned char *buff, size_t len)
@@ -375,12 +376,12 @@ int ecdh(const int type, const int curve, const char *key1_fname)
     /* Error */
     exit(-13);
 
-  printf("keylen: %d\n", keylen);
+  printf("keylen: %zu\n", keylen);
   // if (keylen > key_len)
   //   exit(-20);
   // skey = OPENSSL_malloc(skeylen);
   // uint8_t key[keylen];
-  uint8_t *key = OPENSSL_malloc(keylen);
+  uint8_t *key = (uint8_t *)OPENSSL_malloc(keylen);
 
   if (EVP_PKEY_derive(ctx, key, &keylen) <= 0)
     /* Error */
@@ -403,69 +404,18 @@ size_t sign(const char *msg, const int curve, const char *key_filename)
 {
   EVP_PKEY *key = read_key(key_filename);
 
-  EVP_MD_CTX *mdctx = NULL;
-  int ret = 0;
-  size_t slen = 0;
+  EC_KEY *ec_key = EVP_PKEY_get0_EC_KEY(key);
 
-  unsigned char *sig = NULL;
+  // first hash the message
+  uint8_t digest[SHA256_DIGEST_LENGTH];
+  SHA256(msg, strlen(msg), digest);
 
-  /* Create the Message Digest Context */
-  if (!(mdctx = EVP_MD_CTX_create()))
-  {
-    printf("could not create md ctx");
-    exit(-1);
-  }
-
-  /* Initialise the DigestSign operation - SHA-256 has been selected as the message digest function in this example */
-  if (1 != EVP_DigestSignInit(mdctx, NULL, EVP_sha256(), NULL, key))
-  {
-    printf("could not digest init");
-    exit(-1);
-  }
-
-  /* Call update with the message */
-  if (1 != EVP_DigestSignUpdate(mdctx, msg, strlen(msg)))
-  {
-    printf("could not EVP_DigestSignUpdate");
-    exit(-1);
-  }
-
-  /* Finalise the DigestSign operation */
-  /* First call EVP_DigestSignFinal with a NULL sig parameter to obtain the length of the
-   * signature. Length is returned in slen */
-  if (1 != EVP_DigestSignFinal(mdctx, NULL, &slen))
-  {
-    printf("could not EVP_DigestSignFinal");
-    exit(-1);
-  }
-  /* Allocate memory for the signature based on size in slen */
-  if (!(sig = OPENSSL_malloc(sizeof(unsigned char) * (slen))))
-  {
-    printf("could not OPENSSL_malloc");
-    exit(-1);
-  }
-  /* Obtain the signature */
-  if (1 != EVP_DigestSignFinal(mdctx, sig, &slen))
-  {
-    printf("could not EVP_DigestSignFinal");
-    exit(-1);
-  }
-
-  printf("signature: ");
-  for (int i = 0; i < slen; i++)
-  {
-    printf("%02x", sig[i]);
-  }
-
-  /* Clean up */
-  if (sig && !ret)
-    OPENSSL_free(sig);
-  if (mdctx)
-    EVP_MD_CTX_destroy(mdctx);
+  ECDSA_SIG *s = ECDSA_do_sign(digest, SHA256_DIGEST_LENGTH, ec_key);
 
   EVP_PKEY_free(key);
 
-  return slen;
+  return 1;
+  // return slen;
 }
 
 int main(int argc, char **argv)
