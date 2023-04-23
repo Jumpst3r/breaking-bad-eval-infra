@@ -25,6 +25,9 @@ class Libsodium(Framework):
         ldflags += f' -XCClinker -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
         ldflags += f' -fuse-ld=lld'
         ldflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+
+        if self.settings.arch == 'mips32el':
+            ldflags += ' -Wl,-z,notext'
         
         return ldflags
 
@@ -42,12 +45,13 @@ class Libsodium(Framework):
         if self.settings.arch == 'x86-i686':
             cflags += " -m32 -march=i386"
         if self.settings.arch == 'aarch64':
-            cflags += " --specs=nosys.specs"
+            # cflags += " --specs=nosys.specs"
             cflags += " -march=armv8-a"
         if self.settings.arch == 'armv7':
-            cflags += " --specs=nosys.specs"
+            # cflags += " --specs=nosys.specs"
             cflags += " -march=armv7"
-            cflags += ' -mfloat-abi=softfp'
+            # cflags += ' -mfloat-abi=softfp'
+            cflags += ' -mfloat-abi=hard'
         if self.settings.compiler == 'llvm':
             ldflags += self.custom_llvm_ldflags(f'{cwd}/toolchain')
             cflags += self.llvm_cflags(f'{cwd}/toolchain')
