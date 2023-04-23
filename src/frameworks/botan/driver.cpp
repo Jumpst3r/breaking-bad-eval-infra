@@ -33,7 +33,7 @@ std::vector<std::unique_ptr<Botan::Private_Key>> load_keys(std::string filename)
     Botan::DataSource_Stream ds(file, "<std::ifstream>");
 
     std::vector<std::unique_ptr<Botan::Private_Key>> res;
-    while (!ds.end_of_data())
+    while (!ds.end_of_data() && res.size() < 2)
     {
         try
         {
