@@ -139,38 +139,41 @@ for t in target:
 with open(f'{resultDir}/data.json', 'w') as f:
     f.write(json.dumps(results))
 
-
-with contextlib.closing(sqlite3.connect(f'{args.result_dir}/database.db')) as con:
-    cur = con.cursor()
-
-    cur.execute("""CREATE TABLE IF NOT EXISTS data (
-        ID INTEGER PRIMARY KEY AUTOINCREMENT, 
-        arch VARCHAR(20), 
-        toolchain VARCHAR(20), 
-        toolchain_version VARCHAR(20), 
-        framework VARCHAR(256), 
-        algo VARCHAR(256),
-        fw_commit VARCHAR(256), 
-        optflag VARCHAR(256), 
-        foldername VARCHAR(256), 
-        tracecount INTEGER, 
-        leaks INTEGER
-    );""")
-    for r in results:
-        cur.execute("INSERT INTO data (arch, toolchain, toolchain_version, framework, algo, fw_commit, optflag, foldername, tracecount, leaks) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
-            r['arch'],
-            r['toolchain'],
-            r['toolchain-version'],
-            r['framework'],
-            r['algo'],
-            r['commit'],
-            r['optflag'],
-            r['foldername'],
-            r['tracecount'],
-            r['leaks']
-        ))
-
-        con.commit()
-
 if args.save_binaries:
     run_subprocess(f'zip -r {resultDir}/rootfs.zip rootfs')
+
+try:
+    with contextlib.closing(sqlite3.connect(f'{args.result_dir}/database.db')) as con:
+        cur = con.cursor()
+
+        cur.execute("""CREATE TABLE IF NOT EXISTS data (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT, 
+            arch VARCHAR(20), 
+            toolchain VARCHAR(20), 
+            toolchain_version VARCHAR(20), 
+            framework VARCHAR(256), 
+            algo VARCHAR(256),
+            fw_commit VARCHAR(256), 
+            optflag VARCHAR(256), 
+            foldername VARCHAR(256), 
+            tracecount INTEGER, 
+            leaks INTEGER
+        );""")
+        for r in results:
+            cur.execute("INSERT INTO data (arch, toolchain, toolchain_version, framework, algo, fw_commit, optflag, foldername, tracecount, leaks) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+                r['arch'],
+                r['toolchain'],
+                r['toolchain-version'],
+                r['framework'],
+                r['algo'],
+                r['commit'],
+                r['optflag'],
+                r['foldername'],
+                r['tracecount'],
+                r['leaks']
+            ))
+
+            con.commit()
+
+except Exception as e:
+        print(str(e))
