@@ -1,6 +1,10 @@
 
 #include <assert.h>
 #include <bearssl.h>
+#include <bearssl_rsa.h>
+#include <bearssl_pem.h>
+#include <bearssl_x509.h>
+// #include <brssl.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,6 +51,89 @@ int hextobin(unsigned char *dst, const char *src)
   return num;
 }
 
+void *xblobdup(const void *src, size_t len)
+{
+	void *buf;
+
+	buf = malloc(len);
+	memcpy(buf, src, len);
+	return buf;
+}
+
+br_rsa_private_key *decode_key(const unsigned char *buf, size_t len)
+{
+	br_skey_decoder_context dc;
+	int err;
+	br_rsa_private_key *sk;
+
+	br_skey_decoder_init(&dc);
+	br_skey_decoder_push(&dc, buf, len);
+	err = br_skey_decoder_last_error(&dc);
+	if (err != 0) {
+		fprintf(stderr, "ERROR (decoding): err=%d\n", err);
+		exit(-2);
+	}
+	switch (br_skey_decoder_key_type(&dc)) {
+		const br_rsa_private_key *rk;
+		// const br_ec_private_key *ek;
+
+	case BR_KEYTYPE_RSA:
+		rk = br_skey_decoder_get_rsa(&dc);
+		sk = malloc(sizeof *sk);
+		sk->n_bitlen = rk->n_bitlen;
+		sk->p = xblobdup(rk->p, rk->plen);
+		sk->plen = rk->plen;
+		sk->q = xblobdup(rk->q, rk->qlen);
+		sk->qlen = rk->qlen;
+		sk->dp = xblobdup(rk->dp, rk->dplen);
+		sk->dplen = rk->dplen;
+		sk->dq = xblobdup(rk->dq, rk->dqlen);
+		sk->dqlen = rk->dqlen;
+		sk->iq = xblobdup(rk->iq, rk->iqlen);
+		sk->iqlen = rk->iqlen;
+		break;
+
+	case BR_KEYTYPE_EC:
+    printf("cannot decode EC keys");
+		exit(-1);
+
+	default:
+		fprintf(stderr, "Unknown key type: %d\n",
+			br_skey_decoder_key_type(&dc));
+		sk = NULL;
+		break;
+	}
+
+	return sk;
+}
+
+br_rsa_private_key *read_key(const char *fname) {
+  br_skey_decoder_context dc;
+  br_skey_decoder_init(&dc);
+
+  FILE *f = fopen(fname, "rb");
+  if (f == NULL) {
+    printf("Could not open file");
+    exit(-2);
+  }
+  fseek(f, 0L, SEEK_END);
+  size_t len = ftell(f);
+  rewind(f);
+
+  char buf[len];
+  size_t buflen = fread(buf, 1, sizeof(buf), f);
+
+  printf("read %ld bytes from %s\n", buflen, fname);
+  for (int i = 0; i < buflen; i++)
+    printf("%02x", buf[i]);
+  fclose(f);
+
+  br_rsa_private_key *key = decode_key(buf, buflen);
+
+  return key;
+}
+
+
 int main(int argc, char **argv)
 {
   /*
@@ -60,10 +147,10 @@ int main(int argc, char **argv)
   // uint32_t key_len = 32;
   uint8_t key[32];
   int len = hextobin(key, key_hex);
-  if (len < 32)
+  if (key_hex[0] != '/' && len < 32)
   {
     printf("insufficient key length\n");
-    return -1;
+    // return -1;
   }
 
   /* The encryption primitive to use */
@@ -316,28 +403,38 @@ int main(int argc, char **argv)
     // br_rsa_pss_vrfy pss_vrfy = br_rsa_pss_vrfy_get_default();
     br_rsa_oaep_encrypt menc = br_rsa_oaep_encrypt_get_default();
     br_rsa_oaep_decrypt mdec = br_rsa_oaep_decrypt_get_default();
-    br_rsa_keygen kgen = br_rsa_keygen_get_default();
-
-    // setup rng
-    br_hmac_drbg_context rng;
-    br_hmac_drbg_init(&rng, &br_sha256_vtable, key, 32);
+    br_rsa_compute_modulus mod = br_rsa_compute_modulus_get_default();
+    br_rsa_compute_pubexp pubexp = br_rsa_compute_pubexp_get_default();
+    // br_rsa_keygen kgen = br_rsa_keygen_get_default();
 
     br_hmac_drbg_context rng_fixed;
     br_hmac_drbg_init(&rng_fixed, &br_sha256_vtable, NULL, 0);
+    
+    br_rsa_private_key *sk = read_key(key_hex);
 
-    br_rsa_private_key sk;
-    br_rsa_public_key pk;
+    br_rsa_public_key pk2;
+    
+    pk2.nlen = mod(NULL, sk);
+    pk2.n = malloc(pk2.nlen);
+    pk2.nlen = mod(pk2.n, sk);
+    uint32_t pube = 3;
+    pk2.e = malloc(4);
+    pk2.e[0] = pube >> 24;
+    pk2.e[1] = pube >> 16;
+    pk2.e[2] = pube >> 8;
+    pk2.e[3] = pube;
+    pk2.elen = 4;
 
-    size_t rsa_size = 512;
-    unsigned char kbuf_priv[BR_RSA_KBUF_PRIV_SIZE(rsa_size)];
-    unsigned char kbuf_pub[BR_RSA_KBUF_PUB_SIZE(rsa_size)];
+    // size_t rsa_size = 512;
+    // unsigned char kbuf_priv[BR_RSA_KBUF_PRIV_SIZE(rsa_size)];
+    // unsigned char kbuf_pub[BR_RSA_KBUF_PUB_SIZE(rsa_size)];
 
-    // generate keypair
-    if (!kgen(&rng.vtable, &sk, kbuf_priv, &pk, kbuf_pub, rsa_size, 3))
-    {
-      printf("RSA keygen failed");
-      exit(-1);
-    }
+    // // generate keypair
+    // if (!kgen(&rng.vtable, &sk, kbuf_priv, &pk, kbuf_pub, rsa_size, 3))
+    // {
+    //   printf("RSA keygen failed");
+    //   exit(-1);
+    // }
 
     // lets first hash the data to be signed
     br_hash_compat_context hc;
@@ -351,7 +448,7 @@ int main(int argc, char **argv)
     // PKCS1.5 (rsa sign)
     unsigned char sig[128];
     memset(sig, 0, sizeof(sig));
-    if (!sign(BR_HASH_OID_SHA1, hash_value, br_sha1_SIZE, &sk, sig))
+    if (!sign(BR_HASH_OID_SHA1, hash_value, br_sha1_SIZE, sk, sig))
     {
       printf("RSA sign failed");
       exit(-1);
@@ -366,14 +463,14 @@ int main(int argc, char **argv)
 
     // OAEP
     unsigned char m[1024];
-    size_t len = menc(&rng_fixed.vtable, &br_sha1_vtable, NULL, 0, &pk, m, sizeof(m), plaintext, 16);
+    size_t len = menc(&rng_fixed.vtable, &br_sha1_vtable, NULL, 0, &pk2, m, sizeof(m), plaintext, 16);
     if (len == 0)
     {
       printf("RSA OAEP enc failed");
       exit(-1);
     }
 
-    if (!mdec(&br_sha1_vtable, NULL, 0, &sk, m, &len))
+    if (!mdec(&br_sha1_vtable, NULL, 0, sk, m, &len))
     {
       printf("RSA OAEP dec failed");
       exit(-1);
