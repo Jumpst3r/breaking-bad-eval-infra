@@ -3,6 +3,7 @@ import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
 import logging
+from .keygen import RSAPrivateKeyGen
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -155,6 +156,13 @@ class Bearssl(Framework):
         }
 
         return f'@ {algo_str[algo]}'.split()
+
+    def secretgen(self, algo: Algo) -> SecretGenerator:
+        if algo == Algo.RSA:
+            return RSAPrivateKeyGen(1024)
+        else:
+            return hex_key_generator_fixed(256, seed=1)
+
 
     def shared_objects(self) -> list[str]:
         return ['libbearssl']
