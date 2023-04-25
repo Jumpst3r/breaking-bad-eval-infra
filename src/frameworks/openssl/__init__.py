@@ -15,7 +15,7 @@ arch_str_gcc = {
     'x86-64': 'linux-x86_64',
     'aarch64': 'linux-aarch64',
     'armv4': 'linux-armv4',
-    'armv7': 'linux-armv7',
+    'armv7': 'linux-armv4',
     'riscv64': 'linux64-riscv64',
     'mips32el': 'linux-mips32',
     'x86-i686': 'linux-x86'
@@ -25,7 +25,7 @@ arch_str_llvm = {
     'x86-64': 'linux-x86_64-clang',
     'aarch64': 'linux-aarch64',
     'armv4': 'linux-armv4',
-    'armv7': 'linux-armv7',
+    'armv7': 'linux-armv4',
     'riscv64': 'linux64-riscv64',
     'mips32el': 'linux-mips32',
     'x86-i686': 'linux-x86-clang'
@@ -71,8 +71,9 @@ class Openssl(Framework):
             cflags += " -m32 -march=i386"
         if self.settings.arch == 'aarch64':
             cflags += " -march=armv8-a"
-        if self.settings.arch == 'armv4':
-            cflags += " -march=armv4"
+        if self.settings.arch == 'armv7':
+            cflags += " -march=armv7"
+            cflags += " no-asm" # openssl somehow includes armv8 insturctions in this build
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_ldflags(f'{cwd}/../toolchain')
 
