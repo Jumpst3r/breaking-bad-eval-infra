@@ -171,6 +171,141 @@ int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
   return plaintext_len;
 }
 
+int gcm_encrypt(unsigned char *plaintext, int plaintext_len,
+                unsigned char *aad, int aad_len,
+                unsigned char *key,
+                unsigned char *iv, int iv_len,
+                unsigned char *ciphertext,
+                unsigned char *tag,
+                const EVP_CIPHER *algo)
+{
+  EVP_CIPHER_CTX *ctx;
+
+  int len;
+
+  int ciphertext_len;
+
+  /* Create and initialise the context */
+  if (!(ctx = EVP_CIPHER_CTX_new()))
+    handleErrors();
+
+  /* Initialise the encryption operation. */
+  if (1 != EVP_EncryptInit_ex(ctx, algo, NULL, NULL, NULL))
+    handleErrors();
+
+  /*
+   * Set IV length if default 12 bytes (96 bits) is not appropriate
+   */
+  if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL))
+    handleErrors();
+
+  /* Initialise key and IV */
+  if (1 != EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
+    handleErrors();
+
+  /*
+   * Provide any AAD data. This can be called zero or more times as
+   * required
+   */
+  if (1 != EVP_EncryptUpdate(ctx, NULL, &len, aad, aad_len))
+    handleErrors();
+
+  /*
+   * Provide the message to be encrypted, and obtain the encrypted output.
+   * EVP_EncryptUpdate can be called multiple times if necessary
+   */
+  if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
+    handleErrors();
+  ciphertext_len = len;
+
+  /*
+   * Finalise the encryption. Normally ciphertext bytes may be written at
+   * this stage, but this does not occur in GCM mode
+   */
+  if (1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
+    handleErrors();
+  ciphertext_len += len;
+
+  /* Get the tag */
+  if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag))
+    handleErrors();
+
+  /* Clean up */
+  EVP_CIPHER_CTX_free(ctx);
+
+  return ciphertext_len;
+}
+
+int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
+                unsigned char *aad, int aad_len,
+                unsigned char *tag,
+                unsigned char *key,
+                unsigned char *iv, int iv_len,
+                unsigned char *plaintext,
+                const EVP_CIPHER *algo)
+{
+  EVP_CIPHER_CTX *ctx;
+  int len;
+  int plaintext_len;
+  int ret;
+
+  /* Create and initialise the context */
+  if (!(ctx = EVP_CIPHER_CTX_new()))
+    handleErrors();
+
+  /* Initialise the decryption operation. */
+  if (!EVP_DecryptInit_ex(ctx, algo, NULL, NULL, NULL))
+    handleErrors();
+
+  /* Set IV length. Not necessary if this is 12 bytes (96 bits) */
+  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL))
+    handleErrors();
+
+  /* Initialise key and IV */
+  if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
+    handleErrors();
+
+  /*
+   * Provide any AAD data. This can be called zero or more times as
+   * required
+   */
+  if (!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len))
+    handleErrors();
+
+  /*
+   * Provide the message to be decrypted, and obtain the plaintext output.
+   * EVP_DecryptUpdate can be called multiple times if necessary
+   */
+  if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+    handleErrors();
+  plaintext_len = len;
+
+  /* Set expected tag value. Works in OpenSSL 1.0.1d and later */
+  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag))
+    handleErrors();
+
+  /*
+   * Finalise the decryption. A positive return value indicates success,
+   * anything else is a failure - the plaintext is not trustworthy.
+   */
+  ret = EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
+
+  /* Clean up */
+  EVP_CIPHER_CTX_free(ctx);
+
+  if (ret > 0)
+  {
+    /* Success */
+    plaintext_len += len;
+    return plaintext_len;
+  }
+  else
+  {
+    /* Verify failed */
+    return -1;
+  }
+}
+
 EVP_PKEY *read_pkey(const char *filename)
 {
   FILE *file = fopen(filename, "rb");
@@ -286,27 +421,40 @@ int ecdh(unsigned char *key, int key_len, const int type, const int curve, const
 
   ctx = EVP_PKEY_CTX_new(pkey, NULL);
   if (!ctx)
+  {
+    printf("pkey ctx failed");
     exit(-10);
+  }
   /* Error occurred */
   if (EVP_PKEY_derive_init(ctx) <= 0)
-    /* Error */
-    exit(-11);
+  {
+    printf("pkey derive failed");
+    exit(-10);
+  }
   if (EVP_PKEY_derive_set_peer(ctx, peerkey) <= 0)
-    /* Error */
-    exit(-12);
-
+  {
+    printf("pkey derive peer failed");
+    exit(-10);
+  }
   /* Determine buffer length */
   if (EVP_PKEY_derive(ctx, NULL, &keylen) <= 0)
-    /* Error */
-    exit(-13);
+  {
+    printf("pkey derive 2 failed");
+    exit(-10);
+  }
 
   if (keylen > key_len)
-    exit(-20);
+  {
+    printf("keylen difference");
+    exit(-10);
+  }
   // skey = OPENSSL_malloc(skeylen);
 
   if (EVP_PKEY_derive(ctx, key, &keylen) <= 0)
-    /* Error */
-    exit(-15);
+  {
+    printf("pkey derive 3 failed");
+    exit(-10);
+  }
 
   for (int i = 0; i < keylen; i++)
   {
@@ -498,15 +646,30 @@ int main(int argc, char **argv)
    * algorithm and mode.
    */
   unsigned char ciphertext[128];
+  unsigned char tag[128];
 
   int ciphertext_len;
 
   /* Encrypt the plaintext */
-  ciphertext_len =
-      encrypt(plaintext, strlen((char *)plaintext), key, iv, ciphertext, alg);
+  if (!strcmp(mode, "aes-gcm"))
+    ciphertext_len =
+        gcm_encrypt(plaintext, strlen((char *)plaintext), NULL, 0, key, iv, strlen(iv), ciphertext, tag, alg);
+  else
+    ciphertext_len =
+        encrypt(plaintext, strlen((char *)plaintext), key, iv, ciphertext, alg);
+
+  if (ciphertext_len <= 0)
+  {
+    printf("encrypt unsuccessful\n");
+    exit(-1);
+  }
 
   unsigned char decrypted[128];
-  int decrypted_len = decrypt(ciphertext, ciphertext_len, key, iv, decrypted, alg);
+  int decrypted_len;
+  if (!strcmp(mode, "aes-gcm"))
+    decrypted_len = gcm_decrypt(ciphertext, ciphertext_len, NULL, 0, tag, key, iv, strlen(iv), decrypted, alg);
+  else
+    decrypted_len = decrypt(ciphertext, ciphertext_len, key, iv, decrypted, alg);
 
   if (strlen((const char *)plaintext) != decrypted_len || memcmp(plaintext, decrypted, decrypted_len) != 0)
   {
