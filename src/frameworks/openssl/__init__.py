@@ -3,6 +3,7 @@ import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
 import logging
+from .keygen import *
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -73,7 +74,7 @@ class Openssl(Framework):
             cflags += " -march=armv8-a"
         if self.settings.arch == 'armv7':
             cflags += " -march=armv7"
-            cflags += " no-asm" # openssl somehow includes armv8 insturctions in this build
+            cflags += " no-asm"  # openssl somehow includes armv8 insturctions in this build
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_ldflags(f'{cwd}/../toolchain')
 
@@ -164,6 +165,16 @@ class Openssl(Framework):
             Algo.CURVE25519,
             Algo.ECDSA
         ]
+
+    def secretgen(self, algo: Algo) -> SecretGenerator:
+        if algo == Algo.ECDSA:
+            return SECP256PrivateKeyGeneratorOpenSSL(0)
+        elif algo == Algo.ECDH_P256:
+            return ECDHP256PrivateKeyGeneratorOpenSSL(0, 'p256')
+        elif algo == Algo.CURVE25519:
+            return ECDHP256PrivateKeyGeneratorOpenSSL(0, 'x25519')
+        else:
+            return hex_key_generator_fixed(256, seed=1)
 
     def gen_args(self, algo: Algo) -> list[str]:
         if algo not in self.supported_ciphers():
