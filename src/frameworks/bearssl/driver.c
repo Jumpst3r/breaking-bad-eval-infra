@@ -108,8 +108,8 @@ br_rsa_private_key *decode_key(const unsigned char *buf, size_t len)
 }
 
 br_rsa_private_key *read_key(const char *fname) {
-  br_skey_decoder_context dc;
-  br_skey_decoder_init(&dc);
+  // br_skey_decoder_context dc;
+  // br_skey_decoder_init(&dc);
 
   FILE *f = fopen(fname, "rb");
   if (f == NULL) {
@@ -123,9 +123,9 @@ br_rsa_private_key *read_key(const char *fname) {
   char buf[len];
   size_t buflen = fread(buf, 1, sizeof(buf), f);
 
-  printf("read %ld bytes from %s\n", buflen, fname);
-  for (int i = 0; i < buflen; i++)
-    printf("%02x", buf[i]);
+  // printf("read %ld bytes from %s\n", buflen, fname);
+  // for (int i = 0; i < buflen; i++)
+  //   printf("%02x", buf[i]);
   fclose(f);
 
   br_rsa_private_key *key = decode_key(buf, buflen);
@@ -471,6 +471,94 @@ int main(int argc, char **argv)
     }
 
     if (!mdec(&br_sha1_vtable, NULL, 0, sk, m, &len))
+    {
+      printf("RSA OAEP dec failed");
+      exit(-1);
+    }
+
+    printf("RSA successful");
+  }
+  else if (!strcmp(mode, "rsa-gen"))
+  {
+    // br_rsa_public pub = br_rsa_public_get_default();
+    // br_rsa_private priv = br_rsa_private_get_default();
+    br_rsa_pkcs1_sign sign = br_rsa_pkcs1_sign_get_default();
+    // br_rsa_pkcs1_vrfy vrfy = br_rsa_pkcs1_vrfy_get_default();
+    // br_rsa_pss_sign pss_sign = br_rsa_pss_sign_get_default();
+    // br_rsa_pss_vrfy pss_vrfy = br_rsa_pss_vrfy_get_default();
+    br_rsa_oaep_encrypt menc = br_rsa_oaep_encrypt_get_default();
+    br_rsa_oaep_decrypt mdec = br_rsa_oaep_decrypt_get_default();
+    br_rsa_compute_modulus mod = br_rsa_compute_modulus_get_default();
+    br_rsa_compute_pubexp pubexp = br_rsa_compute_pubexp_get_default();
+    br_rsa_keygen kgen = br_rsa_keygen_get_default();
+
+    br_hmac_drbg_context rng_fixed;
+    br_hmac_drbg_init(&rng_fixed, &br_sha256_vtable, NULL, 0);
+    
+    // setup rng
+    br_hmac_drbg_context rng;
+    br_hmac_drbg_init(&rng, &br_sha256_vtable, key, 32);
+
+    br_rsa_private_key sk;
+    br_rsa_public_key pk;
+
+    size_t rsa_size = 512;
+    unsigned char kbuf_priv[BR_RSA_KBUF_PRIV_SIZE(rsa_size)];
+    unsigned char kbuf_pub[BR_RSA_KBUF_PUB_SIZE(rsa_size)];
+
+    // generate keypair
+    if (!kgen(&rng.vtable, &sk, kbuf_priv, &pk, kbuf_pub, rsa_size, 3))
+    {
+      printf("RSA keygen failed");
+      exit(-1);
+    }
+
+    // size_t rsa_size = 512;
+    // unsigned char kbuf_priv[BR_RSA_KBUF_PRIV_SIZE(rsa_size)];
+    // unsigned char kbuf_pub[BR_RSA_KBUF_PUB_SIZE(rsa_size)];
+
+    // // generate keypair
+    // if (!kgen(&rng.vtable, &sk, kbuf_priv, &pk, kbuf_pub, rsa_size, 3))
+    // {
+    //   printf("RSA keygen failed");
+    //   exit(-1);
+    // }
+
+    // lets first hash the data to be signed
+    br_hash_compat_context hc;
+    const br_hash_class *hf = &br_sha1_vtable;
+
+    uint8_t hash_value[br_sha1_SIZE];
+    hf->init(&hc.vtable);
+    hf->update(&hc.vtable, plaintext, sizeof(plaintext));
+    hf->out(&hc.vtable, hash_value);
+
+    // PKCS1.5 (rsa sign)
+    unsigned char sig[128];
+    memset(sig, 0, sizeof(sig));
+    if (!sign(BR_HASH_OID_SHA1, hash_value, br_sha1_SIZE, &sk, sig))
+    {
+      printf("RSA sign failed");
+      exit(-1);
+    }
+    // we do not need to check the verify function as it operates on public values
+    // unsigned char hash_out[br_sha256_SIZE];
+    // if (vrfy(sig, sizeof(sig), BR_HASH_OID_SHA256, br_sha256_SIZE, &pk, hash_out) != 1)
+    // {
+    //   printf("RSA verify failed");
+    //   exit(-1);
+    // }
+
+    // OAEP
+    unsigned char m[1024];
+    size_t len = menc(&rng_fixed.vtable, &br_sha1_vtable, NULL, 0, &pk, m, sizeof(m), plaintext, 16);
+    if (len == 0)
+    {
+      printf("RSA OAEP enc failed");
+      exit(-1);
+    }
+
+    if (!mdec(&br_sha1_vtable, NULL, 0, &sk, m, &len))
     {
       printf("RSA OAEP dec failed");
       exit(-1);
