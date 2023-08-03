@@ -59,7 +59,10 @@ set(CMAKE_CXX_FLAGS "{self.settings.optflag}")
 set(CMAKE_C_FLAGS "{self.settings.optflag}")
 set(CMAKE_ASM_FLAGS "{self.settings.optflag}")
 
-add_compile_options("{extra_cflags_format}")
+add_compile_options(
+    "-DNDEBUG"
+    "{extra_cflags_format}"
+)
 """
 
     def llvm_toolchain_cmake(self, toolchain_dir, extra_cflags, extra_ldflags):
@@ -108,6 +111,7 @@ add_compile_options(
     "-I${{toolchain}}/${{triple}}/include/"
     "-I${{toolchain}}/${{triple}}/include/c++/${{gcc_ver}}/"
     "-I${{toolchain}}/${{triple}}/include/c++/${{gcc_ver}}/${{triple}}"
+    "-DNDEBUG"
     "{extra_cflags_format}"
 )
 add_link_options(
