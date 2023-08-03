@@ -4,6 +4,7 @@ from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
 import logging
 
+from .keygen import HaclRSAGen
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -168,8 +169,15 @@ class Haclstar(Framework):
             Algo.HMAC_BLAKE2,
             Algo.CURVE25519,
             Algo.ECDH_P256,
-            Algo.ECDSA
+            Algo.ECDSA,
+            Algo.RSA
         ]
+    
+    def secretgen(self, algo: Algo) -> SecretGenerator:
+        if algo == Algo.RSA:
+            return HaclRSAGen(512)
+        else:
+            return hex_key_generator_fixed(256, seed=1)
 
     def gen_args(self, algo: Algo) -> list[str]:
         if algo not in self.supported_ciphers():
@@ -183,6 +191,7 @@ class Haclstar(Framework):
             Algo.CURVE25519: 'ecdh-curve25519',
             Algo.ECDH_P256: 'ecdh-p256',
             Algo.ECDSA: 'ecdsa-p256',
+            Algo.RSA: 'rsa'
         }
 
         return f'@ {algo_str[algo]}'.split()
