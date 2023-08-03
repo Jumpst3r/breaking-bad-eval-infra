@@ -20,9 +20,12 @@ class RSAPrivateKeyGen(SecretGenerator):
 
     def __call__(self, *args, **kwargs) -> str:
         if self.index < self.nbTraces:
-            self.pkey = rsa.generate_private_key(3, self.keylen)
+            self.key = rsa.generate_private_key(3, self.keylen)
 
-            kbytes = self.pkey.private_bytes(
+            while self.key.private_numbers().public_numbers.n.bit_length() != self.keylen or self.key.private_numbers().d.bit_length() != self.keylen:
+                self.key = rsa.generate_private_key(3, self.keylen)
+
+            kbytes = self.key.private_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption()
@@ -31,7 +34,7 @@ class RSAPrivateKeyGen(SecretGenerator):
             keyfile = tempfile.NamedTemporaryFile(prefix="microsurf_key_gen", suffix=".key").name
             with open(keyfile, 'wb') as f:
                 f.write(kbytes)
-            self.secrets.append((keyfile, self.pkey))
+            self.secrets.append((keyfile, self.key))
         secret = self.secrets[self.index % self.nbTraces][0]
         self.index += 1
         return secret
