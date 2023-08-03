@@ -17,6 +17,7 @@ RUN apt update && apt install --no-install-recommends -y \
     software-properties-common \
     gnupg \
     cmake \
+    ssh \
     libncurses5
 RUN pip3 install Jinja2 jsonschema
 # RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 15

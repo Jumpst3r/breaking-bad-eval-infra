@@ -1,8 +1,7 @@
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt install --no-install-recommends -y software-properties-common && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt update && apt install --no-install-recommends -y \
+RUN apt update && apt install --no-install-recommends -y \
+    software-properties-common \
     build-essential \
     libtool \
     zlib1g \
@@ -10,8 +9,6 @@ RUN apt update && apt install --no-install-recommends -y software-properties-com
     libxml2 \
     git \
     wget \
-    python3.9 \
-    python3.9-distutils \
     zip \
     autoconf \
     automake \
@@ -22,9 +19,19 @@ RUN apt update && apt install --no-install-recommends -y software-properties-com
     llvm-5.0 \
     lld-5.0 \
     libncurses5 \
+    libssl-dev \
     curl \
     cmake \
+    ssh \
     && rm -rf /var/lib/apt/lists/*
+
+# install python 3.9 from source
+RUN wget https://www.python.org/ftp/python/3.9.16/Python-3.9.16.tgz && \
+        tar -xf Python-3.9.16.tgz && \
+        cd Python-3.9.16 && \
+        ./configure --enable-optimizations && \
+        make -j6 && \
+        make altinstall
 
 RUN ln -s /usr/bin/clang-5.0 /usr/bin/clang \
         && ln -s /usr/bin/clang++-5.0 /usr/bin/clang++ \
@@ -34,13 +41,15 @@ RUN ln -s /usr/bin/clang-5.0 /usr/bin/clang \
         && ln -s /usr/bin/lld-5.0 /usr/bin/lld \
         && ln -s /usr/bin/ld.lld-5.0 /usr/bin/ld.lld
 
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-        python3.9 get-pip.py
+# RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+#         python3.9 get-pip.py
+
+RUN python3.9 -m ensurepip --upgrade
 
 RUN ln -s /usr/bin/python3.9 /usr/local/sbin/python3 \
         && ln -s /usr/bin/python3.9 /usr/local/sbin/python
 
-RUN pip install Jinja2 jsonschema setuptools
+RUN python3.9 -m pip install Jinja2 jsonschema setuptools
 
 # Install go (necessary for boringssl)
 RUN wget -q -O - https://go.dev/dl/go1.20.2.linux-amd64.tar.gz | tar -v -C /usr/local -xz
@@ -48,7 +57,7 @@ ENV PATH $PATH:/usr/local/go/bin
 
 # WORKDIR /install
 ADD ./microsurf /install
-RUN pip install /install/
+RUN python3.9 -m pip install /install/
 
 
 WORKDIR /build
