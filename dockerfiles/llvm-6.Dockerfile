@@ -22,6 +22,7 @@ RUN apt update && apt install --no-install-recommends -y \
     libncurses5 \
     curl \
     cmake \
+    ssh \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/clang-6.0 /usr/bin/clang \

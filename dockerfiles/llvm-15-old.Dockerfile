@@ -1,11 +1,8 @@
 FROM moschn/microsurf-eval:base
 
-RUN apt update && apt install --no-install-recommends -y \
-        clang-15 \
-        llvm-15 \
-        lld-15
-
-RUN ln -s /usr/bin/clang-15 /usr/bin/clang \
+# use the llvm.sh script to install 
+RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 15 \
+        && ln -s /usr/bin/clang-15 /usr/bin/clang \
         && ln -s /usr/bin/clang++-15 /usr/bin/clang++ \
         && ln -s /usr/bin/llvm-ar-15 /usr/bin/llvm-ar \
         && ln -s /usr/bin/llvm-as-15 /usr/bin/llvm-as \
