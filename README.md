@@ -46,6 +46,7 @@ Running in a different directory:
 Docker images exist for extra convenience. We provide docker images for LLVM versions 5-15. GCC toolchains are downloaded at runtime. Follow the steps below to build a single image. 
 
 ```bash
+git submodule update --init
 docker build -t microsurf-eval:base -f dockerfiles/base.Dockerfile .
 
 # edit dockerfiles/llvmXX.Dockerfile with the tag chosen above
