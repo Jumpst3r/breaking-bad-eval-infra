@@ -1,3 +1,5 @@
+# Build all docker images and upload them to a dockerhub account (currently set to account "moschn")
+
 docker build -t moschn/microsurf-eval:base -f dockerfiles/base.Dockerfile .
 
 docker build -t moschn/microsurf-eval:llvm5 -f dockerfiles/llvm-5.Dockerfile .
