@@ -7,6 +7,14 @@
       "libdir": "lib/",
       "prefix": "bin/${TOOLCHAIN}-",
       "versions": {
+        "13.2.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64-core-i7/tarballs/x86-64-core-i7--musl--bleeding-edge-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64-core-i7/tarballs/x86-64-core-i7--musl--bleeding-edge-2024.02-1.sha256"
+        },
+        "12.3.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64-core-i7/tarballs/x86-64-core-i7--musl--stable-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64-core-i7/tarballs/x86-64-core-i7--musl--stable-2024.02-1.sha256"
+        },
         "11.3.0": {
           "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64-core-i7/tarballs/x86-64-core-i7--musl--stable-2022.08-1.tar.bz2",
           "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64-core-i7/tarballs/x86-64-core-i7--musl--stable-2022.08-1.sha256"
@@ -43,6 +51,14 @@
       "libdir": "lib/",
       "prefix": "bin/${TOOLCHAIN}-",
       "versions": {
+        "13.2.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--bleeding-edge-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--bleeding-edge-2024.02-1.sha256"
+        },
+        "12.3.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2024.02-1.tar.sha256"
+        },
         "11.3.0": {
           "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2022.08-1.tar.bz2",
           "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2022.08-1.sha256"
@@ -79,6 +95,14 @@
       "libdir": "lib/",
       "prefix": "bin/${TOOLCHAIN}-",
       "versions": {
+        "13.2.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--musl--bleeding-edge-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--musl--bleeding-edge-2024.02-1.sha256"
+        },
+        "12.3.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--musl--stable-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--musl--stable-2024.02-1.sha256"
+        },
         "11.3.0": {
           "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--musl--stable-2022.08-2.tar.bz2",
           "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--musl--stable-2022.08-2.sha256"
@@ -115,6 +139,14 @@
       "libdir": "lib/",
       "prefix": "bin/${TOOLCHAIN}-",
       "versions": {
+        "13.2.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--musl--bleeding-edge-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--musl--bleeding-edge-2024.02-1.sha256"
+        },
+        "12.3.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--musl--stable-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--musl--stable-2024.02-1.sha256"
+        },
         "11.3.0": {
           "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--musl--stable-2022.08-1.tar.bz2",
           "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--musl--stable-2022.08-1.sha256"
@@ -151,6 +183,14 @@
       "libdir": "lib/",
       "prefix": "bin/${TOOLCHAIN}-",
       "versions": {
+        "13.2.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--musl--bleeding-edge-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--musl--bleeding-edge-2024.02-1.sha256"
+        },
+        "12.3.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--musl--stable-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--musl--stable-2024.02-1.sha256"
+        },
         "11.3.0": {
           "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--musl--stable-2022.08-1.tar.bz2",
           "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--musl--stable-2022.08-1.sha256"
@@ -167,6 +207,14 @@
       "libdir": "lib/",
       "prefix": "bin/${TOOLCHAIN}-",
       "versions": {
+        "13.2.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/mips32el/tarballs/mips32el--musl--bleeding-edge-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/mips32el/tarballs/mips32el--musl--bleeding-edge-2024.02-1.sha256"
+        },
+        "12.3.0": {
+          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/mips32el/tarballs/mips32el--musl--stable-2024.02-1.tar.bz2",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/mips32el/tarballs/mips32el--musl--stable-2024.02-1.sha256"
+        },
         "11.3.0": {
           "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/mips32el/tarballs/mips32el--musl--stable-2022.08-1.tar.bz2",
           "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/mips32el/tarballs/mips32el--musl--stable-2022.08-1.sha256"
@@ -200,6 +248,9 @@
   },
   "llvm": {
     "versions": [
+      "18",
+      "17",
+      "16",
       "15",
       "14",
       "13",
