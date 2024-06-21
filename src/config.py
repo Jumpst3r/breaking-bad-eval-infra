@@ -21,7 +21,7 @@ class Settings:
         # We always need a gcc toolchain for the sysroot and the includes
         # we use version 11.3.0
         self.gcc_ver = version if compiler == 'gcc' else '11.3.0'
-        self.llvm_ver = version if compiler == 'llvm' else '15'
+        self.llvm_ver = version if compiler == 'llvm' else '18'
         self.arch = arch
         self.compiler = compiler
         self.framework = framework
