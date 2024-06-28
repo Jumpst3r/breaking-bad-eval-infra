@@ -16,8 +16,9 @@ class Settings:
     framework: str
     optflag: str
     commit: str
+    assembly: bool
 
-    def __init__(self, arch: str, compiler: str = "gcc", version: str = "11.3.0", framework: str = "openssl", optflag: str = "-O2", commit: str = None):
+    def __init__(self, arch: str, compiler: str = "gcc", version: str = "11.3.0", framework: str = "openssl", optflag: str = "-O2", commit: str = None, assembly: bool = False):
         # We always need a gcc toolchain for the sysroot and the includes
         # we use version 11.3.0
         self.gcc_ver = version if compiler == 'gcc' else '11.3.0'
@@ -27,6 +28,7 @@ class Settings:
         self.framework = framework
         self.optflag = optflag
         self.commit = commit
+        self.assembly = assembly
 
         # there is some weird behavior with the musl lib that comes with newer
         # gcc toolchains for ARM

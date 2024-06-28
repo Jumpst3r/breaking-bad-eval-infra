@@ -195,7 +195,7 @@ class Framework:
 
         lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(
             binaryLoader=binLoader, flagVariableHitCount=True)]
-        scd = SCDetector(modules=lmodues, getAssembly=True)
+        scd = SCDetector(modules=lmodues, getAssembly=self.settings.assembly)
         scd.initTraceCount = 8
         scd.exec()
 

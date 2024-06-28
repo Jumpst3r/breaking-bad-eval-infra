@@ -5,8 +5,9 @@ This repository contains the environment and the scripts used in the paper "Brea
 ## Synopsis
 
 ```
-usage: run.py [-h] [-a {riscv64,x86-64,x86-i686,aarch64,armv7,mips32el}] [-t {gcc,llvm}] --toolchain-version TOOLCHAIN_VERSION -f {haclstar,openssl,mbedtls,wolfssl,botan,bearssl,libsodium,boringssl} -c COMMIT [-o OPT] [-p PATH] [--result-dir RESULT_DIR] [--fw-dir FW_DIR]
-              [--save-binaries | --no-save-binaries]
+usage: run.py [-h] [-a {riscv64,x86-64,x86-i686,aarch64,armv7,mips32el}] [-t {gcc,llvm}] --toolchain-version TOOLCHAIN_VERSION -f
+              {haclstar,openssl,mbedtls,wolfssl,botan,bearssl,libsodium,boringssl} -c COMMIT [-o OPT] [-p PATH] [--result-dir RESULT_DIR] [--fw-dir FW_DIR]
+              [--save-binaries | --no-save-binaries] [--asm | --no-asm]
               target [target ...]
 
 positional arguments:
@@ -31,6 +32,7 @@ options:
                         Result directory
   --fw-dir FW_DIR       Directory to frameworks directory
   --save-binaries, --no-save-binaries
+  --asm, --no-asm       Extract assembly during analysis. Will incur a memory and performance overhead if enabled.
 
 example usage:
 

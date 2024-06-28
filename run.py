@@ -44,6 +44,8 @@ parser.add_argument('--result-dir', type=str,
 parser.add_argument('--fw-dir', type=str,
                     help="Directory to frameworks directory", default='src/frameworks')
 parser.add_argument('--save-binaries', action=argparse.BooleanOptionalAction, default=True)
+parser.add_argument('--asm', action=argparse.BooleanOptionalAction, default=False,
+                    help="Extract assembly during analysis. Will incur a memory and performance overhead if enabled.")
 
 args = parser.parse_args()
 
@@ -85,7 +87,7 @@ def build_framework(config: Config, settings: Settings, rootfs='rootfs', fwDir='
 logging.basicConfig(level=logging.DEBUG)
 settings = Settings(
     arch=args.arch, compiler=args.toolchain, version=args.toolchain_version,
-    framework=args.framework, commit=args.commit, optflag=args.opt
+    framework=args.framework, commit=args.commit, optflag=args.opt, assembly=args.asm
 )
 print(settings)
 config = Config(settings, args.path)
