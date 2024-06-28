@@ -82,7 +82,7 @@ class Haclstar(Framework):
                 cflags += " -march=armv8-a"
             if self.settings.arch == 'armv7':
                 cflags += " -march=armv7"
-                cflags += ' -mfloat-abi=softfp'
+                cflags += ' -mfloat-abi=hard'
             if self.settings.arch == 'armv4':
                 cflags += " -march=armv4"
         if self.settings.compiler == 'llvm':
