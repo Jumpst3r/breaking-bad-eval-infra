@@ -56,8 +56,8 @@
           "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--bleeding-edge-2024.02-1.sha256"
         },
         "12.3.0": {
-          "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2024.02-1.tar.bz2",
-          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2024.02-1.tar.sha256"
+          "url": "`https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2024.02-1.tar.bz2`",
+          "sha256": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2024.02-1.sha256"
         },
         "11.3.0": {
           "url": "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2022.08-1.tar.bz2",
