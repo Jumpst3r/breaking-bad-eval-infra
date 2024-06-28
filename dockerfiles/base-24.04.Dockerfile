@@ -22,6 +22,7 @@ RUN apt update && apt install --no-install-recommends -y \
     ssh \
     libncurses6 \
     python3-jinja2 \
+    earlyoom \
     python3-jsonschema
 # RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 15
 # RUN ln -s /usr/bin/clang-15 /usr/bin/clang
