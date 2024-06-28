@@ -12,13 +12,16 @@ spec:
   #   strategy: OnPodCompletion
   entrypoint: schedule-framework-builds
   volumes:
-  - name: volv
-    persistentVolumeClaim:
-      claimName: vol-results
-  - name: secret-ssh-key
-    secret:
-      secretName: ssh-key-secret
-      defaultMode: 0600
+  - name: nfs-volume
+    nfs:
+      server: 10.0.0.1
+      path: /mnt/results
+      readOnly: no
+  - name: hostpath-volume
+    hostPath:
+      # Ensure the file directory is created.
+      path: /home/mschneider/results
+      type: DirectoryOrCreate
   imagePullSecrets:
   - name: regcred
   arguments:
@@ -30,10 +33,10 @@ spec:
       value: |
         {
           "gcc": [
-            "5.4.0", "6.4.0", "7.3.0", "8.4.0", "9.3.0", "10.3.0", "11.3.0"
+            "12.3.0", "13.2.0"
           ],
           "llvm": [
-            "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5"
+            "16", "17", "18"
           ]
         }
       # value: |
@@ -181,20 +184,24 @@ spec:
       image: moschn/microsurf-eval:{{inputs.parameters.image}}
       imagePullPolicy: Always
       volumeMounts:
-      - name: volv
+      # - name: volv
+      #   mountPath: /data
+      # - name: nfs-volume
+      #   mountPath: /data
+      - name: hostpath-volume
         mountPath: /data
-      - name: secret-ssh-key     # mount file containing secret at /secret/mountpath
-        mountPath: "/root/.ssh"
-        readOnly: true
+      # - name: secret-ssh-key     # mount file containing secret at /secret/mountpath
+      #   mountPath: "/root/.ssh"
+      #   readOnly: true
       resources:
         requests:
-          cpu: "16"
-          memory: "10Gi"
-          ephemeral-storage: "15Gi"
+          cpu: "8"
+          memory: "16Gi"
+          # ephemeral-storage: "15Gi"
         limits:
-          cpu: "16"
-          memory: "28Gi"
-          ephemeral-storage: "35Gi"
+          cpu: "12"
+          memory: "32Gi"
+        #   ephemeral-storage: "35Gi"
       # command: ["sleep", "infinity"]
       # env:
       #   - name: RAY_memory_monitor_refresh_ms
@@ -244,7 +251,7 @@ spec:
           for c, ver in comps.items():
             for v in ver:
               if c == 'gcc':
-                if a == 'riscv64' and v not in ['11.3.0', '10.3.0']:
+                if a == 'riscv64' and v not in ['11.3.0', '10.3.0', '12.3.0', '13.2.0']:
                   continue
                 elif 'Oz' in o:
                   continue
@@ -256,7 +263,7 @@ spec:
                       'framework': f,
                       'target': target,
                       'opt': o,
-                      'image': 'llvm15',
+                      'image': 'llvm18',
                       'commit': commit
                     })
               else:
