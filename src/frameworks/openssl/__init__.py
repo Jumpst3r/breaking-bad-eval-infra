@@ -48,7 +48,7 @@ arch_str_llvm = {
 class Openssl(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir: str):
         self.name = 'openssl'
-        self.url = 'git://git.openssl.org/openssl.git'
+        self.url = 'https://github.com/openssl/openssl.git'
         super().__init__(settings, config, rootfs, fwDir)
 
     def download(self):
