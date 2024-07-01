@@ -20,7 +20,16 @@ class Libsodium(Framework):
         else:
             git_reset(self.settings.commit, self.name)
 
-    def custom_llvm_ldflags(self, toolchain_dir):
+    def custom_llvm_ldflags_configure(self, toolchain_dir):
+        ldflags = f' -fuse-ld=lld'
+        ldflags += f' -L{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
+
+        if self.settings.arch == 'mips32el':
+            ldflags += ' -Wl,-z,notext'
+        
+        return ldflags
+    
+    def custom_llvm_ldflags_make(self, toolchain_dir):
         ldflags = f'-XCClinker --target={arch_str_target[self.settings.arch]}'
         ldflags += f' -XCClinker -B{toolchain_dir}/lib/gcc/{self.config.get_toolchain_name(self.settings)}/{self.settings.gcc_ver}/'
         ldflags += f' -fuse-ld=lld'
@@ -53,7 +62,7 @@ class Libsodium(Framework):
             # cflags += ' -mfloat-abi=softfp'
             cflags += ' -mfloat-abi=hard'
         if self.settings.compiler == 'llvm':
-            ldflags += self.custom_llvm_ldflags(f'{cwd}/toolchain')
+            ldflags += self.custom_llvm_ldflags_configure(f'{cwd}/toolchain')
             cflags += self.llvm_cflags(f'{cwd}/toolchain')
 
         logging.info(f'Setting CFLAGS to {cflags}')
@@ -77,7 +86,10 @@ class Libsodium(Framework):
                                cflags=cflags, ldflags=ldflags, cc="clang", ar="llvm-ar", ranlib="llvm-ranlib")
 
         logging.info(f'Building {self.name} (make)')
-        run_subprocess_env('make -j6', path=f'{cwd}/toolchain/bin')
+        if self.settings.compiler == 'llvm':
+            run_subprocess_env(f'make -j6 LDFLAGS="{self.custom_llvm_ldflags_make(f'{cwd}/toolchain')}"', path=f'{cwd}/toolchain/bin')
+        else:
+            run_subprocess_env('make -j6', path=f'{cwd}/toolchain/bin')
 
         os.chdir(cwd)
 
