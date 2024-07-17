@@ -20,7 +20,7 @@ cd test
 
 ## Synopsis
 
-```
+```bash
 usage: run.py [-h] [-a {riscv64,x86-64,x86-i686,aarch64,armv7,mips32el}] [-t {gcc,llvm}] --toolchain-version TOOLCHAIN_VERSION -f
               {haclstar,openssl,mbedtls,wolfssl,botan,bearssl,libsodium,boringssl} -c COMMIT [-o OPT] [-p PATH] [--result-dir RESULT_DIR] [--fw-dir FW_DIR]
               [--save-binaries | --no-save-binaries] [--asm | --no-asm]
@@ -59,9 +59,9 @@ Running in a different directory:
     python ../run.py -a riscv64 -t gcc --toolchain-version 11.3.0 -f libsodium -c stable -o="-O2" --fw-dir ../src/frameworks -p ../config.json hmac-sha2
 ```
 
-## Docker Images
+## Compilers and their Versions
 
-Docker images exist for extra convenience. We provide docker images for LLVM versions 5-15. GCC toolchains are downloaded at runtime. Follow the steps below to build a single image.
+GCC toolchains are downloaded at runtime, but LLVM needs to be available in the host system with the correct version. For our experiments, we built Docker images for LLVM versions 5-18. Follow the steps below to build a single image.
 
 ```bash
 git submodule update --init
@@ -75,6 +75,8 @@ docker build -t 'microsurf-eval:llvmXX' -f dockerfiles/llvm-XX.Dockerfile .
 ```
 
 We also provide a script to build all docker images and upload them to a dockerhub account in [docker_build.sh](docker_build.sh).
+
+Note: Building new images with dockerfiles might be broken as the Ubuntu repositories no longer contain certain packages.
 
 ## Running in Docker
 
@@ -128,7 +130,7 @@ The configuration of the run is specified in [workflow/workflow.yaml](workflow/w
 
 The run can then be launched with the following command:
 
-```
+```bash
 argo submit -n microsurf --name haclstar workflow/workflow.yaml
 ```
 
