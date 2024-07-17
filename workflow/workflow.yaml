@@ -28,7 +28,9 @@ spec:
     parameters:
     - name: architectures
       value: |
-        ["riscv64", "x86-64", "x86-i686", "aarch64", "mips32el", "armv7"]
+        ["mips32el"]
+      # value: |
+      #   ["riscv64", "x86-64", "x86-i686", "aarch64", "mips32el", "armv7"]
     - name: compilers
       value: |
         {
@@ -50,22 +52,35 @@ spec:
       #   }
     - name: frameworks
       value: |
-        ["haclstar"]
+        ["haclstar", "libsodium", "botan", "bearssl", "boringssl", "openssl", "wolfssl", "mbedtls"]
     - name: target-algorithms
       value: |
-        "hmac-sha1 hmac-sha2 hmac-blake2 chacha-poly1305 curve25519 ecdh-p256 ecdsa rsa"
+        "all"
       # value: |
       #   "aes-cbc aes-ctr aes-gcm chacha-poly1305 hmac-sha1 hmac-sha2 hmac-blake2 curve25519 ecdh-p256 ecdsa"
       # value: |
       #   "rsa"
     - name: optimizations
+      # value: |
+      #   ["-O0"]
       value: |
         ["-O0", "-O1", "-O2", "-O3", "-Os", "-Ofast", "-Oz"]
     - name: commit
+      value: |
+        {
+          "haclstar": "f283af14715cc66ec7481a3ae0ed019cbff4c790",
+          "libsodium": "8cc84df",
+          "botan": "15dc32f",
+          "bearssl": "79c060eea3eea1257797f15ea1608a9a9923aa6f",
+          "boringssl": "28f96c2686459add7acedcd97cb841030bdda019",
+          "openssl": "a92271e",
+          "wolfssl": "4fbd4fd",
+          "mbedtls": "1873d3b"
+        }
       # value: "28f96c2686459add7acedcd97cb841030bdda019" # boringssl "chromium-stable" "28f96c2686459add7acedcd97cb841030bdda019"
       # value: "4fbd4fd" # wolfSSL v5.5.4-stable
       # value: "79c060eea3eea1257797f15ea1608a9a9923aa6f" # bearSSL
-      value: "f283af14715cc66ec7481a3ae0ed019cbff4c790" # hacl-star
+      # value: "f283af14715cc66ec7481a3ae0ed019cbff4c790" # hacl-star
       # value: "15dc32f" # botan 2.19.3
       # value: "8cc84df" # libsodium stable
       # value: "a92271e" # openssl release 3.1.0
@@ -200,7 +215,7 @@ spec:
           # ephemeral-storage: "15Gi"
         limits:
           cpu: "12"
-          memory: "32Gi"
+          memory: "64Gi"
         #   ephemeral-storage: "35Gi"
       # command: ["sleep", "infinity"]
       # env:
@@ -242,7 +257,18 @@ spec:
         fw = json.loads(r'''{{inputs.parameters.frameworks}}''')
         target = json.loads(r'''{{inputs.parameters.target-algorithms}}''')
         opt = json.loads(r'''{{inputs.parameters.optimizations}}''')
-        commit = '{{inputs.parameters.commit}}'
+        commit = json.loads(r'''{{inputs.parameters.commit}}''')
+
+        #   "aes-cbc aes-ctr aes-gcm chacha-poly1305 hmac-sha1 hmac-sha2 hmac-blake2 curve25519 ecdh-p256 ecdsa"
+        supported_ciphers = {}
+        supported_ciphers["haclstar"] = ['chacha-poly1305', 'hmac-sha1', 'hmac-sha2', 'hmac-blake2', 'curve25519', 'ecdh-p256', 'ecdsa', 'rsa']
+        supported_ciphers["libsodium"] = ['chacha-poly1305', 'hmac-sha2', 'curve25519']
+        supported_ciphers["botan"] = ['aes-cbc', 'aes-ctr', 'aes-gcm', 'chacha-poly1305', 'hmac-sha1', 'hmac-sha2', 'hmac-blake2', 'curve25519']
+        supported_ciphers["bearssl"] = ['aes-cbc', 'aes-ctr', 'aes-gcm', 'chacha-poly1305', 'hmac-sha1', 'hmac-sha2', 'curve25519', 'ecdh-p256', 'ecdsa', 'rsa']
+        supported_ciphers["boringssl"] = ['aes-cbc', 'aes-ctr', 'aes-gcm', 'chacha-poly1305', 'hmac-sha1', 'hmac-sha2', 'hmac-blake2', 'curve25519', 'ecdh-p256', 'ecdsa']
+        supported_ciphers["openssl"] = ['chacha-poly1305', 'hmac-sha1', 'hmac-sha2', 'hmac-blake2', 'curve25519']
+        supported_ciphers["wolfssl"] = ['aes-cbc', 'aes-ctr', 'aes-gcm', 'chacha-poly1305', 'hmac-sha1', 'hmac-sha2', 'curve25519']
+        supported_ciphers["mbedtls"] = ['chacha-poly1305', 'hmac-sha1', 'hmac-sha2']
 
         print(archs)
         print(comps)
@@ -250,6 +276,7 @@ spec:
         for a, f, o in itertools.product(archs, fw, opt):
           for c, ver in comps.items():
             for v in ver:
+              t = " ".join(supported_ciphers[f]) if target == 'all' else target
               if c == 'gcc':
                 if a == 'riscv64' and v not in ['11.3.0', '10.3.0', '12.3.0', '13.2.0']:
                   continue
@@ -261,10 +288,10 @@ spec:
                       'toolchain': c,
                       'version': v,
                       'framework': f,
-                      'target': target,
+                      'target': t,
                       'opt': o,
                       'image': 'llvm18',
-                      'commit': commit
+                      'commit': commit[f]
                     })
               else:
                 if a == 'riscv64' and v in ['5', '6', '7', '8', '9']:
@@ -275,10 +302,10 @@ spec:
                     'toolchain': c,
                     'version': v,
                     'framework': f,
-                    'target': target,
+                    'target': t,
                     'opt': o,
                     'image': f'llvm{v}',
-                    'commit': commit
+                    'commit': commit[f]
                   })
         print(out_map)
         with open('/tmp/outmap.json', 'w') as f:
