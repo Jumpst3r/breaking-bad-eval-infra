@@ -1,6 +1,6 @@
 # Breaking Bad: How Compilers Break Constant-Time Implementations
 
-This repository contains the environment and the scripts used in the paper "Breaking Bad: How Compilers Break Constant-Time Implementations". For the large sclae evaluateion, we used a kubernetes cluster setup running [argo workflows](https://argoproj.github.io/argo-workflows/). For further details, check the large scale analysis section below.
+This repository contains the environment and the scripts used in the paper "Breaking Bad: How Compilers Break Constant-Time Implementations". For the large-scale evaluation, we used a Kubernetes cluster setup running [argo workflows](https://argoproj.github.io/argo-workflows/). For further details, check the large-scale analysis section below.
 
 ## Quickstart
 
@@ -74,9 +74,9 @@ docker build -t microsurf-eval:base -f dockerfiles/base.Dockerfile .
 docker build -t 'microsurf-eval:llvmXX' -f dockerfiles/llvm-XX.Dockerfile .
 ```
 
-We also provide a script to build all docker images and upload them to a dockerhub account in [docker_build.sh](docker_build.sh).
+We also provide a script to build all docker images and upload them to a Dockerhub account in [docker_build.sh](docker_build.sh).
 
-Note: Building new images with dockerfiles might be broken as the Ubuntu repositories no longer contain certain packages.
+Note: Building new images with Dockerfiles might be broken as the Ubuntu repositories no longer contain certain packages.
 
 ## Running in Docker
 
@@ -88,14 +88,14 @@ python run.py --help
 python run.py -a x86-64 -t llvm --toolchain-version XX -f haclstar -c main -o="-O0" hmac-sha2
 ```
 
-## Large Scale Analysis
+## Large-Scale Analysis
 
-The large scale setup is a bit more involved. It requires the following prerequisites:
+The large-scale setup is a bit more involved. It requires the following prerequisites:
 
-- A working kubernetes cluster
-- Installation of argo workflow on your cluster
-- All Docker images uploaded to to dockerhub (see [docker_build.sh](docker_build.sh)) 
-- A shared network drive that is accessible to all argo containers, e.g., an ntfs drive that is mounted to `/data/`.
+- A working Kubernetes cluster
+- Installation of Argo Workflow on your cluster
+- All Docker images uploaded to Dockerhub (see [docker_build.sh](docker_build.sh))
+- A shared network drive that is accessible to all Argo containers, e.g., an NFS drive that is mounted to `/data/`.
 
 The configuration of the run is specified in [workflow/workflow.yaml](workflow/workflow.yaml). An example configuration:
 
@@ -136,5 +136,5 @@ argo submit -n microsurf --name haclstar workflow/workflow.yaml
 
 ## Known Issues
 
-- Old dockerfiles might not build. Need realignment with ubuntu.
+- Old dockerfiles might not build. Need realignment with Ubuntu.
 - For specific settings, a lot of memory is required (>64gb). This is mostly relevant for `-O0` builds.
