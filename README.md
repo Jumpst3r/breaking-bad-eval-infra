@@ -1,6 +1,22 @@
 # Breaking Bad: How Compilers Break Constant-Time Implementations
 
-This repository contains the environment and the scripts used in the paper "Breaking Bad: How Compilers Break Constant-Time Implementations". We use a kubernetes cluster setup running [argo workflows](https://argoproj.github.io/argo-workflows/) to run the experiments.
+This repository contains the environment and the scripts used in the paper "Breaking Bad: How Compilers Break Constant-Time Implementations". For the large sclae evaluateion, we used a kubernetes cluster setup running [argo workflows](https://argoproj.github.io/argo-workflows/). For further details, check the large scale analysis section below.
+
+## Quickstart
+
+```bash
+git submodule update --init --recursive
+
+# install microsurf in a virtualenv
+python -m virtualenv venv
+source venv/bin/activate
+pip install -e microsurf
+
+# run the analysis
+mkdir test
+cd test
+../run.py -a riscv64 -t gcc --toolchain-version 11.3.0 -f haclstar -c f283af14715cc66ec7481a3ae0ed019cbff4c790 -o="-O2" --fw-dir ../src/frameworks -p ../config.json hmac-sha2
+```
 
 ## Synopsis
 
@@ -45,7 +61,7 @@ Running in a different directory:
 
 ## Docker Images
 
-Docker images exist for extra convenience. We provide docker images for LLVM versions 5-15. GCC toolchains are downloaded at runtime. Follow the steps below to build a single image. 
+Docker images exist for extra convenience. We provide docker images for LLVM versions 5-15. GCC toolchains are downloaded at runtime. Follow the steps below to build a single image.
 
 ```bash
 git submodule update --init
@@ -60,7 +76,7 @@ docker build -t 'microsurf-eval:llvmXX' -f dockerfiles/llvm-XX.Dockerfile .
 
 We also provide a script to build all docker images and upload them to a dockerhub account in [docker_build.sh](docker_build.sh).
 
-## Individual Analysis
+## Running in Docker
 
 Executing an individual analysis on a target library and cryptographic algorithm is simple within a docker image. Run the following steps to run an individual analysis
 
@@ -115,3 +131,8 @@ The run can then be launched with the following command:
 ```
 argo submit -n microsurf --name haclstar workflow/workflow.yaml
 ```
+
+## Known Issues
+
+- Old dockerfiles might not build. Need realignment with ubuntu.
+- For specific settings, a lot of memory is required (>64gb). This is mostly relevant for `-O0` builds.
