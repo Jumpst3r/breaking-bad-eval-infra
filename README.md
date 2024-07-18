@@ -1,19 +1,140 @@
-# microsurf-eval-infra
+# Breaking Bad: How Compilers Break Constant-Time Implementations
 
-Evaluation scripts for the microsurf repo
+This repository contains the environment and the scripts used in the paper "Breaking Bad: How Compilers Break Constant-Time Implementations". For the large-scale evaluation, we used a Kubernetes cluster setup running [argo workflows](https://argoproj.github.io/argo-workflows/). For further details, check the large-scale analysis section below.
 
-## Files
+## Quickstart
 
-`config.json`: Contains information on how to build the different frameworks for different architectures
+```bash
+git submodule update --init --recursive
 
-`builder.py`: Script used to build and analyze a selected framework
+# install microsurf in a virtualenv
+python -m virtualenv venv
+source venv/bin/activate
+pip install -e microsurf
 
-`k8s-config`: Kubernetes config stuff
+# run the analysis
+mkdir test
+cd test
+../run.py -a riscv64 -t gcc --toolchain-version 11.3.0 -f haclstar -c f283af14715cc66ec7481a3ae0ed019cbff4c790 -o="-O2" --fw-dir ../src/frameworks -p ../config.json hmac-sha2
+```
 
-`create-cluster.sh`: Deploy a large scale cluster on Exoscale and run the evaluation workflow
+## Synopsis
 
-`workflow/`: Kubernetes workflow engine (argo) templates
+```bash
+usage: run.py [-h] [-a {riscv64,x86-64,x86-i686,aarch64,armv7,mips32el}] [-t {gcc,llvm}] --toolchain-version TOOLCHAIN_VERSION -f
+              {haclstar,openssl,mbedtls,wolfssl,botan,bearssl,libsodium,boringssl} -c COMMIT [-o OPT] [-p PATH] [--result-dir RESULT_DIR] [--fw-dir FW_DIR]
+              [--save-binaries | --no-save-binaries] [--asm | --no-asm]
+              target [target ...]
 
-`framework-builder/`: driver source code for the different frameworks
+positional arguments:
+  target                Target algorithm(s) to be analyzed
 
-`bootstrap-static/`: static result summary (not updated, data from an old run - ignore)
+options:
+  -h, --help            show this help message and exit
+  -a {riscv64,x86-64,x86-i686,aarch64,armv7,mips32el}, --arch {riscv64,x86-64,x86-i686,aarch64,armv7,mips32el}
+                        Architecture
+  -t {gcc,llvm}, --toolchain {gcc,llvm}
+                        Toolchain
+  --toolchain-version TOOLCHAIN_VERSION
+                        Toolchain Version
+  -f {haclstar,openssl,mbedtls,wolfssl,botan,bearssl,libsodium,boringssl}, --framework {haclstar,openssl,mbedtls,wolfssl,botan,bearssl,libsodium,boringssl}
+                        Framework
+  -c COMMIT, --commit COMMIT
+                        Commit of the framework
+  -o OPT, --opt OPT, --optimization OPT
+                        Optimization (default: -O2)
+  -p PATH, --path PATH  path to config
+  --result-dir RESULT_DIR
+                        Result directory
+  --fw-dir FW_DIR       Directory to frameworks directory
+  --save-binaries, --no-save-binaries
+  --asm, --no-asm       Extract assembly during analysis. Will incur a memory and performance overhead if enabled.
+
+example usage:
+
+    python run.py -a riscv64 -t gcc --toolchain-version 11.3.0 -f haclstar -c main -o="-O3" hmac-sha2
+    python run.py -a x86-64 -t llvm --toolchain-version 15 -f haclstar -c main -o="-O0" hmac-sha2
+
+Running in a different directory:
+    python ../run.py -a riscv64 -t gcc --toolchain-version 11.3.0 -f libsodium -c stable -o="-O2" --fw-dir ../src/frameworks -p ../config.json hmac-sha2
+```
+
+## Compilers and their Versions
+
+GCC toolchains are downloaded at runtime, but LLVM needs to be available in the host system with the correct version. For our experiments, we built Docker images for LLVM versions 5-18. Follow the steps below to build a single image.
+
+```bash
+git submodule update --init
+docker build -t microsurf-eval:base -f dockerfiles/base.Dockerfile .
+
+# edit dockerfiles/llvmXX.Dockerfile with the tag chosen above
+# First line of dockerfiles/llvmXX.Dockerfile should be: 
+# FROM microsurf-eval:base
+
+docker build -t 'microsurf-eval:llvmXX' -f dockerfiles/llvm-XX.Dockerfile .
+```
+
+We also provide a script to build all docker images and upload them to a Dockerhub account in [docker_build.sh](docker_build.sh).
+
+Note: Building new images with Dockerfiles might be broken as the Ubuntu repositories no longer contain certain packages.
+
+## Running in Docker
+
+Executing an individual analysis on a target library and cryptographic algorithm is simple within a docker image. Run the following steps to run an individual analysis
+
+```bash
+docker run --rm -it microsurf-eval:llvmXX bash
+python run.py --help
+python run.py -a x86-64 -t llvm --toolchain-version XX -f haclstar -c main -o="-O0" hmac-sha2
+```
+
+## Large-Scale Analysis
+
+The large-scale setup is a bit more involved. It requires the following prerequisites:
+
+- A working Kubernetes cluster
+- Installation of Argo Workflow on your cluster
+- All Docker images uploaded to Dockerhub (see [docker_build.sh](docker_build.sh))
+- A shared network drive that is accessible to all Argo containers, e.g., an NFS drive that is mounted to `/data/`.
+
+The configuration of the run is specified in [workflow/workflow.yaml](workflow/workflow.yaml). An example configuration:
+
+```yaml
+  arguments:
+    parameters:
+    - name: architectures
+      value: |
+        ["riscv64", "x86-64", "x86-i686", "aarch64", "mips32el", "armv7"]
+    - name: compilers
+      value: |
+        {
+          "gcc": [
+            "5.4.0", "6.4.0", "7.3.0", "8.4.0", "9.3.0", "10.3.0", "11.3.0"
+          ],
+          "llvm": [
+            "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5"
+          ]
+        }
+    - name: frameworks
+      value: |
+        ["haclstar"]
+    - name: target-algorithms
+      value: |
+        "hmac-sha1 hmac-sha2 hmac-blake2 chacha-poly1305 curve25519 ecdh-p256 ecdsa rsa"
+    - name: optimizations
+      value: |
+        ["-O0", "-O1", "-O2", "-O3", "-Os", "-Ofast", "-Oz"]
+    - name: commit
+      value: "f283af14715cc66ec7481a3ae0ed019cbff4c790" # hacl-star
+```
+
+The run can then be launched with the following command:
+
+```bash
+argo submit -n microsurf --name haclstar workflow/workflow.yaml
+```
+
+## Known Issues
+
+- Old dockerfiles might not build. Need realignment with Ubuntu.
+- For specific settings, a lot of memory is required (>64gb). This is mostly relevant for `-O0` builds.

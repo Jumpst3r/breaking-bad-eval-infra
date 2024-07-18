@@ -3,3 +3,5 @@ build-satic.py
 .git/*
 .git
 k8s-config/
+test/
+microsurf/venv/
