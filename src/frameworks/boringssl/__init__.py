@@ -3,10 +3,10 @@ import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
 # from cryptography.hazmat.primitives.asymmetric import ec
-import logging
+# import logging
 from .keygen import SECP256PrivateKeyGeneratorBoringSSL, ECDHP256PrivateKeyGeneratorBoringSSL
 
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logging.DEBUG)
 
 arch_str = {
     'riscv64': 'riscv64',
@@ -135,7 +135,7 @@ set(CMAKE_ASM_FLAGS "{self.settings.optflag}")
         os.mkdir("build")
         os.chdir("build")
 
-        logging.info(
+        logger.info(
             f'Generating toolchain.cmake for {self.settings.compiler} on {self.settings.arch}')
 
         cflags = "-gdwarf-4 -Wno-error"
@@ -164,9 +164,9 @@ set(CMAKE_ASM_FLAGS "{self.settings.optflag}")
                 file.write(self.llvm_toolchain_cmake(
                     f'{cwd}/toolchain', cflags, ldflags))
 
-        logging.info('Created custom toolchain config for cmake')
+        logger.info('Created custom toolchain config for cmake')
 
-        logging.info(
+        logger.info(
             'Forcing fvisbility=default in CMakeLists.txt of boringSSL')
         with open("../CMakeLists.txt", "r") as fin:
             data = fin.read()
@@ -177,20 +177,20 @@ set(CMAKE_ASM_FLAGS "{self.settings.optflag}")
         run_subprocess(
             'cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DBORINGSSL_UNSAFE_DETERMINISTIC_MODE=1 -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=None ..')
 
-        logging.info(f'Building {self.name} (make)')
+        logger.info(f'Building {self.name} (make)')
         run_subprocess_env('make -j6')
 
         os.chdir(cwd)
 
     def copy_lib_rootfs(self):
-        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
+        logger.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
         run_subprocess(
             f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
-        logging.info(f"pwd = {os.getcwd()}")
+        logger.info(f"pwd = {os.getcwd()}")
         run_subprocess(
             f'cp {cwd}/{self.name}/build/crypto/libcrypto.so* {os.getcwd()}/{self.rootfs}/{self.libdir}')
 
@@ -198,7 +198,7 @@ set(CMAKE_ASM_FLAGS "{self.settings.optflag}")
         self.build_lib()
         self.copy_lib_rootfs()
 
-        logging.info(f'- Building driver.c')
+        logger.info(f'- Building driver.c')
 
         cwd = os.getcwd()
 

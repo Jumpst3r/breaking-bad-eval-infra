@@ -2,10 +2,10 @@ from ..util import *
 import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
-import logging
+# import logging
 from .keygen import *
 
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logger.DEBUG)
 
 compile_options = {"buildcmd-gcc": ["./Configure linux-aarch64 --cross-compile-prefix={cwd}/../toolchain/bin/aarch64-linux- $CFLAGS", "make -j4"],
                    "buildcmd-clang": ["./Configure linux-aarch64 $CFLAGS", "sed -i \"/^CC=/c\\CC=clang\" Makefile && sed -i \"/^AR=/c\\AR=llvm-ar\" Makefile && sed -i \"/^CXX=/c\\CXX=clang++\" Makefile", "make -j4"],
@@ -62,7 +62,7 @@ class Openssl(Framework):
 
         cwd = os.getcwd()
 
-        logging.info(
+        logger.info(
             f'Configuring openssl for {self.settings.compiler} on {self.settings.arch}')
 
         cflags = "-gdwarf-4"
@@ -78,7 +78,7 @@ class Openssl(Framework):
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_ldflags(f'{cwd}/../toolchain')
 
-        logging.info(f'Setting CFLAGS to {cflags}')
+        logger.info(f'Setting CFLAGS to {cflags}')
 
         if self.settings.compiler == 'gcc':
             configure = [
@@ -97,10 +97,10 @@ class Openssl(Framework):
             ]
             run_subprocess_env(configure, 'clang', 'llvm-ar', 'clang++')
         else:
-            logging.error('Unknown compiler for Openssl')
+            logger.error('Unknown compiler for Openssl')
             raise Exception('Unknown compiler for Openssl')
 
-        logging.info('Building OpenSSL (make)')
+        logger.info('Building OpenSSL (make)')
         if self.settings.compiler == 'gcc':
             run_subprocess(['make', '-j6'])
         if self.settings.compiler == 'llvm':
@@ -109,15 +109,15 @@ class Openssl(Framework):
         os.chdir('../')
 
     def copy_lib_rootfs(self):
-        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
+        logger.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
         run_subprocess(
             f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
-        logging.info(f"pwd = {os.getcwd()}")
-        logging.info(f"find ./ -name '{self.name}*.so'")
+        logger.info(f"pwd = {os.getcwd()}")
+        logger.info(f"find ./ -name '{self.name}*.so'")
         run_subprocess(
             f'cp $(find ./{self.name} -name "*.so") {os.getcwd()}/{self.rootfs}/{self.libdir}')
         run_subprocess(
@@ -134,7 +134,7 @@ class Openssl(Framework):
         self.build_lib()
         self.copy_lib_rootfs()
 
-        logging.info(f'- Building driver.c')
+        logger.info(f'- Building driver.c')
 
         cwd = os.getcwd()
 

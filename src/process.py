@@ -1,27 +1,27 @@
 import subprocess
 import logging
 import os
+from src.config import logger
+# import logger from toolchain
 
 # logging.getLogger().setLevel(logging.DEBUG)
-
 
 def checkretcode(result):
     err = result.stderr
     if result.returncode != 0:
-        logging.error(f"failed: {err}")
+        logger.error(f"failed: {err}")
         exit(-1)
 
 
 def run_subprocess(args, *additionalargs, **kwargs):
     """A wrapper around `subprocess.run` that sets some settings important for us."""
-    logging.getLogger().setLevel(logging.DEBUG)
     command = ''
     if not isinstance(args, str):
         command = ' '.join(args)
     else:
         command = args
         args = args.split(' ')
-    logging.debug(
+    logger.debug(
         f"Running command: {command} (cwd: {os.getcwd()})")
     assert 'cwd' not in kwargs
     assert 'check' not in kwargs

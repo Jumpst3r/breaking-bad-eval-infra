@@ -10,6 +10,8 @@ from microsurf.pipeline.DetectionModules import CFLeakDetector, DataLeakDetector
 from microsurf.pipeline.Stages import BinaryLoader
 from microsurf.utils.generators import hex_key_generator, hex_key_generator_fixed, SecretGenerator
 
+logger = logging.getLogger("BUILD")
+logger.setLevel(logging.DEBUG)
 
 class Algo(Enum):
     AES_CBC = 1
@@ -177,7 +179,7 @@ class Framework:
 
         args = self.gen_args(algo)
 
-        logging.info("Creating BinaryLoader")
+        logger.info("Creating BinaryLoader")
         binLoader = BinaryLoader(
             path=binpath,
             args=args,
@@ -187,10 +189,10 @@ class Framework:
             name=str(algo),
             resultDir=resultDir
         )
-        logging.info("Configuring BinaryLoader")
+        logger.info("Configuring BinaryLoader")
         errno = binLoader.configure()
         if errno:
-            logging.error("failed to configure BinaryLoader")
+            logger.error("failed to configure BinaryLoader")
             raise "failed to configure BinaryLoader"
 
         lmodues = [DataLeakDetector(binaryLoader=binLoader, granularity=1), CFLeakDetector(
@@ -204,11 +206,11 @@ class Framework:
 
 
 def git_clone(url: str, commit: str, name: str):
-    logging.info(f'Cloning {name}')
+    logger.info(f'Cloning {name}')
     run_subprocess(['git', 'clone', url, name])
 
     os.chdir(name)
-    logging.info(f'Selecting commit {commit}')
+    logger.info(f'Selecting commit {commit}')
     run_subprocess(['git', 'checkout', commit])
     os.chdir('../')
 

@@ -6,6 +6,8 @@ import logging
 from dataclasses import dataclass
 from xmlrpc.client import Boolean
 
+logger = logging.getLogger("TOOLCHAIN") #.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 @dataclass
 class Settings:

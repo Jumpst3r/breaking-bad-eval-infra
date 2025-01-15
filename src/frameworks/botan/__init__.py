@@ -2,7 +2,7 @@ from ..util import *
 import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
-import logging
+# import logging
 
 from .keygen import BotanGenerator
 
@@ -10,7 +10,7 @@ from .keygen import BotanGenerator
 # ECDH
 # ECDSA
 
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logging.DEBUG)
 
 host_str = {
     'riscv64': 'riscv64',
@@ -40,7 +40,7 @@ class Botan(Framework):
 
         cwd = os.getcwd()
 
-        logging.info(
+        logger.info(
             f'Configuring {self.name} for {self.settings.compiler} on {self.settings.arch}')
 
         cflags = "-gdwarf-4"
@@ -59,9 +59,9 @@ class Botan(Framework):
             cflags += self.llvm_cflags(f'{cwd}/../toolchain')
             ldflags = self.llvm_ldflags(f'{cwd}/../toolchain')
 
-        logging.info(f'Setting CFLAGS to {cflags}')
+        logger.info(f'Setting CFLAGS to {cflags}')
 
-        logging.info(f'Configuring {self.name} (configure.py)')
+        logger.info(f'Configuring {self.name} (configure.py)')
         common = f'--cpu={host_str[self.settings.arch]}'
 
         prefix = f'{cwd}/../toolchain/bin/{self.config.get_toolchain_name(self.settings)}'
@@ -80,21 +80,21 @@ class Botan(Framework):
 
         run_subprocess_env(f'./configure.py {common} {comp_configure}')
 
-        logging.info(f'Building {self.name} (make)')
+        logger.info(f'Building {self.name} (make)')
         run_subprocess_env('make libs -j6')
 
         os.chdir('../')
 
     def copy_lib_rootfs(self):
-        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
+        logger.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
         run_subprocess(
             f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
-        logging.info(f"pwd = {os.getcwd()}")
-        logging.info(f"find ./ -name '{self.name}*.so'")
+        logger.info(f"pwd = {os.getcwd()}")
+        logger.info(f"find ./ -name '{self.name}*.so'")
         run_subprocess(
             f'cp $(find ./{self.name} -name "*.so") {os.getcwd()}/{self.rootfs}/{self.libdir}')
         run_subprocess(
@@ -111,7 +111,7 @@ class Botan(Framework):
         self.build_lib()
         self.copy_lib_rootfs()
 
-        logging.info(f'- Building driver.cpp')
+        logger.info(f'- Building driver.cpp')
 
         cwd = os.getcwd()
 
