@@ -2,9 +2,9 @@ from ..util import *
 import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
-import logging
+# import logging
 
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logger.DEBUG)
 
 class Mbedtls(Framework):
     def __init__(self, settings: Settings, config: Config, rootfs: str, fwDir):
@@ -23,7 +23,7 @@ class Mbedtls(Framework):
 
         cwd = os.getcwd()
 
-        logging.info(
+        logger.info(
             f'Configuring MBEDTLS for {self.settings.compiler} on {self.settings.arch}')
 
         cflags = "-gdwarf-4"
@@ -41,9 +41,9 @@ class Mbedtls(Framework):
             cflags += self.llvm_cflags(f'{cwd}/../toolchain')
             ldflags = self.llvm_ldflags(f'{cwd}/../toolchain')
 
-        logging.info(f'Setting CFLAGS to {cflags}')
+        logger.info(f'Setting CFLAGS to {cflags}')
 
-        logging.info('Building mbedtls (make)')
+        logger.info('Building mbedtls (make)')
         if self.settings.compiler == 'gcc':
             prefix = f'{cwd}/../toolchain/bin/{self.config.get_toolchain_name(self.settings)}'
             cc = f'{prefix}-gcc'
@@ -58,15 +58,15 @@ class Mbedtls(Framework):
         os.chdir('../')
 
     def copy_lib_rootfs(self):
-        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
+        logger.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
         run_subprocess(
             f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
-        logging.info(f"pwd = {os.getcwd()}")
-        logging.info(f"find ./ -name '{self.name}*.so'")
+        logger.info(f"pwd = {os.getcwd()}")
+        logger.info(f"find ./ -name '{self.name}*.so'")
         run_subprocess(
             f'cp $(find ./{self.name} -name "*.so") {os.getcwd()}/{self.rootfs}/{self.libdir}')
         run_subprocess(
@@ -83,7 +83,7 @@ class Mbedtls(Framework):
         self.build_lib()
         self.copy_lib_rootfs()
 
-        logging.info(f'- Building driver.c')
+        logger.info(f'- Building driver.c')
 
         cwd = os.getcwd()
 

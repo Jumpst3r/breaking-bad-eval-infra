@@ -2,9 +2,9 @@ from ..util import *
 import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
-import logging
+# import logging
 
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logger.DEBUG)
 
 host_str = {
     'riscv64': 'riscv64-unknown-linux-musl',
@@ -34,7 +34,7 @@ class Wolfssl(Framework):
 
         cwd = os.getcwd()
 
-        logging.info(
+        logger.info(
             f'Configuring {self.name} for {self.settings.compiler} on {self.settings.arch}')
 
         cflags = "-gdwarf-4"
@@ -54,12 +54,12 @@ class Wolfssl(Framework):
         # cflags += ' -DWOLFSSL_GENSEED_FORTEST -w'
         # cflags += ' -DSINGLE_THREADED'
 
-        logging.info(f'Setting CFLAGS to {cflags}')
+        logger.info(f'Setting CFLAGS to {cflags}')
 
-        logging.info(f'Configuring {self.name} (autogen)')
+        logger.info(f'Configuring {self.name} (autogen)')
         run_subprocess('./autogen.sh')
 
-        logging.info(f'Configuring {self.name} (configure)')
+        logger.info(f'Configuring {self.name} (configure)')
         common = f'--enable-all-crypto --disable-shared --enable-cryptonly --disable-examples --enable-static --disable-optflags --host={host_str[self.settings.arch]}'
 
         prefix = f'{cwd}/../toolchain/bin/{self.config.get_toolchain_name(self.settings)}'
@@ -77,13 +77,13 @@ class Wolfssl(Framework):
         run_subprocess_env(f'./configure {common}', cc=cc,
                            ld=ld, ar=ar, cflags=cflags, ranlib=ranlib)
 
-        logging.info(f'Building {self.name} (make)')
+        logger.info(f'Building {self.name} (make)')
         run_subprocess_env('make')
 
         os.chdir('../')
 
     def copy_lib_rootfs(self):
-        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
+        logger.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
@@ -94,7 +94,7 @@ class Wolfssl(Framework):
         self.build_lib()
         self.copy_lib_rootfs()
 
-        logging.info(f'- Building driver.c')
+        logger.info(f'- Building driver.c')
 
         cwd = os.getcwd()
 

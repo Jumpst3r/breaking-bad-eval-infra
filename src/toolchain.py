@@ -11,9 +11,9 @@ from typing import Dict
 from src.config import *
 from src.process import run_subprocess
 
-
 resultjson = []
 initPath = ""
+
 
 
 def download_gcc(url: str, sha256: str):
@@ -23,7 +23,7 @@ def download_gcc(url: str, sha256: str):
         url (str): URL to be downloaded
         sha256 (str): Checksum url
     """
-    logging.info('- Downloading GCC')
+    logger.info('- Downloading GCC')
     run_subprocess(['wget', '-O', 'toolchain.tar.bz2', url])
     # checkretcode(result)
 
@@ -37,10 +37,10 @@ def download_gcc(url: str, sha256: str):
         f.writelines([f'{hash} toolchain.tar.bz2'])
         f.truncate()
 
-    logging.info('- Checking checksum')
+    logger.info('- Checking checksum')
     run_subprocess(['sha256sum', '-c', 'toolchain.tar.bz2.sha256'])
 
-    logging.info('- Extracting')
+    logger.info('- Extracting')
     run_subprocess(['mkdir', '-p', 'toolchain'])
 
     run_subprocess(['tar', '-xf', 'toolchain.tar.bz2', '-C',
@@ -54,13 +54,13 @@ def check_llvm(version: str):
         version (str): Major version of LLVM that is expected to be installed, 
                        e.g., '15' 
     """
-    logging.info('- Checking LLVM')
+    logger.info('- Checking LLVM')
     result = run_subprocess(
         ['clang', '--version'])
     # print(result.stdout)
 
     if f"{version}." not in result.stdout.decode():
-        logging.error(
+        logger.error(
             f'Unexpected LLVM version.\nExpected: {version}\nFound: {result.stdout}')
         exit(-1)
 

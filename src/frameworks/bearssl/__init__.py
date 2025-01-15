@@ -2,10 +2,10 @@ from ..util import *
 import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
-import logging
+# import logging
 from .keygen import RSAPrivateKeyGen
 
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logging.DEBUG)
 
 arch_str_gcc = {
     'x86-64': 'linux-x86_64',
@@ -45,7 +45,7 @@ class Bearssl(Framework):
 
         cwd = os.getcwd()
 
-        logging.info(
+        logger.info(
             f'Configuring {self.name} for {self.settings.compiler} on {self.settings.arch}')
 
         cflags = "-gdwarf-4"
@@ -59,7 +59,7 @@ class Bearssl(Framework):
         if self.settings.compiler == 'llvm':
             cflags += self.llvm_cflags(f'{cwd}/../toolchain')
 
-        logging.info(f'Setting CFLAGS to {cflags}')
+        logger.info(f'Setting CFLAGS to {cflags}')
 
         with open(f'conf/{self.confFile}', 'w') as f:
             f.write('include conf/Unix.mk\n')
@@ -81,20 +81,20 @@ class Bearssl(Framework):
                 f.write(
                     f'LDFLAGS = {self.llvm_ldflags(f"{cwd}/../toolchain")}\n')
 
-        logging.info(f'Building {self.name} (make)')
+        logger.info(f'Building {self.name} (make)')
         run_subprocess(f'make CONF=cross -j6')
 
         os.chdir('../')
 
     def copy_lib_rootfs(self):
-        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
+        logger.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
         run_subprocess(
             f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
-        logging.info(f"pwd = {os.getcwd()}")
+        logger.info(f"pwd = {os.getcwd()}")
         run_subprocess(
             f'cp BearSSL/crossbuild/libbearssl.so {os.getcwd()}/{self.rootfs}/{self.libdir}')
 
@@ -109,7 +109,7 @@ class Bearssl(Framework):
         self.build_lib()
         self.copy_lib_rootfs()
 
-        logging.info(f'- Building driver.c')
+        logger.info(f'- Building driver.c')
 
         cwd = os.getcwd()
 

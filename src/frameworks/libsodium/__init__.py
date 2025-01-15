@@ -2,10 +2,10 @@ from ..util import *
 import os
 from src.process import run_subprocess, run_subprocess_env
 from src.config import Settings, Config
-import logging
+# import logging
 
 
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logger.DEBUG)
 
 
 class Libsodium(Framework):
@@ -45,7 +45,7 @@ class Libsodium(Framework):
 
         os.chdir(f"{self.name}/")
 
-        logging.info(
+        logger.info(
             f'Configuring {self.name} for {self.settings.compiler} on {self.settings.arch}')
 
         cflags = "-gdwarf-4"
@@ -65,10 +65,10 @@ class Libsodium(Framework):
             ldflags += self.custom_llvm_ldflags_configure(f'{cwd}/toolchain')
             cflags += self.llvm_cflags(f'{cwd}/toolchain')
 
-        logging.info(f'Setting CFLAGS to {cflags}')
-        logging.info(f'Setting LDFLAGS to {ldflags}')
+        logger.info(f'Setting CFLAGS to {cflags}')
+        logger.info(f'Setting LDFLAGS to {ldflags}')
 
-        logging.info(f'Calling ./configure')
+        logger.info(f'Calling ./configure')
         if self.settings.compiler == 'gcc':
             # run_subprocess_env(f'./configure --host {self.config.get_toolchain_name(self.settings)}',
             #                    cflags=cflags, ldflags=ldflags, path=f'{cwd}/toolchain/bin')
@@ -85,23 +85,24 @@ class Libsodium(Framework):
             run_subprocess_env(f'./configure --host {self.config.get_toolchain_name(self.settings)}',
                                cflags=cflags, ldflags=ldflags, cc="clang", ar="llvm-ar", ranlib="llvm-ranlib")
 
-        logging.info(f'Building {self.name} (make)')
+        logger.info(f'Building {self.name} (make)')
         if self.settings.compiler == 'llvm':
-            run_subprocess_env(f'make -j6 LDFLAGS="{self.custom_llvm_ldflags_make(f'{cwd}/toolchain')}"', path=f'{cwd}/toolchain/bin')
+            ldflags = self.custom_llvm_ldflags_make(f'{cwd}/toolchain')
+            run_subprocess_env(f'make -j6 LDFLAGS="{ldflags}"', path=f'{cwd}/toolchain/bin')
         else:
             run_subprocess_env('make -j6', path=f'{cwd}/toolchain/bin')
 
         os.chdir(cwd)
 
     def copy_lib_rootfs(self):
-        logging.info(f'- Copying files to {self.rootfs}{self.libdir}')
+        logger.info(f'- Copying files to {self.rootfs}{self.libdir}')
 
         cwd = os.getcwd()
 
         run_subprocess(
             f'cp -r {cwd}/toolchain/{self.config.get_toolchain_name(self.settings)}/sysroot/* {os.getcwd()}/{self.rootfs}')
 
-        logging.info(f"pwd = {os.getcwd()}")
+        logger.info(f"pwd = {os.getcwd()}")
         run_subprocess(
             f'cp {cwd}/{self.name}/src/libsodium/.libs/libsodium.so* {os.getcwd()}/{self.rootfs}/{self.libdir}')
 
@@ -109,7 +110,7 @@ class Libsodium(Framework):
         self.build_lib()
         self.copy_lib_rootfs()
 
-        logging.info(f'- Building driver.c')
+        logger.info(f'- Building driver.c')
 
         cwd = os.getcwd()
 
